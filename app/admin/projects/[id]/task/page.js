@@ -20,7 +20,6 @@ export default function TaskDetailPage() {
   }, [])
 
   const loadTaskDetails = async () => {
-    // Pobierz task
     const { data: taskData, error: taskError } = await supabase
       .from('tasks')
       .select('*')
@@ -35,7 +34,6 @@ export default function TaskDetailPage() {
 
     setTask(taskData)
 
-    // Pobierz kategorię
     const { data: categoryData } = await supabase
       .from('categories')
       .select('*')
@@ -44,7 +42,6 @@ export default function TaskDetailPage() {
 
     setCategory(categoryData)
 
-    // Pobierz projekt
     const { data: projectData } = await supabase
       .from('projects')
       .select('*')
@@ -53,7 +50,6 @@ export default function TaskDetailPage() {
 
     setProject(projectData)
 
-    // Pobierz dokumenty
     const { data: docsData } = await supabase
       .from('task_documents')
       .select('*')
@@ -61,7 +57,6 @@ export default function TaskDetailPage() {
 
     if (docsData) setDocuments(docsData)
 
-    // Pobierz oferty
     const { data: bidsData } = await supabase
       .from('bids')
       .select('*, profiles(*)')
@@ -70,7 +65,6 @@ export default function TaskDetailPage() {
 
     if (bidsData) setBids(bidsData)
 
-    // Pobierz pytania
     const { data: questionsData } = await supabase
       .from('task_questions')
       .select('*, profiles(*)')
@@ -100,7 +94,6 @@ export default function TaskDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -120,71 +113,51 @@ export default function TaskDetailPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Task Details */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-bold mb-4">Task Details</h2>
-              
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <div className="text-sm text-gray-600">Status</div>
-                  <span className={`inline-block px-3 py-1 text-sm rounded mt-1 ${
-                    task.status === 'open' ? 'bg-green-100 text-green-800' :
-                    task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                  <span className={`inline-block px-3 py-1 text-sm rounded mt-1 ${task.status === 'open' ? 'bg-green-100 text-green-800' : task.status === 'assigned' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
                     {task.status}
                   </span>
                 </div>
                 <div>
                   <div className="text-sm text-gray-600">Budget Range</div>
                   <div className="font-bold">
-                    {task.budget_min && task.budget_max 
-                      ? `£${task.budget_min} - £${task.budget_max}`
-                      : task.suggested_price 
-                      ? `£${task.suggested_price}`
-                      : 'Not set'}
+                    {task.budget_min && task.budget_max ? `£${task.budget_min} - £${task.budget_max}` : task.suggested_price ? `£${task.suggested_price}` : 'Not set'}
                   </div>
                 </div>
               </div>
-
               {task.short_description && (
                 <div className="mb-4">
                   <div className="text-sm text-gray-600 mb-1">Short Description</div>
                   <div className="text-gray-800">{task.short_description}</div>
                 </div>
               )}
-
               {task.description && (
                 <div className="mb-4">
                   <div className="text-sm text-gray-600 mb-1">Full Description</div>
                   <div className="text-gray-800 whitespace-pre-wrap">{task.description}</div>
                 </div>
               )}
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-sm text-gray-600">Estimated Duration</div>
-                  <div className="font-medium">
-                    {task.estimated_duration ? `${task.estimated_duration} days` : 'Not set'}
-                  </div>
+                  <div className="font-medium">{task.estimated_duration ? `${task.estimated_duration} days` : 'Not set'}</div>
                 </div>
                 {task.bid_deadline && (
                   <div>
                     <div className="text-sm text-gray-600">Bid Deadline</div>
-                    <div className="font-medium">
-                      {new Date(task.bid_deadline).toLocaleString()}
-                    </div>
+                    <div className="font-medium">{new Date(task.bid_deadline).toLocaleString()}</div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Questions */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-bold mb-4">Questions ({questions.length})</h2>
               {questions.length === 0 ? (
@@ -199,9 +172,7 @@ export default function TaskDetailPage() {
                       </div>
                       <div className="font-medium mb-2">Q: {q.question}</div>
                       {q.answer ? (
-                        <div className="text-gray-700 bg-gray-50 p-2 rounded">
-                          A: {q.answer}
-                        </div>
+                        <div className="text-gray-700 bg-gray-50 p-2 rounded">A: {q.answer}</div>
                       ) : (
                         <div className="text-gray-400 italic">Not answered yet</div>
                       )}
@@ -211,7 +182,6 @@ export default function TaskDetailPage() {
               )}
             </div>
 
-            {/* Bids */}
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-bold mb-4">Bids ({bids.length})</h2>
               {bids.length === 0 ? (
@@ -222,12 +192,9 @@ export default function TaskDetailPage() {
                     <div key={bid.id} className="border rounded p-4">
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="font-bold">
-                            {bid.profiles?.company_name || bid.profiles?.email}
-                          </div>
+                          <div className="font-bold">{bid.profiles?.company_name || bid.profiles?.email}</div>
                           <div className="text-sm text-gray-500">
-                            Rating: {bid.profiles?.average_rating || 0} ⭐ | 
-                            Projects: {bid.profiles?.total_projects || 0}
+                            Rating: {bid.profiles?.average_rating || 0} ⭐ | Projects: {bid.profiles?.total_projects || 0}
                           </div>
                         </div>
                         <div className="text-right">
@@ -235,15 +202,9 @@ export default function TaskDetailPage() {
                           <div className="text-sm text-gray-500">{bid.duration} days</div>
                         </div>
                       </div>
-                      {bid.comment && (
-                        <div className="text-sm text-gray-700 mt-2">{bid.comment}</div>
-                      )}
+                      {bid.comment && <div className="text-sm text-gray-700 mt-2">{bid.comment}</div>}
                       <div className="mt-3">
-                        <span className={`px-2 py-1 text-xs rounded ${
-                          bid.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          bid.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                          'bg-red-100 text-red-800'
-                        }`}>
+                        <span className={`px-2 py-1 text-xs rounded ${bid.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : bid.status === 'accepted' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                           {bid.status}
                         </span>
                       </div>
@@ -254,7 +215,6 @@ export default function TaskDetailPage() {
             </div>
           </div>
 
-          {/* Right Column */}
           <div className="space-y-6">
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="font-bold mb-4">Documents ({documents.length})</h3>
@@ -263,13 +223,7 @@ export default function TaskDetailPage() {
               ) : (
                 <div className="space-y-2">
                   {documents.map((doc) => (
-                    
-                      key={doc.id}
-                      href={doc.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block p-2 bg-gray-50 rounded hover:bg-gray-100 text-sm"
-                    >
+                    <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer" className="block p-2 bg-gray-50 rounded hover:bg-gray-100 text-sm">
                       {doc.file_name}
                     </a>
                   ))}
@@ -279,16 +233,10 @@ export default function TaskDetailPage() {
 
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="font-bold mb-4">Actions</h3>
-              <button
-                onClick={() => alert('Edit functionality coming soon')}
-                className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-2"
-              >
+              <button onClick={() => alert('Edit functionality coming soon')} className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-2">
                 Edit Task
               </button>
-              <button
-                onClick={() => alert('Delete functionality coming soon')}
-                className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
+              <button onClick={() => alert('Delete functionality coming soon')} className="w-full px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
                 Delete Task
               </button>
             </div>
