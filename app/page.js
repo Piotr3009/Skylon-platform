@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 
 const CATEGORY_PRESETS = [
   {
-    keywords: ['demolition', 'strip', 'clearance'],
+    keywords: ['demolition', 'site clearance', 'strip', 'clearance'],
     color: 'bg-rose-50 text-rose-600 border border-rose-200',
     Icon: (props) => (
       <svg
@@ -25,7 +25,7 @@ const CATEGORY_PRESETS = [
     )
   },
   {
-    keywords: ['ground', 'foundation', 'excavation'],
+    keywords: ['groundworks', 'foundations', 'ground', 'foundation', 'excavation'],
     color: 'bg-amber-50 text-amber-600 border border-amber-200',
     Icon: (props) => (
       <svg
@@ -44,7 +44,146 @@ const CATEGORY_PRESETS = [
     )
   },
   {
-    keywords: ['electrical', 'lighting', 'power'],
+    keywords: ['structural frame', 'steelwork', 'steel', 'metal', 'structural'],
+    color: 'bg-slate-50 text-slate-600 border border-slate-200',
+    Icon: (props) => (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <path d="M6 3v18" />
+        <path d="M18 3v18" />
+        <path d="M6 9h12" />
+        <path d="M6 15h12" />
+      </svg>
+    )
+  },
+  {
+    keywords: ['external walls', 'cladding', 'facade', 'curtain wall'],
+    color: 'bg-gray-50 text-gray-600 border border-gray-200',
+    Icon: (props) => (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M3 15h18" />
+      </svg>
+    )
+  },
+  {
+    keywords: ['roofing', 'roof', 'waterproof'],
+    color: 'bg-teal-50 text-teal-600 border border-teal-200',
+    Icon: (props) => (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <path d="M3 12l9-9 9 9" />
+        <path d="M5 10v10h14V10" />
+      </svg>
+    )
+  },
+  {
+    keywords: ['joinery installation', 'joinery', 'carpentry', 'wood', 'timber'],
+    color: 'bg-orange-50 text-orange-600 border border-orange-200',
+    Icon: (props) => (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <path d="M4 6h16v4H4z" />
+        <path d="M6 10v8" />
+        <path d="M18 10v8" />
+        <path d="M9 10v8" />
+        <path d="M15 10v8" />
+      </svg>
+    )
+  },
+  {
+    keywords: ['internal walls', 'partitions', 'partition', 'wall', 'drywall', 'stud'],
+    color: 'bg-zinc-50 text-zinc-600 border border-zinc-200',
+    Icon: (props) => (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <rect x="8" y="3" width="8" height="18" />
+        <path d="M8 8h8" />
+        <path d="M8 13h8" />
+      </svg>
+    )
+  },
+  {
+    keywords: ['carpentry works', 'carpentry', 'joinery', 'wood'],
+    color: 'bg-orange-50 text-orange-600 border border-orange-200',
+    Icon: (props) => (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <path d="M4 6h16v4H4z" />
+        <path d="M6 10v8" />
+        <path d="M18 10v8" />
+        <path d="M9 10v8" />
+        <path d="M15 10v8" />
+      </svg>
+    )
+  },
+  {
+    keywords: ['plumbing', 'drainage', 'water', 'pipes'],
+    color: 'bg-blue-50 text-blue-600 border border-blue-200',
+    Icon: (props) => (
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        {...props}
+      >
+        <path d="M12 2v20" />
+        <path d="M8 6h8" />
+        <path d="M8 10h8" />
+        <path d="M8 14h8" />
+        <path d="M8 18h8" />
+      </svg>
+    )
+  },
+  {
+    keywords: ['electrical', 'installation', 'lighting', 'power'],
     color: 'bg-indigo-50 text-indigo-600 border border-indigo-200',
     Icon: (props) => (
       <svg
@@ -61,7 +200,7 @@ const CATEGORY_PRESETS = [
     )
   },
   {
-    keywords: ['mechanical', 'hvac', 'ac', 'vent'],
+    keywords: ['mechanical', 'hvac', 'ac', 'vrf', 'vent'],
     color: 'bg-cyan-50 text-cyan-600 border border-cyan-200',
     Icon: (props) => (
       <svg
@@ -86,8 +225,8 @@ const CATEGORY_PRESETS = [
     )
   },
   {
-    keywords: ['finishing', 'paint', 'decor', 'decoration'],
-    color: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
+    keywords: ['plastering', 'drylining', 'plaster', 'dry lining'],
+    color: 'bg-stone-50 text-stone-600 border border-stone-200',
     Icon: (props) => (
       <svg
         viewBox="0 0 24 24"
@@ -102,67 +241,6 @@ const CATEGORY_PRESETS = [
         <path d="M9 10v10" />
         <path d="M6 20h6" />
         <path d="M16 4l4 4-4 4" />
-      </svg>
-    )
-  },
-  {
-    keywords: ['joinery', 'carpentry', 'wood', 'timber'],
-    color: 'bg-orange-50 text-orange-600 border border-orange-200',
-    Icon: (props) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        {...props}
-      >
-        <path d="M4 6h16v4H4z" />
-        <path d="M6 10v8" />
-        <path d="M18 10v8" />
-        <path d="M9 10v8" />
-        <path d="M15 10v8" />
-      </svg>
-    )
-  },
-  {
-    keywords: ['plumbing', 'water', 'drainage', 'pipes'],
-    color: 'bg-blue-50 text-blue-600 border border-blue-200',
-    Icon: (props) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        {...props}
-      >
-        <path d="M12 2v20" />
-        <path d="M8 6h8" />
-        <path d="M8 10h8" />
-        <path d="M8 14h8" />
-        <path d="M8 18h8" />
-      </svg>
-    )
-  },
-  {
-    keywords: ['glazing', 'windows', 'glass', 'curtain wall'],
-    color: 'bg-sky-50 text-sky-600 border border-sky-200',
-    Icon: (props) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        {...props}
-      >
-        <rect x="3" y="3" width="18" height="18" rx="2" />
-        <path d="M12 3v18" />
-        <path d="M3 12h18" />
       </svg>
     )
   },
@@ -185,8 +263,8 @@ const CATEGORY_PRESETS = [
     )
   },
   {
-    keywords: ['ceiling', 'suspended', 'mf'],
-    color: 'bg-violet-50 text-violet-600 border border-violet-200',
+    keywords: ['finishing', 'paint', 'decor', 'decoration'],
+    color: 'bg-emerald-50 text-emerald-600 border border-emerald-200',
     Icon: (props) => (
       <svg
         viewBox="0 0 24 24"
@@ -197,17 +275,16 @@ const CATEGORY_PRESETS = [
         strokeLinejoin="round"
         {...props}
       >
-        <path d="M3 4h18" />
-        <path d="M6 4v3" />
-        <path d="M12 4v3" />
-        <path d="M18 4v3" />
-        <rect x="3" y="7" width="18" height="3" />
+        <path d="M4 4h12v6H4z" />
+        <path d="M9 10v10" />
+        <path d="M6 20h6" />
+        <path d="M16 4l4 4-4 4" />
       </svg>
     )
   },
   {
-    keywords: ['partition', 'wall', 'drywall', 'stud'],
-    color: 'bg-gray-50 text-gray-600 border border-gray-200',
+    keywords: ['external works', 'external', 'landscaping'],
+    color: 'bg-green-50 text-green-600 border border-green-200',
     Icon: (props) => (
       <svg
         viewBox="0 0 24 24"
@@ -218,32 +295,15 @@ const CATEGORY_PRESETS = [
         strokeLinejoin="round"
         {...props}
       >
-        <rect x="8" y="3" width="8" height="18" />
-        <path d="M8 8h8" />
-        <path d="M8 13h8" />
+        <path d="M3 20h18" />
+        <path d="M6 20v-6" />
+        <path d="M12 20v-10" />
+        <path d="M18 20v-4" />
       </svg>
     )
   },
   {
-    keywords: ['door', 'doorset', 'ironmongery'],
-    color: 'bg-zinc-50 text-zinc-600 border border-zinc-200',
-    Icon: (props) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        {...props}
-      >
-        <rect x="5" y="2" width="14" height="20" rx="2" />
-        <circle cx="16" cy="12" r="1" />
-      </svg>
-    )
-  },
-  {
-    keywords: ['fire', 'protection', 'sprinkler', 'alarm'],
+    keywords: ['specialist', 'systems', 'fire', 'security'],
     color: 'bg-red-50 text-red-600 border border-red-200',
     Icon: (props) => (
       <svg
@@ -259,44 +319,6 @@ const CATEGORY_PRESETS = [
         <path d="M9 14h6" />
         <path d="M12 14v8" />
         <path d="M8 22h8" />
-      </svg>
-    )
-  },
-  {
-    keywords: ['steelwork', 'steel', 'metal', 'structural'],
-    color: 'bg-slate-50 text-slate-600 border border-slate-200',
-    Icon: (props) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        {...props}
-      >
-        <path d="M6 3v18" />
-        <path d="M18 3v18" />
-        <path d="M6 9h12" />
-        <path d="M6 15h12" />
-      </svg>
-    )
-  },
-  {
-    keywords: ['roofing', 'roof', 'waterproof'],
-    color: 'bg-teal-50 text-teal-600 border border-teal-200',
-    Icon: (props) => (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        {...props}
-      >
-        <path d="M3 12l9-9 9 9" />
-        <path d="M5 10v10h14V10" />
       </svg>
     )
   }
@@ -321,7 +343,7 @@ const DEFAULT_CATEGORY_STYLE = {
   )
 }
 
-const clampCategories = (categories) => categories.slice(0, 15)
+const clampCategories = (categories) => categories.slice(0, 17)
 
 const formatCurrency = (value) => {
   if (!value || Number.isNaN(value)) return '—'
@@ -445,10 +467,10 @@ const CategoryNode = ({ name }) => {
   const { color, Icon } = getCategoryStyle(name)
   return (
     <div
-      className={`flex min-h-24 min-w-28 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-2 ${color}`}
+      className={`flex min-h-28 min-w-36 max-w-44 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-3 ${color}`}
     >
       <Icon className="h-8 w-8 flex-shrink-0" />
-      <span className="mt-1 text-center text-xs font-semibold leading-tight">
+      <span className="mt-2 text-center text-[11px] font-semibold leading-tight break-words">
         {name}
       </span>
     </div>
@@ -484,19 +506,19 @@ const ProjectTree = ({ project }) => {
 
       {categories.map((category, index) => {
         const angle = (index / total) * Math.PI * 2 - Math.PI / 2
-        const distance = 260
+        const distance = 280
         const x = Math.cos(angle) * distance
         const y = Math.sin(angle) * distance
         
-        // Building edge radius (approximate)
-        const buildingRadius = 90
+        // Building edge radius - strzałki zaczynają się dalej od budynku
+        const buildingRadius = 130
         
         // Start from building edge
         const startX = Math.cos(angle) * buildingRadius
         const startY = Math.sin(angle) * buildingRadius
         
-        // End at icon edge (subtract icon size)
-        const iconRadius = 70
+        // End at icon edge - strzałki są krótsze
+        const iconRadius = 80
         const endX = Math.cos(angle) * (distance - iconRadius)
         const endY = Math.sin(angle) * (distance - iconRadius)
         
