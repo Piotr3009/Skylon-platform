@@ -321,7 +321,7 @@ const DEFAULT_CATEGORY_STYLE = {
   )
 }
 
-const clampCategories = (categories) => categories.slice(0, 8)
+const clampCategories = (categories) => categories.slice(0, 15)
 
 const formatCurrency = (value) => {
   if (!value || Number.isNaN(value)) return '—'
@@ -461,9 +461,9 @@ const ProjectTree = ({ project }) => {
   const buildingType = determineBuildingType(project)
 
   return (
-    <div className="relative mx-auto flex h-[500px] w-full items-center justify-center">
-      <div className="absolute inset-6 rounded-[36px] bg-gradient-to-br from-white/80 via-white/60 to-indigo-50/70 shadow-lg" />
-      <div className="absolute inset-6 blur-3xl bg-indigo-200/40" />
+    <div className="relative mx-auto flex h-[600px] w-full items-center justify-center">
+      <div className="absolute inset-6 rounded-[36px] bg-gradient-to-br from-indigo-100/80 via-indigo-50/60 to-slate-200/70 shadow-lg" />
+      <div className="absolute inset-6 blur-3xl bg-indigo-300/40" />
       <div className="relative z-0 flex items-center justify-center">
         <div className="relative flex items-center justify-center rounded-3xl border border-indigo-100 bg-white/90 p-6 shadow-xl">
           <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-50 via-white to-slate-50 opacity-80" />
@@ -484,39 +484,54 @@ const ProjectTree = ({ project }) => {
 
       {categories.map((category, index) => {
         const angle = (index / total) * Math.PI * 2 - Math.PI / 2
-        const distance = 220
+        const distance = 260
         const x = Math.cos(angle) * distance
         const y = Math.sin(angle) * distance
-        const branchLength = distance - 120
+        
+        // Building edge radius (approximate)
+        const buildingRadius = 90
+        
+        // Start from building edge
+        const startX = Math.cos(angle) * buildingRadius
+        const startY = Math.sin(angle) * buildingRadius
+        
+        // End at icon edge (subtract icon size)
+        const iconRadius = 70
+        const endX = Math.cos(angle) * (distance - iconRadius)
+        const endY = Math.sin(angle) * (distance - iconRadius)
+        
+        const lineLength = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2))
         const rotation = angle * (180 / Math.PI)
 
         // Arrow tip calculations
         const arrowSize = 6
-        const arrowX1 = branchLength - arrowSize
+        const arrowX1 = lineLength - arrowSize
         const arrowY1 = -arrowSize / 2
-        const arrowX2 = branchLength - arrowSize
+        const arrowX2 = lineLength - arrowSize
         const arrowY2 = arrowSize / 2
 
         return (
           <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 z-20">
             <svg
-              className="absolute left-1/2 top-1/2 overflow-visible"
+              className="absolute overflow-visible"
               style={{ 
-                transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
-                width: `${branchLength}px`,
+                left: '50%',
+                top: '50%',
+                transform: `translate(calc(-50% + ${startX}px), calc(-50% + ${startY}px)) rotate(${rotation}deg)`,
+                width: `${lineLength}px`,
                 height: '20px'
               }}
             >
               <line
                 x1="0"
                 y1="10"
-                x2={branchLength}
+                x2={lineLength}
                 y2="10"
                 stroke="rgb(99 102 241)"
                 strokeWidth="1"
               />
               <polygon
-                points={`${branchLength},10 ${arrowX1},${10 + arrowY1} ${arrowX1},${10 + arrowY2}`}
+                points={`${lineLength},10 ${arrowX1},${10 + arrowY1} ${arrowX1},${10 + arrowY2}`}
                 fill="rgb(99 102 241)"
               />
             </svg>
