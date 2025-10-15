@@ -701,7 +701,7 @@ export default function HomePage() {
                     </article>
                   )
                 })
-                projects.map((project, index) => (
+                projects.map((project, index)  
                   <article
                     key={project.id}
                     className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
