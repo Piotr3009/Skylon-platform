@@ -307,8 +307,10 @@ const CategoryNode = ({ name }) => {
 }
 
 const ProjectTree = ({ project }) => {
+  const categoryCount = project.categories?.length ?? 0
   const categories = clampCategories(project.categories ?? [])
   const total = categories.length
+  const extraCount = Math.max(0, categoryCount - total)
   const buildingType = determineBuildingType(project)
   const ringRadius = total >= 6 ? 210 : total >= 3 ? 190 : 170
   const branchOffset = 40
@@ -332,6 +334,14 @@ const ProjectTree = ({ project }) => {
       {total === 0 && (
         <div className="absolute -bottom-6 left-1/2 w-full -translate-x-1/2 text-center text-sm text-slate-500">
           Categories will appear here once scoped.
+        </div>
+      )}
+
+      {extraCount > 0 && (
+        <div className="absolute -bottom-16 left-1/2 flex -translate-x-1/2 items-center justify-center">
+          <span className="rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-indigo-500/30">
+            +{extraCount} more packages
+          </span>
         </div>
       )}
 
