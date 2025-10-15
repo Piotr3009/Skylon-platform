@@ -405,7 +405,7 @@ const BuildingIcon = ({ type }) => {
       return (
         <svg
           viewBox="0 0 120 120"
-          className="h-40 w-40 text-slate-600"
+          className="h-50 w-50 text-slate-600"
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
@@ -420,7 +420,7 @@ const BuildingIcon = ({ type }) => {
       return (
         <svg
           viewBox="0 0 120 120"
-          className="h-40 w-40 text-slate-600"
+          className="h-50 w-50 text-slate-600"
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
@@ -437,7 +437,7 @@ const BuildingIcon = ({ type }) => {
       return (
         <svg
           viewBox="0 0 120 120"
-          className="h-40 w-40 text-slate-600"
+          className="h-50 w-50 text-slate-600"
           fill="none"
           stroke="currentColor"
           strokeWidth="3"
@@ -454,7 +454,7 @@ const BuildingIcon = ({ type }) => {
         <img
           src="/office-building.svg"
           alt="Office Building"
-          className="h-40 w-40"
+          className="h-50 w-50"
         />
       )
   }
@@ -464,10 +464,10 @@ const CategoryNode = ({ name }) => {
   const { color, Icon } = getCategoryStyle(name)
   return (
     <div
-      className={`flex min-h-32 min-w-40 max-w-48 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-3 ${color}`}
+      className={`flex min-h-24 min-w-32 max-w-36 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-2 ${color}`}
     >
-      <Icon className="h-7 w-7 flex-shrink-0" />
-      <span className="mt-2 text-center text-[11px] font-semibold leading-tight break-words px-1">
+      <Icon className="h-6 w-6 flex-shrink-0" />
+      <span className="mt-1 text-center text-[10px] font-semibold leading-tight break-words px-1">
         {name}
       </span>
     </div>
@@ -480,11 +480,11 @@ const ProjectTree = ({ project }) => {
   const buildingType = determineBuildingType(project)
 
   return (
-    <div className="relative mx-auto flex h-[650px] w-full items-center justify-center">
+    <div className="relative mx-auto flex h-[600px] w-full items-center justify-center">
       <div className="absolute inset-6 rounded-[36px] bg-gradient-to-br from-indigo-100/80 via-indigo-50/60 to-slate-200/70 shadow-lg" />
       <div className="absolute inset-6 blur-3xl bg-indigo-300/40" />
       <div className="relative z-0 flex items-center justify-center">
-        <div className="relative flex items-center justify-center rounded-3xl border border-indigo-100 bg-white/90 p-6 shadow-xl">
+        <div className="relative flex items-center justify-center rounded-3xl border border-indigo-100 bg-white/90 p-8 shadow-xl">
           <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-50 via-white to-slate-50 opacity-80" />
           <div className="relative">
             <BuildingIcon type={buildingType} />
@@ -503,27 +503,27 @@ const ProjectTree = ({ project }) => {
 
       {categories.map((category, index) => {
         const angle = (index / total) * Math.PI * 2 - Math.PI / 2
-        const distance = 300
+        const distance = 270
         const x = Math.cos(angle) * distance
         const y = Math.sin(angle) * distance
         
-        // Building edge radius - strzałki zaczynają się dalej od budynku
-        const buildingRadius = 130
+        // Building edge radius - strzałki zaczynają się jeszcze dalej od budynku
+        const buildingRadius = 150
         
         // Start from building edge
         const startX = Math.cos(angle) * buildingRadius
         const startY = Math.sin(angle) * buildingRadius
         
         // End at icon edge - strzałki są krótsze
-        const iconRadius = 85
+        const iconRadius = 75
         const endX = Math.cos(angle) * (distance - iconRadius)
         const endY = Math.sin(angle) * (distance - iconRadius)
         
         const lineLength = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2))
         const rotation = angle * (180 / Math.PI)
 
-        // Arrow tip calculations
-        const arrowSize = 6
+        // Arrow tip calculations - mniejsza strzałka
+        const arrowSize = 4
         const arrowX1 = lineLength - arrowSize
         const arrowY1 = -arrowSize / 2
         const arrowX2 = lineLength - arrowSize
@@ -547,7 +547,7 @@ const ProjectTree = ({ project }) => {
                 x2={lineLength}
                 y2="10"
                 stroke="rgb(99 102 241)"
-                strokeWidth="1"
+                strokeWidth="0.8"
               />
               <polygon
                 points={`${lineLength},10 ${arrowX1},${10 + arrowY1} ${arrowX1},${10 + arrowY2}`}
@@ -860,11 +860,11 @@ export default function HomePage() {
                       className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-100" />
-                      <div className="relative grid gap-10 p-10 md:grid-cols-[70%_30%] md:items-center">
-                        <div>
+                      <div className={`relative grid gap-10 p-10 md:items-center ${index % 2 === 0 ? 'md:grid-cols-[70%_30%]' : 'md:grid-cols-[30%_70%]'}`}>
+                        <div className={`${index % 2 === 0 ? 'order-1' : 'order-2'}`}>
                           <ProjectTree project={project} />
                         </div>
-                        <div className="flex flex-col gap-6">
+                        <div className={`flex flex-col gap-6 ${index % 2 === 0 ? 'order-2' : 'order-1'}`}>
                           <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-indigo-500">
                             <span>Project</span>
                             <span className="h-1 w-1 rounded-full bg-indigo-500" />
