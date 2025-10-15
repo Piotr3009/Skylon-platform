@@ -287,7 +287,7 @@ const ProjectTree = ({ project }) => {
   const buildingType = determineBuildingType(project)
 
   return (
-    <div className="relative mx-auto flex h-[360px] w-full max-w-md items-center justify-center">
+    <div className="relative mx-auto flex h-[500px] w-full items-center justify-center">
       <div className="absolute inset-6 rounded-[36px] bg-gradient-to-br from-white/80 via-white/60 to-indigo-50/70 shadow-lg" />
       <div className="absolute inset-6 blur-3xl bg-indigo-200/40" />
       <div className="relative z-0 flex items-center justify-center">
@@ -310,20 +310,42 @@ const ProjectTree = ({ project }) => {
 
       {categories.map((category, index) => {
         const angle = (index / total) * Math.PI * 2 - Math.PI / 2
-        const distance = 150
+        const distance = 220
         const x = Math.cos(angle) * distance
         const y = Math.sin(angle) * distance
         const branchLength = distance - 70
         const rotation = angle * (180 / Math.PI)
 
+        // Arrow tip calculations
+        const arrowSize = 8
+        const arrowX1 = branchLength - arrowSize
+        const arrowY1 = -arrowSize / 2
+        const arrowX2 = branchLength - arrowSize
+        const arrowY2 = arrowSize / 2
+
         return (
           <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 z-20">
-            <div
-              className="absolute left-1/2 top-1/2 origin-left"
-              style={{ transform: `translate(-50%, -50%) rotate(${rotation}deg)` }}
+            <svg
+              className="absolute left-1/2 top-1/2 overflow-visible"
+              style={{ 
+                transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+                width: `${branchLength}px`,
+                height: '20px'
+              }}
             >
-              <span className="block h-[2px] bg-slate-200" style={{ width: `${branchLength}px` }} />
-            </div>
+              <line
+                x1="0"
+                y1="10"
+                x2={branchLength}
+                y2="10"
+                stroke="rgb(226 232 240)"
+                strokeWidth="2"
+              />
+              <polygon
+                points={`${branchLength},10 ${arrowX1},${10 + arrowY1} ${arrowX1},${10 + arrowY2}`}
+                fill="rgb(226 232 240)"
+              />
+            </svg>
 
             <div
               className="absolute left-1/2 top-1/2"
