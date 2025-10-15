@@ -172,13 +172,18 @@ const formatDuration = (days) => {
 const parseDate = (value) => {
   if (!value) return null
   const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return null
-  return date
+  return Number.isNaN(date.getTime()) ? null : date
 }
+
+const FULL_DATE_FORMATTER = new Intl.DateTimeFormat('en-GB')
+const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+  month: 'short',
+  day: 'numeric'
+})
 
 const formatDate = (value) => {
   const date = parseDate(value)
-  return date ? date.toLocaleDateString() : null
+  return date ? FULL_DATE_FORMATTER.format(date) : null
 }
 
 const formatDateRange = (start, end) => {
@@ -187,8 +192,19 @@ const formatDateRange = (start, end) => {
 
   if (!startDate || !endDate) return null
 
-  const options = { month: 'short', day: 'numeric' }
-  return `${startDate.toLocaleDateString(undefined, options)} – ${endDate.toLocaleDateString(undefined, options)}`
+  return `${SHORT_DATE_FORMATTER.format(startDate)} – ${SHORT_DATE_FORMATTER.format(endDate)}`
+}
+
+const getProjectSchedule = (project) => {
+  const formattedStart = formatDate(project.start_date)
+  const formattedEnd = formatDate(project.end_date)
+  const procurementWindow = formatDateRange(project.start_date, project.end_date)
+
+  return {
+    formattedStart,
+    formattedEnd,
+    procurementWindow
+  }
 }
 
 const getCategoryStyle = (name = '') => {
@@ -631,9 +647,7 @@ export default function HomePage() {
                 </div>
               ) : (
                 projects.map((project, index) => {
-                  const formattedStart = formatDate(project.start_date)
-                  const formattedEnd = formatDate(project.end_date)
-                  const procurementWindow = formatDateRange(project.start_date, project.end_date)
+                  const { formattedStart, formattedEnd, procurementWindow } = getProjectSchedule(project)
 
                   return (
                     <article
