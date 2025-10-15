@@ -608,8 +608,25 @@ export default function HomePage() {
                   No active refurbishment projects are open for bidding right now. Check back soon or contact our team for upcoming tenders.
                 </div>
               ) : (
-                projects.map((project, index) => (
-                  <article
+                projects.map((project, index) => {
+                  const startDate = project.start_date ? new Date(project.start_date) : null
+                  const endDate = project.end_date ? new Date(project.end_date) : null
+
+                  const formattedStart = startDate?.toLocaleDateString()
+                  const formattedEnd = endDate?.toLocaleDateString()
+                  const windowRange =
+                    startDate && endDate
+                      ? `${startDate.toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric'
+                        })} – ${endDate.toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric'
+                        })}`
+                      : null
+
+                  return (
+                    <article
                     key={project.id}
                     className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
                   >
@@ -668,29 +685,15 @@ export default function HomePage() {
 
                         <div className="space-y-3 text-sm text-slate-500">
                           <div className="flex flex-wrap items-center gap-4">
-                            {project.start_date && (
-                              <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
-                            )}
-                            {project.end_date && (
-                              <span>Target completion: {new Date(project.end_date).toLocaleDateString()}</span>
-                            )}
+                            {formattedStart && <span>Start: {formattedStart}</span>}
+                            {formattedEnd && <span>Target completion: {formattedEnd}</span>}
                             {project.meta?.tasks ? <span>{project.meta.tasks} scoped tasks</span> : null}
                           </div>
-                          {project.start_date && project.end_date ? (
+                          {windowRange ? (
                             <div>
                               <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-wide text-slate-400">
                                 <span>Procurement window</span>
-                                <span>
-                                  {new Date(project.start_date).toLocaleDateString(undefined, {
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}{' '}
-                                  –{' '}
-                                  {new Date(project.end_date).toLocaleDateString(undefined, {
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}
-                                </span>
+                                <span>{windowRange}</span>
                               </div>
                               <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                                 <div className="h-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-400" />
@@ -726,8 +729,9 @@ export default function HomePage() {
                         </div>
                       </div>
                     </div>
-                  </article>
-                ))
+                    </article>
+                  )
+                })
               )}
             </div>
           )}
