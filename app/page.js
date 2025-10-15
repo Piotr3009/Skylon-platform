@@ -290,7 +290,7 @@ const ProjectTree = ({ project }) => {
     <div className="relative mx-auto flex h-[360px] w-full max-w-md items-center justify-center">
       <div className="absolute inset-6 rounded-[36px] bg-gradient-to-br from-white/80 via-white/60 to-indigo-50/70 shadow-lg" />
       <div className="absolute inset-6 blur-3xl bg-indigo-200/40" />
-      <div className="relative z-10 flex items-center justify-center">
+      <div className="relative z-0 flex items-center justify-center">
         <div className="relative flex items-center justify-center rounded-3xl border border-indigo-100 bg-white/90 p-6 shadow-xl">
           <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-50 via-white to-slate-50 opacity-80" />
           <div className="relative">
@@ -317,7 +317,7 @@ const ProjectTree = ({ project }) => {
         const rotation = angle * (180 / Math.PI)
 
         return (
-          <div key={category.id || `${category.name}-${index}`} className="absolute inset-0">
+          <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 z-20">
             <div
               className="absolute left-1/2 top-1/2 origin-left"
               style={{ transform: `translate(-50%, -50%) rotate(${rotation}deg)` }}
@@ -630,7 +630,7 @@ export default function HomePage() {
                       className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-100" />
-                      <div className="relative grid gap-10 p-10 md:grid-cols-2 md:items-center">
+                      <div className="relative grid gap-10 p-10 md:grid-cols-[70%_30%] md:items-center">
                         <div className={`order-2 ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}>
                           <ProjectTree project={project} />
                         </div>
