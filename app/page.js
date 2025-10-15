@@ -169,6 +169,44 @@ const formatDuration = (days) => {
   return `${weeks} wk`
 }
 
+const parseDate = (value) => {
+  if (!value) return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+const FULL_DATE_FORMATTER = new Intl.DateTimeFormat('en-GB')
+const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+  month: 'short',
+  day: 'numeric'
+})
+
+const formatDate = (value) => {
+  const date = parseDate(value)
+  return date ? FULL_DATE_FORMATTER.format(date) : null
+}
+
+const formatDateRange = (start, end) => {
+  const startDate = parseDate(start)
+  const endDate = parseDate(end)
+
+  if (!startDate || !endDate) return null
+
+  return `${SHORT_DATE_FORMATTER.format(startDate)} – ${SHORT_DATE_FORMATTER.format(endDate)}`
+}
+
+const getProjectSchedule = (project) => {
+  const formattedStart = formatDate(project.start_date)
+  const formattedEnd = formatDate(project.end_date)
+  const procurementWindow = formatDateRange(project.start_date, project.end_date)
+
+  return {
+    formattedStart,
+    formattedEnd,
+    procurementWindow
+  }
+}
+
 const getCategoryStyle = (name = '') => {
   const normalized = name.toLowerCase()
   return (
@@ -238,11 +276,18 @@ const BuildingIcon = ({ type }) => {
       )
     default:
       return (
-        <img
-          src="/office-building.svg"
-          alt="Office Building"
-          className="h-40 w-40"
-        />
+        <svg
+          viewBox="0 0 120 120"
+          className="h-40 w-40 text-slate-600"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+        >
+          <rect x="28" y="28" width="64" height="64" rx="6" className="fill-white/70" />
+          <path d="M44 28v-8h32v8" />
+          <path d="M44 48h8M68 48h8M44 64h8M68 64h8M44 80h8M68 80h8" />
+          <path d="M52 92v12M68 92v12" />
+        </svg>
       )
   }
 }
@@ -262,12 +307,16 @@ const CategoryNode = ({ name }) => {
 }
 
 const ProjectTree = ({ project }) => {
+  const categoryCount = project.categories?.length ?? 0
   const categories = clampCategories(project.categories ?? [])
   const total = categories.length
+  const extraCount = Math.max(0, categoryCount - total)
   const buildingType = determineBuildingType(project)
+  const ringRadius = total >= 6 ? 210 : total >= 3 ? 190 : 170
+  const branchOffset = 40
 
   return (
-    <div className="relative mx-auto flex h-[360px] w-full max-w-md items-center justify-center">
+    <div className="relative mx-auto flex h-[380px] w-full max-w-2xl items-center justify-center">
       <div className="absolute inset-6 rounded-[36px] bg-gradient-to-br from-white/80 via-white/60 to-indigo-50/70 shadow-lg" />
       <div className="absolute inset-6 blur-3xl bg-indigo-200/40" />
       <div className="relative z-10 flex items-center justify-center">
@@ -288,12 +337,19 @@ const ProjectTree = ({ project }) => {
         </div>
       )}
 
+      {extraCount > 0 && (
+        <div className="absolute -bottom-16 left-1/2 flex -translate-x-1/2 items-center justify-center">
+          <span className="rounded-full bg-indigo-500 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white shadow-md shadow-indigo-500/30">
+            +{extraCount} more packages
+          </span>
+        </div>
+      )}
+
       {categories.map((category, index) => {
         const angle = (index / total) * Math.PI * 2 - Math.PI / 2
-        const distance = 150
-        const x = Math.cos(angle) * distance
-        const y = Math.sin(angle) * distance
-        const branchLength = distance - 70
+        const x = Math.cos(angle) * ringRadius
+        const y = Math.sin(angle) * ringRadius
+        const branchLength = ringRadius - branchOffset
         const rotation = angle * (180 / Math.PI)
 
         return (
@@ -306,7 +362,7 @@ const ProjectTree = ({ project }) => {
             </div>
 
             <div
-              className="absolute left-1/2 top-1/2"
+              className="absolute left-1/2 top-1/2 z-20"
               style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}
             >
               <CategoryNode name={category.name} />
@@ -701,103 +757,6 @@ export default function HomePage() {
                     </article>
                   )
                 })
-                projects.map((project, index) => (
-                  <article
-                    key={project.id}
-                    className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-100" />
-                    <div className="relative grid gap-10 p-10 md:grid-cols-2 md:items-center">
-                      <div
-                        className={`order-2 ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}
-                      >
-                        <ProjectTree project={project} />
-                      </div>
-                      <div
-                        className={`order-1 flex flex-col gap-6 ${index % 2 === 0 ? 'md:order-2' : 'md:order-1'}`}
-                      >
-                        <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-indigo-500">
-                          <span>Project</span>
-                          <span className="h-1 w-1 rounded-full bg-indigo-500" />
-                          <span>{project.status}</span>
-                          {project.meta?.categories ? <span className="h-1 w-1 rounded-full bg-indigo-500" /> : null}
-                          {project.meta?.categories ? <span>{project.meta.categories} packages</span> : null}
-                        </div>
-                        <div>
-                          <h4 className="text-3xl font-bold text-slate-900">{project.name}</h4>
-                          {project.description && (
-                            <p className="mt-3 text-base leading-relaxed text-slate-600">
-                              {project.description}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Suggested Budget
-                            </div>
-                            <div className="mt-2 text-xl font-bold text-slate-900">
-                              {formatCurrency(project.meta?.budget ?? 0)}
-                            </div>
-                          </div>
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Packages
-                            </div>
-                            <div className="mt-2 text-xl font-bold text-slate-900">
-                              {project.meta?.categories ?? 0}
-                            </div>
-                          </div>
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Combined Duration
-                            </div>
-                            <div className="mt-2 text-xl font-bold text-slate-900">
-                              {formatDuration(project.meta?.duration)}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                          {project.start_date && (
-                            <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
-                          )}
-                          {project.end_date && (
-                            <span>Target completion: {new Date(project.end_date).toLocaleDateString()}</span>
-                          )}
-                          {project.meta?.tasks ? <span>{project.meta.tasks} scoped tasks</span> : null}
-                        </div>
-
-                        {project.gantt_image_url && (
-                          <div className="overflow-hidden rounded-2xl border border-slate-200">
-                            <img
-                              src={project.gantt_image_url}
-                              alt={`${project.name} Gantt preview`}
-                              className="h-40 w-full object-cover"
-                              loading="lazy"
-                            />
-                          </div>
-                        )}
-
-                        <div className="flex flex-wrap gap-4">
-                          <button
-                            onClick={() => router.push(`/projects/${project.id}`)}
-                            className="rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:-translate-y-0.5 hover:bg-indigo-400"
-                          >
-                            View package board
-                          </button>
-                          <button
-                            onClick={() => router.push('/register')}
-                            className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
-                          >
-                            I want to price this scope
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                ))
               )}
             </div>
           )}
