@@ -336,7 +336,6 @@ export default function HomePage() {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [selectedBuildingType, setSelectedBuildingType] = useState('all')
   const router = useRouter()
 
   useEffect(() => {
@@ -447,18 +446,6 @@ export default function HomePage() {
     }
   }
 
-  const buildingTypeOptions = useMemo(() => {
-    const counts = projects.reduce((acc, project) => {
-      const type = determineBuildingType(project)
-      acc[type] = (acc[type] ?? 0) + 1
-      return acc
-    }, {})
-
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([type, count]) => ({ type, count }))
-  }, [projects])
-
   const heroStats = useMemo(() => {
     if (!projects.length) {
       return [
@@ -477,14 +464,6 @@ export default function HomePage() {
       { value: formatCurrency(totalBudget), label: 'Total Budget Live' }
     ]
   }, [projects])
-
-  const filteredProjects = useMemo(() => {
-    if (selectedBuildingType === 'all') {
-      return projects
-    }
-
-    return projects.filter((project) => determineBuildingType(project) === selectedBuildingType)
-  }, [projects, selectedBuildingType])
 
   return (
     <div className="min-h-screen bg-slate-900">
@@ -623,167 +602,132 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div className="mt-12 space-y-10">
+            <div className="mt-12 space-y-14">
               {projects.length === 0 ? (
                 <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500">
                   No active refurbishment projects are open for bidding right now. Check back soon or contact our team for upcoming tenders.
                 </div>
               ) : (
-                <>
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={() => setSelectedBuildingType('all')}
-                      className={`rounded-2xl border px-4 py-2 text-sm font-semibold transition ${
-                        selectedBuildingType === 'all'
-                          ? 'border-indigo-500 bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                          : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
-                      }`}
-                    >
-                      All assets
-                    </button>
-                    {buildingTypeOptions.map(({ type, count }) => (
-                      <button
-                        key={type}
-                        onClick={() => setSelectedBuildingType(type)}
-                        className={`rounded-2xl border px-4 py-2 text-sm font-semibold capitalize transition ${
-                          selectedBuildingType === type
-                            ? 'border-indigo-500 bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                            : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900'
-                        }`}
+                projects.map((project, index) => (
+                  <article
+                    key={project.id}
+                    className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-100" />
+                    <div className="relative grid gap-10 p-10 md:grid-cols-2 md:items-center">
+                      <div
+                        className={`order-2 ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}
                       >
-                        {type}
-                        <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">{count}</span>
-                      </button>
-                    ))}
-                  </div>
+                        <ProjectTree project={project} />
+                      </div>
+                      <div
+                        className={`order-1 flex flex-col gap-6 ${index % 2 === 0 ? 'md:order-2' : 'md:order-1'}`}
+                      >
+                        <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-indigo-500">
+                          <span>Project</span>
+                          <span className="h-1 w-1 rounded-full bg-indigo-500" />
+                          <span>{project.status}</span>
+                          {project.meta?.categories ? <span className="h-1 w-1 rounded-full bg-indigo-500" /> : null}
+                          {project.meta?.categories ? <span>{project.meta.categories} packages</span> : null}
+                        </div>
+                        <div>
+                          <h4 className="text-3xl font-bold text-slate-900">{project.name}</h4>
+                          {project.description && (
+                            <p className="mt-3 text-base leading-relaxed text-slate-600">
+                              {project.description}
+                            </p>
+                          )}
+                        </div>
 
-                  {filteredProjects.length === 0 ? (
-                    <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500">
-                      No {selectedBuildingType} assets are live right now. Switch the filter or check back soon for new tenders.
-                    </div>
-                  ) : (
-                    filteredProjects.map((project, index) => (
-                      <article
-                        key={project.id}
-                        className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-100" />
-                        <div className="relative grid gap-10 p-10 md:grid-cols-2 md:items-center">
-                          <div
-                            className={`order-2 ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}
-                          >
-                            <ProjectTree project={project} />
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              Suggested Budget
+                            </div>
+                            <div className="mt-2 text-xl font-bold text-slate-900">
+                              {formatCurrency(project.meta?.budget ?? 0)}
+                            </div>
                           </div>
-                          <div
-                            className={`order-1 flex flex-col gap-6 ${index % 2 === 0 ? 'md:order-2' : 'md:order-1'}`}
-                          >
-                            <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-indigo-500">
-                              <span>Project</span>
-                              <span className="h-1 w-1 rounded-full bg-indigo-500" />
-                              <span>{project.status}</span>
-                              {project.meta?.categories ? <span className="h-1 w-1 rounded-full bg-indigo-500" /> : null}
-                              {project.meta?.categories ? <span>{project.meta.categories} packages</span> : null}
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              Packages
                             </div>
-                            <div>
-                              <h4 className="text-3xl font-bold text-slate-900">{project.name}</h4>
-                              {project.description && (
-                                <p className="mt-3 text-base leading-relaxed text-slate-600">
-                                  {project.description}
-                                </p>
-                              )}
+                            <div className="mt-2 text-xl font-bold text-slate-900">
+                              {project.meta?.categories ?? 0}
                             </div>
-
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  Suggested Budget
-                                </div>
-                                <div className="mt-2 text-xl font-bold text-slate-900">
-                                  {formatCurrency(project.meta?.budget ?? 0)}
-                                </div>
-                              </div>
-                              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  Packages
-                                </div>
-                                <div className="mt-2 text-xl font-bold text-slate-900">
-                                  {project.meta?.categories ?? 0}
-                                </div>
-                              </div>
-                              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                  Combined Duration
-                                </div>
-                                <div className="mt-2 text-xl font-bold text-slate-900">
-                                  {formatDuration(project.meta?.duration)}
-                                </div>
-                              </div>
+                          </div>
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                              Combined Duration
                             </div>
-
-                            <div className="space-y-3 text-sm text-slate-500">
-                              <div className="flex flex-wrap items-center gap-4">
-                                {project.start_date && (
-                                  <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
-                                )}
-                                {project.end_date && (
-                                  <span>Target completion: {new Date(project.end_date).toLocaleDateString()}</span>
-                                )}
-                                {project.meta?.tasks ? <span>{project.meta.tasks} scoped tasks</span> : null}
-                              </div>
-                              {project.start_date && project.end_date ? (
-                                <div>
-                                  <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-wide text-slate-400">
-                                    <span>Procurement window</span>
-                                    <span>
-                                      {new Date(project.start_date).toLocaleDateString(undefined, {
-                                        month: 'short',
-                                        day: 'numeric'
-                                      })}{' '}
-                                      –{' '}
-                                      {new Date(project.end_date).toLocaleDateString(undefined, {
-                                        month: 'short',
-                                        day: 'numeric'
-                                      })}
-                                    </span>
-                                  </div>
-                                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                                    <div className="h-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-400" />
-                                  </div>
-                                </div>
-                              ) : null}
-                            </div>
-
-                            {project.gantt_image_url && (
-                              <div className="overflow-hidden rounded-2xl border border-slate-200">
-                                <img
-                                  src={project.gantt_image_url}
-                                  alt={`${project.name} Gantt preview`}
-                                  className="h-40 w-full object-cover"
-                                  loading="lazy"
-                                />
-                              </div>
-                            )}
-
-                            <div className="flex flex-wrap gap-4">
-                              <button
-                                onClick={() => router.push(`/projects/${project.id}`)}
-                                className="rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:-translate-y-0.5 hover:bg-indigo-400"
-                              >
-                                View package board
-                              </button>
-                              <button
-                                onClick={() => router.push('/register')}
-                                className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
-                              >
-                                I want to price this scope
-                              </button>
+                            <div className="mt-2 text-xl font-bold text-slate-900">
+                              {formatDuration(project.meta?.duration)}
                             </div>
                           </div>
                         </div>
-                      </article>
-                    ))
-                  )}
-                </>
+
+                        <div className="space-y-3 text-sm text-slate-500">
+                          <div className="flex flex-wrap items-center gap-4">
+                            {project.start_date && (
+                              <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
+                            )}
+                            {project.end_date && (
+                              <span>Target completion: {new Date(project.end_date).toLocaleDateString()}</span>
+                            )}
+                            {project.meta?.tasks ? <span>{project.meta.tasks} scoped tasks</span> : null}
+                          </div>
+                          {project.start_date && project.end_date ? (
+                            <div>
+                              <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-wide text-slate-400">
+                                <span>Procurement window</span>
+                                <span>
+                                  {new Date(project.start_date).toLocaleDateString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}{' '}
+                                  –{' '}
+                                  {new Date(project.end_date).toLocaleDateString(undefined, {
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                              </div>
+                              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                                <div className="h-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-400" />
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {project.gantt_image_url && (
+                          <div className="overflow-hidden rounded-2xl border border-slate-200">
+                            <img
+                              src={project.gantt_image_url}
+                              alt={`${project.name} Gantt preview`}
+                              className="h-40 w-full object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap gap-4">
+                          <button
+                            onClick={() => router.push(`/projects/${project.id}`)}
+                            className="rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:-translate-y-0.5 hover:bg-indigo-400"
+                          >
+                            View package board
+                          </button>
+                          <button
+                            onClick={() => router.push('/register')}
+                            className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
+                          >
+                            I want to price this scope
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))
               )}
             </div>
           )}
