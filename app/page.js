@@ -101,7 +101,7 @@ const CATEGORY_PRESETS = [
     )
   },
   {
-    keywords: ['joinery installation', 'joinery', 'carpentry', 'wood', 'timber'],
+    keywords: ['joinery installation', 'joinery', 'doors', 'windows'],
     color: 'bg-orange-50 text-orange-600 border border-orange-200',
     Icon: (props) => (
       <svg
@@ -113,11 +113,8 @@ const CATEGORY_PRESETS = [
         strokeLinejoin="round"
         {...props}
       >
-        <path d="M4 6h16v4H4z" />
-        <path d="M6 10v8" />
-        <path d="M18 10v8" />
-        <path d="M9 10v8" />
-        <path d="M15 10v8" />
+        <rect x="5" y="2" width="14" height="20" rx="2" />
+        <circle cx="16" cy="12" r="1" fill="currentColor" />
       </svg>
     )
   },
@@ -141,8 +138,8 @@ const CATEGORY_PRESETS = [
     )
   },
   {
-    keywords: ['carpentry works', 'carpentry', 'joinery', 'wood'],
-    color: 'bg-orange-50 text-orange-600 border border-orange-200',
+    keywords: ['carpentry works', 'carpentry', 'timber', 'wood'],
+    color: 'bg-amber-50 text-amber-600 border border-amber-200',
     Icon: (props) => (
       <svg
         viewBox="0 0 24 24"
@@ -184,7 +181,7 @@ const CATEGORY_PRESETS = [
   },
   {
     keywords: ['electrical', 'installation', 'lighting', 'power'],
-    color: 'bg-indigo-50 text-indigo-600 border border-indigo-200',
+    color: 'bg-yellow-50 text-yellow-600 border border-yellow-200',
     Icon: (props) => (
       <svg
         viewBox="0 0 24 24"
@@ -246,7 +243,7 @@ const CATEGORY_PRESETS = [
   },
   {
     keywords: ['flooring', 'floor', 'screed', 'tiles'],
-    color: 'bg-stone-50 text-stone-600 border border-stone-200',
+    color: 'bg-neutral-50 text-neutral-600 border border-neutral-200',
     Icon: (props) => (
       <svg
         viewBox="0 0 24 24"
@@ -283,7 +280,7 @@ const CATEGORY_PRESETS = [
     )
   },
   {
-    keywords: ['external works', 'external', 'landscaping'],
+    keywords: ['external works', 'external', 'landscaping', 'site'],
     color: 'bg-green-50 text-green-600 border border-green-200',
     Icon: (props) => (
       <svg
@@ -467,10 +464,10 @@ const CategoryNode = ({ name }) => {
   const { color, Icon } = getCategoryStyle(name)
   return (
     <div
-      className={`flex min-h-28 min-w-36 max-w-44 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-3 ${color}`}
+      className={`flex min-h-32 min-w-40 max-w-48 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-3 ${color}`}
     >
-      <Icon className="h-8 w-8 flex-shrink-0" />
-      <span className="mt-2 text-center text-[11px] font-semibold leading-tight break-words">
+      <Icon className="h-7 w-7 flex-shrink-0" />
+      <span className="mt-2 text-center text-[11px] font-semibold leading-tight break-words px-1">
         {name}
       </span>
     </div>
@@ -483,7 +480,7 @@ const ProjectTree = ({ project }) => {
   const buildingType = determineBuildingType(project)
 
   return (
-    <div className="relative mx-auto flex h-[600px] w-full items-center justify-center">
+    <div className="relative mx-auto flex h-[650px] w-full items-center justify-center">
       <div className="absolute inset-6 rounded-[36px] bg-gradient-to-br from-indigo-100/80 via-indigo-50/60 to-slate-200/70 shadow-lg" />
       <div className="absolute inset-6 blur-3xl bg-indigo-300/40" />
       <div className="relative z-0 flex items-center justify-center">
@@ -506,7 +503,7 @@ const ProjectTree = ({ project }) => {
 
       {categories.map((category, index) => {
         const angle = (index / total) * Math.PI * 2 - Math.PI / 2
-        const distance = 280
+        const distance = 300
         const x = Math.cos(angle) * distance
         const y = Math.sin(angle) * distance
         
@@ -518,7 +515,7 @@ const ProjectTree = ({ project }) => {
         const startY = Math.sin(angle) * buildingRadius
         
         // End at icon edge - strzałki są krótsze
-        const iconRadius = 80
+        const iconRadius = 85
         const endX = Math.cos(angle) * (distance - iconRadius)
         const endY = Math.sin(angle) * (distance - iconRadius)
         
@@ -864,10 +861,10 @@ export default function HomePage() {
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-100" />
                       <div className="relative grid gap-10 p-10 md:grid-cols-[70%_30%] md:items-center">
-                        <div className={`order-2 ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}>
+                        <div>
                           <ProjectTree project={project} />
                         </div>
-                        <div className={`order-1 flex flex-col gap-6 ${index % 2 === 0 ? 'md:order-2' : 'md:order-1'}`}>
+                        <div className="flex flex-col gap-6">
                           <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-indigo-500">
                             <span>Project</span>
                             <span className="h-1 w-1 rounded-full bg-indigo-500" />
