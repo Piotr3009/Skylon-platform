@@ -186,6 +186,26 @@ const determineBuildingType = (project) => {
   return 'office'
 }
 
+const getProjectSchedule = (project) => {
+  const formattedStart = project.start_date
+    ? new Date(project.start_date).toLocaleDateString()
+    : null
+  const formattedEnd = project.end_date
+    ? new Date(project.end_date).toLocaleDateString()
+    : null
+  
+  let procurementWindow = null
+  if (project.start_date && project.end_date) {
+    const start = new Date(project.start_date)
+    const end = new Date(project.end_date)
+    const diffTime = Math.abs(end - start)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    procurementWindow = formatDuration(diffDays)
+  }
+
+  return { formattedStart, formattedEnd, procurementWindow }
+}
+
 const BuildingIcon = ({ type }) => {
   switch (type) {
     case 'industrial':
@@ -601,7 +621,7 @@ export default function HomePage() {
                   No active refurbishment projects are open for bidding right now. Check back soon or contact our team for upcoming tenders.
                 </div>
               ) : (
-                projects.map((project) => {
+                projects.map((project, index) => {
                   const { formattedStart, formattedEnd, procurementWindow } = getProjectSchedule(project)
 
                   return (
@@ -610,11 +630,11 @@ export default function HomePage() {
                       className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-100" />
-                      <div className="relative grid gap-10 p-10 md:grid-cols-[minmax(0,_0.7fr)_minmax(0,_0.3fr)] md:items-center">
-                        <div className="flex justify-center md:justify-start">
+                      <div className="relative grid gap-10 p-10 md:grid-cols-2 md:items-center">
+                        <div className={`order-2 ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}>
                           <ProjectTree project={project} />
                         </div>
-                        <div className="flex flex-col gap-6 md:pl-4">
+                        <div className={`order-1 flex flex-col gap-6 ${index % 2 === 0 ? 'md:order-2' : 'md:order-1'}`}>
                           <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-indigo-500">
                             <span>Project</span>
                             <span className="h-1 w-1 rounded-full bg-indigo-500" />
@@ -701,103 +721,6 @@ export default function HomePage() {
                     </article>
                   )
                 })
-                projects.map((project, index)  
-                  <article
-                    key={project.id}
-                    className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-100" />
-                    <div className="relative grid gap-10 p-10 md:grid-cols-2 md:items-center">
-                      <div
-                        className={`order-2 ${index % 2 === 0 ? 'md:order-1' : 'md:order-2'}`}
-                      >
-                        <ProjectTree project={project} />
-                      </div>
-                      <div
-                        className={`order-1 flex flex-col gap-6 ${index % 2 === 0 ? 'md:order-2' : 'md:order-1'}`}
-                      >
-                        <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-indigo-500">
-                          <span>Project</span>
-                          <span className="h-1 w-1 rounded-full bg-indigo-500" />
-                          <span>{project.status}</span>
-                          {project.meta?.categories ? <span className="h-1 w-1 rounded-full bg-indigo-500" /> : null}
-                          {project.meta?.categories ? <span>{project.meta.categories} packages</span> : null}
-                        </div>
-                        <div>
-                          <h4 className="text-3xl font-bold text-slate-900">{project.name}</h4>
-                          {project.description && (
-                            <p className="mt-3 text-base leading-relaxed text-slate-600">
-                              {project.description}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Suggested Budget
-                            </div>
-                            <div className="mt-2 text-xl font-bold text-slate-900">
-                              {formatCurrency(project.meta?.budget ?? 0)}
-                            </div>
-                          </div>
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Packages
-                            </div>
-                            <div className="mt-2 text-xl font-bold text-slate-900">
-                              {project.meta?.categories ?? 0}
-                            </div>
-                          </div>
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-                            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Combined Duration
-                            </div>
-                            <div className="mt-2 text-xl font-bold text-slate-900">
-                              {formatDuration(project.meta?.duration)}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                          {project.start_date && (
-                            <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
-                          )}
-                          {project.end_date && (
-                            <span>Target completion: {new Date(project.end_date).toLocaleDateString()}</span>
-                          )}
-                          {project.meta?.tasks ? <span>{project.meta.tasks} scoped tasks</span> : null}
-                        </div>
-
-                        {project.gantt_image_url && (
-                          <div className="overflow-hidden rounded-2xl border border-slate-200">
-                            <img
-                              src={project.gantt_image_url}
-                              alt={`${project.name} Gantt preview`}
-                              className="h-40 w-full object-cover"
-                              loading="lazy"
-                            />
-                          </div>
-                        )}
-
-                        <div className="flex flex-wrap gap-4">
-                          <button
-                            onClick={() => router.push(`/projects/${project.id}`)}
-                            className="rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:-translate-y-0.5 hover:bg-indigo-400"
-                          >
-                            View package board
-                          </button>
-                          <button
-                            onClick={() => router.push('/register')}
-                            className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
-                          >
-                            I want to price this scope
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
-                ))
               )}
             </div>
           )}
