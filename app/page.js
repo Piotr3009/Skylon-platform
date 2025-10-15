@@ -238,18 +238,11 @@ const BuildingIcon = ({ type }) => {
       )
     default:
       return (
-        <svg
-          viewBox="0 0 120 120"
-          className="h-40 w-40 text-slate-600"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-        >
-          <rect x="28" y="28" width="64" height="64" rx="6" className="fill-white/70" />
-          <path d="M44 28v-8h32v8" />
-          <path d="M44 48h8M68 48h8M44 64h8M68 64h8M44 80h8M68 80h8" />
-          <path d="M52 92v12M68 92v12" />
-        </svg>
+        <img
+          src="/office-building.svg"
+          alt="Office Building"
+          className="h-40 w-40"
+        />
       )
   }
 }
