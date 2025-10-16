@@ -11,6 +11,8 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [showCategoryForm, setShowCategoryForm] = useState(false)
   const [categoryName, setCategoryName] = useState('')
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingProject, setEditingProject] = useState(null)
   const router = useRouter()
   const params = useParams()
 
@@ -137,6 +139,49 @@ export default function ProjectDetailPage() {
     }
   }
 
+  const handleEdit = () => {
+    setEditingProject({...project})
+    setShowEditModal(true)
+  }
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this project? All categories and tasks will be deleted.')) return
+
+    const { error } = await supabase
+      .from('projects')
+      .delete()
+      .eq('id', params.id)
+
+    if (!error) {
+      router.push('/admin/projects')
+    } else {
+      alert('Error deleting project')
+    }
+  }
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault()
+
+    const { error } = await supabase
+      .from('projects')
+      .update({
+        name: editingProject.name,
+        description: editingProject.description,
+        status: editingProject.status,
+        start_date: editingProject.start_date,
+        end_date: editingProject.end_date
+      })
+      .eq('id', params.id)
+
+    if (!error) {
+      setShowEditModal(false)
+      setEditingProject(null)
+      loadProject()
+    } else {
+      alert('Error updating project')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -152,12 +197,26 @@ export default function ProjectDetailPage() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-900">{project?.name}</h1>
-            <button
-              onClick={() => router.push('/admin/projects')}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-            >
-              Back to Projects
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={handleEdit}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Edit Project
+              </button>
+              <button
+                onClick={handleDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete Project
+              </button>
+              <button
+                onClick={() => router.push('/admin/projects')}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                Back to Projects
+              </button>
+            </div>
           </div>
           {project?.description && (
             <p className="text-gray-600">{project.description}</p>
@@ -292,6 +351,94 @@ export default function ProjectDetailPage() {
           )}
         </div>
       </main>
+
+      {/* Edit Modal */}
+      {showEditModal && editingProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-4">Edit Project</h2>
+            <form onSubmit={handleSaveEdit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Project Name</label>
+                  <input
+                    type="text"
+                    value={editingProject.name}
+                    onChange={(e) => setEditingProject({...editingProject, name: e.target.value})}
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    value={editingProject.description || ''}
+                    onChange={(e) => setEditingProject({...editingProject, description: e.target.value})}
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows="3"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <select
+                    value={editingProject.status}
+                    onChange={(e) => setEditingProject({...editingProject, status: e.target.value})}
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="planning">Planning</option>
+                    <option value="active">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="on_hold">On Hold</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Start Date</label>
+                    <input
+                      type="date"
+                      value={editingProject.start_date || ''}
+                      onChange={(e) => setEditingProject({...editingProject, start_date: e.target.value})}
+                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-1">End Date</label>
+                    <input
+                      type="date"
+                      value={editingProject.end_date || ''}
+                      onChange={(e) => setEditingProject({...editingProject, end_date: e.target.value})}
+                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-6">
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false)
+                    setEditingProject(null)
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
