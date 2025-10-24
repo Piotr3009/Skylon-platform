@@ -503,7 +503,7 @@ const CategoryNode = ({ name, categoryId, projectId, tasks, onClick }) => {
   )
 }
 
-const ProjectTree = ({ project }) => {
+const ProjectTree = ({ project, router }) => {
   const categories = clampCategories(project.categories ?? [])
   const total = categories.length
   const buildingType = determineBuildingType(project)
@@ -598,14 +598,12 @@ const ProjectTree = ({ project }) => {
                 tasks={category.tasks}
                 onClick={(catId, projId, tasks) => {
                   // Navigate to first task in category, or project page if no tasks
-                  if (typeof window !== 'undefined') {
-                    if (tasks && tasks.length > 0) {
-                      // Go to first task in this category
-                      window.location.href = `/projects/${projId}/task/${tasks[0].id}`
-                    } else {
-                      // No tasks, go to project page with category highlighted
-                      window.location.href = `/projects/${projId}#category-${catId}`
-                    }
+                  if (tasks && tasks.length > 0) {
+                    // Go to first task in this category
+                    router.push(`/projects/${projId}/task/${tasks[0].id}`)
+                  } else {
+                    // No tasks, go to project page with category highlighted
+                    router.push(`/projects/${projId}#category-${catId}`)
                   }
                 }}
               />
@@ -911,7 +909,7 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-slate-100" />
                       <div className={`relative grid gap-10 p-10 md:items-center ${index % 2 === 0 ? 'md:grid-cols-[70%_30%]' : 'md:grid-cols-[30%_70%]'}`}>
                         <div className={`${index % 2 === 0 ? 'order-1' : 'order-2'}`}>
-                          <ProjectTree project={project} />
+                          <ProjectTree project={project} router={router} />
                         </div>
                         <div className={`flex flex-col gap-6 ${index % 2 === 0 ? 'order-2' : 'order-1'}`}>
                           <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.3em] text-indigo-500">
