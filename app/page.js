@@ -572,7 +572,7 @@ const ProjectTree = ({ project, router }) => {
         return (
           <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 z-20">
             <svg
-              className="absolute overflow-visible"
+              className="absolute overflow-visible pointer-events-none"
               style={{ 
                 left: '50%',
                 top: '50%',
