@@ -68,9 +68,16 @@ export default function DashboardPage() {
       .from('bids')
       .select(`
         *,
-        tasks(id, name, status),
-        categories(id, name, project_id),
-        projects(id, name)
+        tasks(
+          id, 
+          name, 
+          status,
+          categories(
+            id, 
+            name,
+            projects(id, name)
+          )
+        )
       `)
       .eq('subcontractor_id', userId)
       .order('created_at', { ascending: false })
@@ -81,9 +88,9 @@ export default function DashboardPage() {
       const formattedBids = bidsData.map(bid => ({
         ...bid,
         task_name: bid.tasks?.name || 'Unknown',
-        category_name: bid.categories?.name || 'Unknown',
-        project_name: bid.projects?.name || 'Unknown',
-        project_id: bid.projects?.id
+        category_name: bid.tasks?.categories?.name || 'Unknown',
+        project_name: bid.tasks?.categories?.projects?.name || 'Unknown',
+        project_id: bid.tasks?.categories?.projects?.id
       }))
       setMyBids(formattedBids)
     }
