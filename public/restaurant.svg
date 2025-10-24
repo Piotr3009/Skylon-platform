@@ -1,0 +1,14 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Restaurant Placeholder -->
+  <rect x="10" y="10" width="100" height="100" rx="8" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M20 98h80" stroke="#f59e0b" stroke-width="3"/>
+  <path d="M20 98V46l40-24 40 24v52" fill="#fde68a" stroke="#f59e0b" stroke-width="3"/>
+  <path d="M44 98V66h12v32" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M64 98V66h12v32" fill="#fbbf24" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M40 46h40" stroke="#f59e0b" stroke-width="2"/>
+  <path d="M52 34h16" stroke="#f59e0b" stroke-width="2"/>
+  <!-- Fork and knife icons -->
+  <path d="M30 30v8M34 30v8M30 38v10M34 38h-4" stroke="#f59e0b" stroke-width="1.5"/>
+  <path d="M88 30v18h-2v-18M90 30v6" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="60" y="110" text-anchor="middle" font-family="Arial" font-size="10" fill="#d97706">RESTAURANT</text>
+</svg>

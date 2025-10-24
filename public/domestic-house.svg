@@ -1,0 +1,10 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Domestic House Placeholder -->
+  <rect x="10" y="10" width="100" height="100" rx="8" fill="#f0f9ff" stroke="#3b82f6" stroke-width="2"/>
+  <path d="M24 94h80" stroke="#3b82f6" stroke-width="3"/>
+  <path d="M24 94V56l36-26 36 26v38" fill="#e0f2fe" stroke="#3b82f6" stroke-width="3"/>
+  <path d="M48 94V74h24v20" fill="#bfdbfe" stroke="#3b82f6" stroke-width="2"/>
+  <path d="M34 66h12M74 66h12" stroke="#3b82f6" stroke-width="2"/>
+  <path d="M20 56h80" stroke="#3b82f6" stroke-width="2"/>
+  <text x="60" y="110" text-anchor="middle" font-family="Arial" font-size="10" fill="#1e40af">DOMESTIC</text>
+</svg>

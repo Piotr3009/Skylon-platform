@@ -29,6 +29,8 @@ export default function CreateProjectPage() {
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
+  const [projectType, setProjectType] = useState('commercial')
+  const [projectLogo, setProjectLogo] = useState(null)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [ganttImage, setGanttImage] = useState(null)
@@ -78,11 +80,42 @@ export default function CreateProjectPage() {
     setError(null)
 
     let ganttImageUrl = null
+    let projectLogoUrl = null
+
+    // Upload project logo if provided
+    if (projectLogo) {
+      // Validate file size (5MB max)
+      if (projectLogo.size > 5 * 1024 * 1024) {
+        setError('Project logo must be less than 5MB')
+        setLoading(false)
+        return
+      }
+
+      const fileExt = projectLogo.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
+      const filePath = `project-logos/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('project-files')
+        .upload(filePath, projectLogo)
+
+      if (uploadError) {
+        setError('Failed to upload project logo: ' + uploadError.message)
+        setLoading(false)
+        return
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-files')
+        .getPublicUrl(filePath)
+
+      projectLogoUrl = publicUrl
+    }
 
     // Upload Gantt image if provided
     if (ganttImage) {
       const fileExt = ganttImage.name.split('.').pop()
-      const fileName = `${Math.random()}.${fileExt}`
+      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
       const filePath = `gantt/${fileName}`
 
       const { error: uploadError } = await supabase.storage
@@ -109,6 +142,8 @@ export default function CreateProjectPage() {
         {
           name,
           description,
+          project_type: projectType,
+          project_image_url: projectLogoUrl,
           gantt_image_url: ganttImageUrl,
           start_date: startDate,
           end_date: endDate,
@@ -216,6 +251,41 @@ export default function CreateProjectPage() {
                 rows="4"
                 placeholder="Project details and requirements..."
               />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 font-bold mb-2">
+                Project Type *
+              </label>
+              <select
+                value={projectType}
+                onChange={(e) => setProjectType(e.target.value)}
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+                <option value="commercial">Commercial & Domestic</option>
+                <option value="domestic">Domestic</option>
+                <option value="restaurant">Restaurant</option>
+                <option value="other">Other</option>
+              </select>
+              <p className="text-sm text-gray-500 mt-1">
+                Select the type of building project
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 font-bold mb-2">
+                Project Logo/Image (optional)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setProjectLogo(e.target.files[0])}
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Upload a logo or main image for this project (max 5MB). This will appear next to the project name.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-4">

@@ -716,8 +716,8 @@ export default function HomePage() {
         <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-white">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Skylon Build Network</h1>
-            <p className="mt-1 text-sm text-white/70">
-              Commercial refurbishment packages for subcontractors in Central London.
+            <p className="mt-1 text-sm text-white">
+              Commercial & Domestic refurbishment packages for subcontractors in Central London.
             </p>
           </div>
           <div className="flex gap-3">
@@ -742,13 +742,13 @@ export default function HomePage() {
         <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-indigo-500/10 blur-3xl" />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-20 text-white md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
-            <span className="rounded-full border border-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/70">
-              Commercial Refurbishment Packages
+            <span className="rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white">
+              Commercial & Domestic Refurbishment
             </span>
             <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl">
               Break down complex fit-out projects into clear trade packages ready for bid.
             </h2>
-            <p className="mt-6 text-lg text-white/70">
+            <p className="mt-6 text-lg text-white">
               Our coordinators publish scope, drawings, programme expectations and suggested budgets for every workstream. Join the trusted network of London subcontractors and win the packages that match your crew.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -959,8 +959,8 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-slate-500 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} Skylon Commercial Refurbishment. All rights reserved.</p>
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} Skylon Commercial & Domestic Refurbishment. All rights reserved.</p>
           <div className="flex flex-wrap gap-4">
             <span>info@skylonbuild.com</span>
             <span>+44 (0)20 1234 5678</span>

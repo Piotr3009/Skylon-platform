@@ -18,6 +18,8 @@ export default function PublicTaskPage() {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [myBid, setMyBid] = useState(null)
+  const [taskPhotos, setTaskPhotos] = useState([])
 
   // Proposal form state
   const [showProposalForm, setShowProposalForm] = useState(false)
@@ -32,6 +34,14 @@ export default function PublicTaskPage() {
   const [showQuestionForm, setShowQuestionForm] = useState(false)
   const [questionText, setQuestionText] = useState('')
   const [askingQuestion, setAskingQuestion] = useState(false)
+
+  // Photo upload state
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoDescription, setPhotoDescription] = useState('')
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [photoError, setPhotoError] = useState(null)
+  const [photoSuccess, setPhotoSuccess] = useState(false)
 
   const router = useRouter()
   const params = useParams()
@@ -107,6 +117,28 @@ export default function PublicTaskPage() {
       .order('created_at', { ascending: false })
 
     if (questionsData) setQuestions(questionsData)
+
+    // Load my bid if logged in
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: bidData } = await supabase
+        .from('bids')
+        .select('*')
+        .eq('task_id', params.taskId)
+        .eq('subcontractor_id', user.id)
+        .single()
+
+      if (bidData) setMyBid(bidData)
+    }
+
+    // Load task photos
+    const { data: photosData } = await supabase
+      .from('task_photos')
+      .select('*, profiles(full_name, company_name)')
+      .eq('task_id', params.taskId)
+      .order('created_at', { ascending: false })
+
+    if (photosData) setTaskPhotos(photosData)
 
     setLoading(false)
   }
@@ -188,6 +220,93 @@ export default function PublicTaskPage() {
     setShowQuestionForm(false)
     setAskingQuestion(false)
     loadTaskDetails()
+  }
+
+  const handlePhotoUpload = async (e) => {
+    e.preventDefault()
+
+    if (!photoFile) {
+      setPhotoError('Please select a photo')
+      return
+    }
+
+    // Validate file size (5MB max)
+    if (photoFile.size > 5 * 1024 * 1024) {
+      setPhotoError('Photo must be less than 5MB')
+      return
+    }
+
+    // Validate file type
+    if (!photoFile.type.startsWith('image/')) {
+      setPhotoError('File must be an image')
+      return
+    }
+
+    setUploadingPhoto(true)
+    setPhotoError(null)
+
+    try {
+      // Upload to Supabase storage
+      const fileExt = photoFile.name.split('.').pop()
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
+      const filePath = `task-photos/${fileName}`
+
+      const { error: uploadError, data: uploadData } = await supabase.storage
+        .from('project-files')
+        .upload(filePath, photoFile)
+
+      if (uploadError) {
+        setPhotoError('Upload failed: ' + uploadError.message)
+        setUploadingPhoto(false)
+        return
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-files')
+        .getPublicUrl(filePath)
+
+      // Save to database
+      const { error: dbError } = await supabase
+        .from('task_photos')
+        .insert([
+          {
+            task_id: params.taskId,
+            uploaded_by: user.id,
+            photo_url: publicUrl,
+            description: photoDescription
+          }
+        ])
+
+      if (dbError) {
+        setPhotoError('Database error: ' + dbError.message)
+        setUploadingPhoto(false)
+        return
+      }
+
+      setPhotoSuccess(true)
+      setUploadingPhoto(false)
+
+      setTimeout(() => {
+        setShowPhotoUpload(false)
+        setPhotoSuccess(false)
+        setPhotoFile(null)
+        setPhotoDescription('')
+        loadTaskDetails()
+      }, 1500)
+
+    } catch (err) {
+      setPhotoError('Upload failed: ' + err.message)
+      setUploadingPhoto(false)
+    }
+  }
+
+  const handlePhotoFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setPhotoFile(file)
+      setPhotoError(null)
+    }
   }
 
   if (loading) {
@@ -304,6 +423,127 @@ export default function PublicTaskPage() {
                 </div>
               )}
             </div>
+
+            {/* Photo Gallery */}
+            {taskPhotos.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  Project Photos ({taskPhotos.length})
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {taskPhotos.map((photo) => (
+                    <div key={photo.id} className="group relative">
+                      <img
+                        src={photo.photo_url}
+                        alt={photo.description || 'Task photo'}
+                        className="w-full h-48 object-cover rounded-lg border border-gray-200 group-hover:shadow-lg transition cursor-pointer"
+                        onClick={() => window.open(photo.photo_url, '_blank')}
+                      />
+                      <div className="mt-2">
+                        {photo.description && (
+                          <p className="text-sm text-gray-700 mb-1">{photo.description}</p>
+                        )}
+                        <p className="text-xs text-gray-500">
+                          {photo.profiles?.company_name || photo.profiles?.full_name} • {new Date(photo.created_at).toLocaleDateString('en-GB')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Upload Photo Section - only for accepted subcontractors */}
+            {myBid && myBid.status === 'accepted' && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">Upload Progress Photos</h2>
+                  {!showPhotoUpload && (
+                    <button
+                      onClick={() => setShowPhotoUpload(true)}
+                      className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                    >
+                      Add Photo
+                    </button>
+                  )}
+                </div>
+
+                {showPhotoUpload && (
+                  <form onSubmit={handlePhotoUpload} className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    {photoError && (
+                      <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                        {photoError}
+                      </div>
+                    )}
+
+                    {photoSuccess && (
+                      <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded text-sm">
+                        Photo uploaded successfully!
+                      </div>
+                    )}
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Photo (max 5MB) *
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoFileChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        required
+                      />
+                      {photoFile && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          Selected: {photoFile.name} ({(photoFile.size / 1024 / 1024).toFixed(2)} MB)
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Description (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={photoDescription}
+                        onChange={(e) => setPhotoDescription(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        placeholder="e.g., Foundation completed, Electrical work in progress..."
+                      />
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        type="submit"
+                        disabled={uploadingPhoto}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition"
+                      >
+                        {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPhotoUpload(false)
+                          setPhotoFile(null)
+                          setPhotoDescription('')
+                          setPhotoError(null)
+                        }}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {!showPhotoUpload && (
+                  <p className="text-sm text-gray-600">
+                    Upload photos to show project progress and keep the coordinator updated.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Questions section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -511,49 +751,95 @@ export default function PublicTaskPage() {
               <h3 className="font-bold text-gray-900 mb-4">
                 Documents ({documents.length})
               </h3>
+
+              {!user && documents.length > 0 && (
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                  <p className="font-medium mb-1">🔒 Login required to download documents</p>
+                  <p className="text-xs text-blue-600">Register or login to access project files</p>
+                </div>
+              )}
+
+              {user && profile && !profile.email_verified && documents.length > 0 && (
+                <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                  <p className="font-medium mb-1">⚠️ Email verification required</p>
+                  <p className="text-xs text-yellow-600">Check your inbox to verify your email before downloading</p>
+                </div>
+              )}
+
               {documents.length === 0 ? (
                 <p className="text-gray-500 text-sm">No documents available</p>
               ) : (
                 <div className="space-y-2">
-                  {documents.map((doc) => (
-                    <a
-                      key={doc.id}
-                      href={doc.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition group"
-                    >
-                      <svg
-                        className="w-5 h-5 text-gray-400 group-hover:text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                      <span className="text-sm text-gray-700 group-hover:text-blue-600 flex-1">
-                        {doc.file_name}
-                      </span>
-                      <svg
-                        className="w-4 h-4 text-gray-400 group-hover:text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                    </a>
-                  ))}
+                  {documents.map((doc) => {
+                    const canDownload = user && profile?.email_verified
+
+                    if (canDownload) {
+                      return (
+                        <a
+                          key={doc.id}
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition group"
+                        >
+                          <svg
+                            className="w-5 h-5 text-gray-400 group-hover:text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          <span className="text-sm text-gray-700 group-hover:text-blue-600 flex-1">
+                            {doc.file_name}
+                          </span>
+                          <svg
+                            className="w-4 h-4 text-gray-400 group-hover:text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                        </a>
+                      )
+                    } else {
+                      return (
+                        <div
+                          key={doc.id}
+                          className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg opacity-60 cursor-not-allowed"
+                        >
+                          <svg
+                            className="w-5 h-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            />
+                          </svg>
+                          <span className="text-sm text-gray-600 flex-1">
+                            {doc.file_name}
+                          </span>
+                          <span className="text-xs text-gray-500">🔒 Locked</span>
+                        </div>
+                      )
+                    }
+                  })}
                 </div>
               )}
             </div>

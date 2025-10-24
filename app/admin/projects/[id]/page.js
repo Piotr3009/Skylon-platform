@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
+import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 
 export default function ProjectDetailPage() {
   const [profile, setProfile] = useState(null)
@@ -298,9 +299,15 @@ export default function ProjectDetailPage() {
           ) : (
             <div className="space-y-4">
               {categories.map((category) => (
-                <div key={category.id} className="border rounded-lg p-4">
+                <div key={category.id} className={`border rounded-lg p-4 ${getCategoryColor(category.name)}`}>
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-lg font-bold">{category.name}</h3>
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const Icon = getCategoryIcon(category.name)
+                        return <Icon className="w-6 h-6" />
+                      })()}
+                      <h3 className="text-lg font-bold">{category.name}</h3>
+                    </div>
                     <div className="flex gap-2">
                       <button
                         onClick={() => router.push(`/admin/projects/${params.id}/category/${category.id}/add-task`)}

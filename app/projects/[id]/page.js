@@ -3,34 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
-
-const getCategoryStyle = (name = '') => {
-  const normalized = name.toLowerCase()
-
-  const styles = {
-    demolition: 'bg-rose-50 text-rose-700 border-rose-200',
-    groundworks: 'bg-amber-50 text-amber-700 border-amber-200',
-    structural: 'bg-slate-50 text-slate-700 border-slate-200',
-    external: 'bg-gray-50 text-gray-700 border-gray-200',
-    roofing: 'bg-teal-50 text-teal-700 border-teal-200',
-    joinery: 'bg-orange-50 text-orange-700 border-orange-200',
-    internal: 'bg-zinc-50 text-zinc-700 border-zinc-200',
-    carpentry: 'bg-amber-50 text-amber-700 border-amber-200',
-    plumbing: 'bg-blue-50 text-blue-700 border-blue-200',
-    electrical: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-    mechanical: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    plastering: 'bg-stone-50 text-stone-700 border-stone-200',
-    flooring: 'bg-neutral-50 text-neutral-700 border-neutral-200',
-    finishing: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    specialist: 'bg-red-50 text-red-700 border-red-200'
-  }
-
-  for (const [key, style] of Object.entries(styles)) {
-    if (normalized.includes(key)) return style
-  }
-
-  return 'bg-slate-50 text-slate-700 border-slate-200'
-}
+import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 
 const formatCurrency = (value) => {
   if (!value || Number.isNaN(value)) return '—'
@@ -239,8 +212,14 @@ export default function PublicProjectPage() {
                 key={category.id}
                 className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
               >
-                <div className={`px-6 py-4 border-b border-gray-200 ${getCategoryStyle(category.name)}`}>
-                  <h3 className="text-lg font-bold">{category.name}</h3>
+                <div className={`px-6 py-4 border-b border-gray-200 ${getCategoryColor(category.name)}`}>
+                  <div className="flex items-center gap-3">
+                    {(() => {
+                      const Icon = getCategoryIcon(category.name)
+                      return <Icon className="w-6 h-6" />
+                    })()}
+                    <h3 className="text-lg font-bold">{category.name}</h3>
+                  </div>
                 </div>
 
                 <div className="p-6">

@@ -227,6 +227,55 @@ export default function DashboardPage() {
           )}
         </div>
 
+        {/* Verification Alerts */}
+        {profile && (!profile.email_verified || !profile.phone_verified) && (
+          <div className="space-y-3 mb-8">
+            {!profile.email_verified && (
+              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-yellow-800">Email Verification Required</p>
+                      <p className="text-sm text-yellow-700">Verify your email to download documents and access all features</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => router.push('/verify-email')}
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
+                  >
+                    Verify Now
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!profile.phone_verified && (
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    <div>
+                      <p className="font-semibold text-blue-800">Phone Verification Optional</p>
+                      <p className="text-sm text-blue-700">Verify your phone to receive SMS notifications and secure your account</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => router.push('/verify-phone')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                  >
+                    Verify Phone
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Admin Actions */}
         {(profile?.role === 'owner' || profile?.role === 'coordinator') && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
@@ -270,6 +319,53 @@ export default function DashboardPage() {
                 </div>
                 <div className="font-bold text-purple-900 text-lg mb-1">Public View</div>
                 <div className="text-sm text-purple-700">See how subcontractors view projects</div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Subcontractor Quick Actions */}
+        {profile?.role === 'subcontractor' && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <button
+                onClick={() => router.push('/dashboard/history')}
+                className="p-6 border-2 border-purple-300 bg-purple-50 rounded-lg hover:border-purple-500 hover:bg-purple-100 transition text-left group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="font-bold text-purple-900 text-lg mb-1">Project History</div>
+                <div className="text-sm text-purple-700">View ratings and completed work</div>
+              </button>
+
+              <button
+                onClick={() => router.push('/')}
+                className="p-6 border-2 border-blue-300 bg-blue-50 rounded-lg hover:border-blue-500 hover:bg-blue-100 transition text-left group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <div className="font-bold text-blue-900 text-lg mb-1">Browse Projects</div>
+                <div className="text-sm text-blue-700">Find and bid on new opportunities</div>
+              </button>
+
+              <button
+                onClick={() => router.push('/')}
+                className="p-6 border-2 border-green-300 bg-green-50 rounded-lg hover:border-green-500 hover:bg-green-100 transition text-left group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div className="font-bold text-green-900 text-lg mb-1">My Proposals</div>
+                <div className="text-sm text-green-700">Track submitted bids and status</div>
               </button>
             </div>
           </div>
