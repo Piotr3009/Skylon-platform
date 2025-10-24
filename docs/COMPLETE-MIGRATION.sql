@@ -39,7 +39,6 @@ END $$;
 CREATE TABLE IF NOT EXISTS task_photos (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
-  bid_id UUID REFERENCES bids(id) ON DELETE CASCADE,
   uploaded_by UUID REFERENCES profiles(id) ON DELETE CASCADE,
   photo_url TEXT NOT NULL,
   description TEXT,
@@ -48,7 +47,6 @@ CREATE TABLE IF NOT EXISTS task_photos (
 
 CREATE INDEX IF NOT EXISTS idx_task_photos_task ON task_photos(task_id);
 CREATE INDEX IF NOT EXISTS idx_task_photos_uploader ON task_photos(uploaded_by);
-CREATE INDEX IF NOT EXISTS idx_task_photos_bid ON task_photos(bid_id);
 
 -- 6. Verify task_ratings table exists (for ratings 1-10)
 CREATE TABLE IF NOT EXISTS task_ratings (
@@ -87,19 +85,11 @@ CREATE POLICY "Anyone can view task photos"
 ON task_photos FOR SELECT
 USING (true);
 
--- Allow subcontractors to upload photos to their accepted tasks
-DROP POLICY IF EXISTS "Subcontractors can upload photos" ON task_photos;
-CREATE POLICY "Subcontractors can upload photos"
+-- Allow authenticated users to upload photos
+DROP POLICY IF EXISTS "Authenticated users can upload photos" ON task_photos;
+CREATE POLICY "Authenticated users can upload photos"
 ON task_photos FOR INSERT
-WITH CHECK (
-  auth.uid() = uploaded_by
-  AND EXISTS (
-    SELECT 1 FROM bids
-    WHERE bids.id = task_photos.bid_id
-    AND bids.subcontractor_id = auth.uid()
-    AND bids.status = 'accepted'
-  )
-);
+WITH CHECK (auth.uid() = uploaded_by);
 
 -- Allow users to delete their own photos
 DROP POLICY IF EXISTS "Users can delete own photos" ON task_photos;
