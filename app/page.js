@@ -485,6 +485,7 @@ const CategoryNode = ({ name, categoryId, projectId, tasks, onClick }) => {
 
   const handleClick = (e) => {
     e.stopPropagation()
+    console.log('CLICKED!', categoryId, projectId, tasks)
     if (onClick) {
       onClick(categoryId, projectId, tasks)
     }
