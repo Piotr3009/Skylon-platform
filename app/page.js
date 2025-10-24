@@ -596,10 +596,16 @@ const ProjectTree = ({ project }) => {
                 categoryId={category.id}
                 projectId={project.id}
                 tasks={category.tasks}
-                onClick={(catId, projId) => {
-                  // Navigate to project page with category highlighted
+                onClick={(catId, projId, tasks) => {
+                  // Navigate to first task in category, or project page if no tasks
                   if (typeof window !== 'undefined') {
-                    window.location.href = `/projects/${projId}#category-${catId}`
+                    if (tasks && tasks.length > 0) {
+                      // Go to first task in this category
+                      window.location.href = `/projects/${projId}/task/${tasks[0].id}`
+                    } else {
+                      // No tasks, go to project page with category highlighted
+                      window.location.href = `/projects/${projId}#category-${catId}`
+                    }
                   }
                 }}
               />
