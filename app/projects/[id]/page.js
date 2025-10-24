@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter, useParams, useSearchParams } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 
 const formatCurrency = (value) => {
@@ -19,7 +19,6 @@ export default function PublicProjectPage() {
   const [user, setUser] = useState(null)
   const router = useRouter()
   const params = useParams()
-  const searchParams = useSearchParams()
   const categoryRefs = useRef({})
 
   useEffect(() => {
@@ -29,21 +28,28 @@ export default function PublicProjectPage() {
 
   // Scroll to category when URL has category parameter
   useEffect(() => {
-    const categoryId = searchParams.get('category')
-    if (categoryId && !loading && categories.length > 0) {
+    if (typeof window === 'undefined' || loading || categories.length === 0) return
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const categoryId = urlParams.get('category')
+
+    if (categoryId) {
       const element = categoryRefs.current[categoryId]
       if (element) {
         setTimeout(() => {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
           // Add highlight effect
-          element.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2')
+          element.classList.add('ring-4', 'ring-blue-400', 'ring-offset-4')
           setTimeout(() => {
-            element.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2')
-          }, 2000)
-        }, 100)
+            element.classList.remove('ring-4', 'ring-blue-400', 'ring-offset-4')
+          }, 3000)
+        }, 300)
+      } else {
+        console.log('Category element not found for ID:', categoryId)
+        console.log('Available refs:', Object.keys(categoryRefs.current))
       }
     }
-  }, [searchParams, loading, categories])
+  }, [loading, categories])
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
