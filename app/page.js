@@ -535,6 +535,13 @@ const ProjectTree = ({ project, router }) => {
       )}
 
       {categories.map((category, index) => {
+        console.log('=== DEBUG ===')
+        console.log('Category name:', category.name)
+        console.log('Category ID:', category.id)
+        console.log('Tasks:', category.tasks)
+        console.log('Tasks length:', category.tasks?.length || 0)
+        console.log('============')
+        
         const angle = (index / total) * Math.PI * 2 - Math.PI / 2
         const distance = 270
         const x = Math.cos(angle) * distance
