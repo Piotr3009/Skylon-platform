@@ -68,9 +68,9 @@ export default function DashboardPage() {
       .from('bids')
       .select(`
         *,
-        tasks!inner(id, name, status),
-        categories!inner(id, name, project_id),
-        projects!inner(id, name)
+        tasks(id, name, status),
+        categories(id, name, project_id),
+        projects(id, name)
       `)
       .eq('subcontractor_id', userId)
       .order('created_at', { ascending: false })
