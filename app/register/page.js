@@ -78,6 +78,8 @@ export default function RegisterPage() {
             <label className="block text-gray-700 mb-2">Full Name *</label>
             <input
               type="text"
+              name="fullName"
+              autoComplete="name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -89,6 +91,8 @@ export default function RegisterPage() {
             <label className="block text-gray-700 mb-2">Company Name</label>
             <input
               type="text"
+              name="companyName"
+              autoComplete="organization"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -99,6 +103,8 @@ export default function RegisterPage() {
             <label className="block text-gray-700 mb-2">Phone</label>
             <input
               type="tel"
+              name="phone"
+              autoComplete="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -109,6 +115,8 @@ export default function RegisterPage() {
             <label className="block text-gray-700 mb-2">Email *</label>
             <input
               type="email"
+              name="email"
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -120,6 +128,8 @@ export default function RegisterPage() {
             <label className="block text-gray-700 mb-2">Password *</label>
             <input
               type="password"
+              name="password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
