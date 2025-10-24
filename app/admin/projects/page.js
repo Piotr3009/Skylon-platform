@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Header from '@/app/components/Header'
 
 export default function ProjectsListPage() {
   const [profile, setProfile] = useState(null)
@@ -104,28 +105,31 @@ export default function ProjectsListPage() {
     )
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-blue-50">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">All Projects</h1>
-          <div className="flex gap-4">
-            <button
-              onClick={() => router.push('/admin/create-project')}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              + New Project
-            </button>
-            <button
-              onClick={() => router.push('/dashboard')}
-              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header
+        title="All Projects"
+        subtitle="Manage your construction projects"
+        user={profile}
+        profile={profile}
+        onLogout={handleLogout}
+        showHome={true}
+        showDashboard={true}
+        gradient={true}
+      >
+        <button
+          onClick={() => router.push('/admin/create-project')}
+          className="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition font-semibold shadow-sm"
+        >
+          + New Project
+        </button>
+      </Header>
 
       {/* Projects List */}
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -146,13 +150,13 @@ export default function ProjectsListPage() {
                 key={project.id}
                 className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
               >
-                <div 
+                <div
                   className="cursor-pointer"
                   onClick={() => router.push(`/admin/projects/${project.id}`)}
                 >
-                  {project.gantt_image_url && (
+                  {(project.project_image_url || project.gantt_image_url) && (
                     <img
-                      src={project.gantt_image_url}
+                      src={project.project_image_url || project.gantt_image_url}
                       alt={project.name}
                       className="w-full h-48 object-cover rounded-t-lg"
                     />

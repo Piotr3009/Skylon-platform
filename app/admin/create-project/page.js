@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Header from '@/app/components/Header'
 
 const STANDARD_CATEGORIES = [
   'Demolition & Site Clearance',
@@ -195,20 +196,24 @@ export default function CreateProjectPage() {
     )
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Create New Project</h1>
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-          >
-            Back to Dashboard
-          </button>
-        </div>
-      </header>
+      <Header
+        title="Create New Project"
+        subtitle="Add a new construction project to the platform"
+        user={profile}
+        profile={profile}
+        onLogout={handleLogout}
+        showHome={true}
+        showDashboard={true}
+        gradient={true}
+      />
 
       {/* Form */}
       <main className="max-w-4xl mx-auto px-4 py-8">
@@ -264,8 +269,8 @@ export default function CreateProjectPage() {
                 required
               >
                 <option value="commercial">Commercial & Domestic</option>
-                <option value="domestic">Domestic</option>
-                <option value="restaurant">Restaurant</option>
+                <option value="domestic">Domestic Only</option>
+                <option value="restaurant">Restaurant & Hospitality</option>
                 <option value="other">Other</option>
               </select>
               <p className="text-sm text-gray-500 mt-1">

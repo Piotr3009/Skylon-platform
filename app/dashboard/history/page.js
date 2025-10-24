@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Header from '@/app/components/Header'
 
 const formatCurrency = (value) => {
   if (!value || Number.isNaN(value)) return '—'
@@ -104,40 +105,18 @@ export default function HistoryPage() {
   const totalProjects = profile?.total_projects || 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">My Project History</h1>
-              <p className="text-sm text-gray-600 mt-1">
-                View your completed projects and ratings
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/')}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              >
-                Home
-              </button>
-              <button
-                onClick={() => router.push('/dashboard')}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header
+        title="My Project History"
+        subtitle="View your completed projects and ratings"
+        user={user}
+        profile={profile}
+        onLogout={handleLogout}
+        showHome={true}
+        showDashboard={true}
+        gradient={true}
+      />
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats Cards */}
@@ -225,7 +204,8 @@ export default function HistoryPage() {
               {completedTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition"
+                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer"
+                  onClick={() => router.push(`/projects/${task.project_id || task.categories?.project_id}`)}
                 >
                   {task.project_image && (
                     <img

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
+import Header from '@/app/components/Header'
+import Breadcrumbs from '@/app/components/Breadcrumbs'
 
 export default function ProjectDetailPage() {
   const [profile, setProfile] = useState(null)
@@ -191,53 +193,78 @@ export default function ProjectDetailPage() {
     )
   }
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold text-gray-900">{project?.name}</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={handleEdit}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Edit Project
-              </button>
-              <button
-                onClick={handleDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-              >
-                Delete Project
-              </button>
-              <button
-                onClick={() => router.push('/admin/projects')}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-              >
-                Back to Projects
-              </button>
+      <Header
+        title={project?.name || 'Project Details'}
+        subtitle={project?.description || 'Manage categories and tasks'}
+        user={profile}
+        profile={profile}
+        onLogout={handleLogout}
+        showHome={true}
+        showDashboard={true}
+        gradient={true}
+      >
+        <button
+          onClick={handleEdit}
+          className="px-4 py-2 bg-white/20 text-white border border-white/30 rounded-lg hover:bg-white/30 transition"
+        >
+          Edit
+        </button>
+        <button
+          onClick={handleDelete}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+        >
+          Delete
+        </button>
+      </Header>
+
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'Projects', href: '/admin/projects' },
+            { label: project?.name || 'Loading...' }
+          ]}
+        />
+
+        {project && (
+          <div className="bg-white/80 backdrop-blur rounded-lg shadow-sm border border-indigo-100 p-4 mb-6">
+            <div className="flex gap-4 text-sm flex-wrap">
+              {project.start_date && (
+                <span className="text-gray-700">
+                  <span className="font-semibold">Start:</span> {new Date(project.start_date).toLocaleDateString()}
+                </span>
+              )}
+              {project.end_date && (
+                <span className="text-gray-700">
+                  <span className="font-semibold">End:</span> {new Date(project.end_date).toLocaleDateString()}
+                </span>
+              )}
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                {project.status}
+              </span>
+              {project.project_type && (
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                  {project.project_type === 'commercial' ? 'Commercial & Domestic' :
+                   project.project_type === 'domestic' ? 'Domestic' :
+                   project.project_type === 'restaurant' ? 'Restaurant' :
+                   project.project_type}
+                </span>
+              )}
             </div>
           </div>
-          {project?.description && (
-            <p className="text-gray-600">{project.description}</p>
-          )}
-          <div className="flex gap-4 mt-2 text-sm text-gray-500">
-            {project?.start_date && (
-              <span>Start: {new Date(project.start_date).toLocaleDateString()}</span>
-            )}
-            {project?.end_date && (
-              <span>End: {new Date(project.end_date).toLocaleDateString()}</span>
-            )}
-            <span className="px-2 py-1 bg-green-100 text-green-800 rounded">
-              {project?.status}
-            </span>
-          </div>
-        </div>
-      </header>
+        )}
+      </div>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-0">
         {/* Gantt Chart */}
         {project?.gantt_image_url && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
