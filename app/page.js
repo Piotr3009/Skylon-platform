@@ -604,14 +604,8 @@ const ProjectTree = ({ project, router }) => {
                 projectId={project.id}
                 tasks={category.tasks}
                 onClick={(catId, projId, tasks) => {
-                  // Navigate to first task in category, or project page if no tasks
-                  if (tasks && tasks.length > 0) {
-                    // Go to first task in this category
-                    router.push(`/projects/${projId}/task/${tasks[0].id}`)
-                  } else {
-                    // No tasks, go to project page with category highlighted
-                    router.push(`/projects/${projId}#category-${catId}`)
-                  }
+                  // Go to project page with category parameter
+                  router.push(`/projects/${projId}?category=${catId}`)
                 }}
               />
             </div>
