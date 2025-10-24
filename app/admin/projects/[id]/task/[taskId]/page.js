@@ -29,6 +29,12 @@ export default function AdminTaskDetailPage() {
   const [editingTask, setEditingTask] = useState(null)
   const [savingTask, setSavingTask] = useState(false)
 
+  // Rating state
+  const [ratingBidId, setRatingBidId] = useState(null)
+  const [ratingValue, setRatingValue] = useState('')
+  const [ratingComment, setRatingComment] = useState('')
+  const [submittingRating, setSubmittingRating] = useState(false)
+
   const router = useRouter()
   const params = useParams()
 
@@ -252,6 +258,58 @@ export default function AdminTaskDetailPage() {
     router.push(`/admin/projects/${params.id}`)
   }
 
+  const handleSubmitRating = async (bidId, subcontractorId) => {
+    if (!ratingValue || ratingValue < 1 || ratingValue > 10) {
+      alert('Please enter a rating between 1 and 10')
+      return
+    }
+
+    setSubmittingRating(true)
+
+    const { error } = await supabase
+      .from('task_ratings')
+      .insert([
+        {
+          task_id: params.taskId,
+          subcontractor_id: subcontractorId,
+          rating: parseInt(ratingValue),
+          comment: ratingComment,
+          rated_by: profile.id
+        }
+      ])
+
+    if (error) {
+      alert('Error submitting rating: ' + error.message)
+      setSubmittingRating(false)
+      return
+    }
+
+    // Update average rating for subcontractor
+    const { data: ratings } = await supabase
+      .from('task_ratings')
+      .select('rating')
+      .eq('subcontractor_id', subcontractorId)
+
+    if (ratings && ratings.length > 0) {
+      const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+      const totalProjects = ratings.length
+
+      await supabase
+        .from('profiles')
+        .update({
+          average_rating: avgRating.toFixed(2),
+          total_projects: totalProjects
+        })
+        .eq('id', subcontractorId)
+    }
+
+    setRatingBidId(null)
+    setRatingValue('')
+    setRatingComment('')
+    setSubmittingRating(false)
+    loadTaskDetails()
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -439,6 +497,68 @@ export default function AdminTaskDetailPage() {
                           >
                             Reject
                           </button>
+                        </div>
+                      )}
+
+                      {bid.status === 'accepted' && ratingBidId !== bid.id && (
+                        <div className="mt-3">
+                          <button
+                            onClick={() => setRatingBidId(bid.id)}
+                            className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
+                          >
+                            ⭐ Rate Subcontractor
+                          </button>
+                        </div>
+                      )}
+
+                      {bid.status === 'accepted' && ratingBidId === bid.id && (
+                        <div className="mt-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                          <div className="text-sm font-semibold text-gray-700 mb-3">Rate this subcontractor's performance</div>
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Rating (1-10) *
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={ratingValue}
+                              onChange={(e) => setRatingValue(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                              placeholder="Enter 1-10"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Comment (optional)
+                            </label>
+                            <textarea
+                              value={ratingComment}
+                              onChange={(e) => setRatingComment(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                              rows="2"
+                              placeholder="Quality of work, professionalism, timeliness..."
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleSubmitRating(bid.id, bid.subcontractor_id)}
+                              disabled={submittingRating}
+                              className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:bg-gray-400 transition font-medium"
+                            >
+                              {submittingRating ? 'Submitting...' : 'Submit Rating'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setRatingBidId(null)
+                                setRatingValue('')
+                                setRatingComment('')
+                              }}
+                              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       )}
                     </div>

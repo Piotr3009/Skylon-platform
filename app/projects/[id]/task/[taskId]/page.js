@@ -511,49 +511,95 @@ export default function PublicTaskPage() {
               <h3 className="font-bold text-gray-900 mb-4">
                 Documents ({documents.length})
               </h3>
+
+              {!user && documents.length > 0 && (
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
+                  <p className="font-medium mb-1">🔒 Login required to download documents</p>
+                  <p className="text-xs text-blue-600">Register or login to access project files</p>
+                </div>
+              )}
+
+              {user && profile && !profile.email_verified && documents.length > 0 && (
+                <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                  <p className="font-medium mb-1">⚠️ Email verification required</p>
+                  <p className="text-xs text-yellow-600">Check your inbox to verify your email before downloading</p>
+                </div>
+              )}
+
               {documents.length === 0 ? (
                 <p className="text-gray-500 text-sm">No documents available</p>
               ) : (
                 <div className="space-y-2">
-                  {documents.map((doc) => (
-                    <a
-                      key={doc.id}
-                      href={doc.file_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition group"
-                    >
-                      <svg
-                        className="w-5 h-5 text-gray-400 group-hover:text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                      <span className="text-sm text-gray-700 group-hover:text-blue-600 flex-1">
-                        {doc.file_name}
-                      </span>
-                      <svg
-                        className="w-4 h-4 text-gray-400 group-hover:text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                    </a>
-                  ))}
+                  {documents.map((doc) => {
+                    const canDownload = user && profile?.email_verified
+
+                    if (canDownload) {
+                      return (
+                        <a
+                          key={doc.id}
+                          href={doc.file_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition group"
+                        >
+                          <svg
+                            className="w-5 h-5 text-gray-400 group-hover:text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          <span className="text-sm text-gray-700 group-hover:text-blue-600 flex-1">
+                            {doc.file_name}
+                          </span>
+                          <svg
+                            className="w-4 h-4 text-gray-400 group-hover:text-blue-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                        </a>
+                      )
+                    } else {
+                      return (
+                        <div
+                          key={doc.id}
+                          className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg opacity-60 cursor-not-allowed"
+                        >
+                          <svg
+                            className="w-5 h-5 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            />
+                          </svg>
+                          <span className="text-sm text-gray-600 flex-1">
+                            {doc.file_name}
+                          </span>
+                          <span className="text-xs text-gray-500">🔒 Locked</span>
+                        </div>
+                      )
+                    }
+                  })}
                 </div>
               )}
             </div>
