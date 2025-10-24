@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 
 const formatCurrency = (value) => {
@@ -19,11 +19,31 @@ export default function PublicProjectPage() {
   const [user, setUser] = useState(null)
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
+  const categoryRefs = useRef({})
 
   useEffect(() => {
     checkUser()
     loadProjectDetails()
   }, [])
+
+  // Scroll to category when URL has category parameter
+  useEffect(() => {
+    const categoryId = searchParams.get('category')
+    if (categoryId && !loading && categories.length > 0) {
+      const element = categoryRefs.current[categoryId]
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          // Add highlight effect
+          element.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2')
+          setTimeout(() => {
+            element.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2')
+          }, 2000)
+        }, 100)
+      }
+    }
+  }, [searchParams, loading, categories])
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -210,7 +230,8 @@ export default function PublicProjectPage() {
             {categories.map((category) => (
               <div
                 key={category.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                ref={(el) => categoryRefs.current[category.id] = el}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-300"
               >
                 <div className={`px-6 py-4 border-b border-gray-200 ${getCategoryColor(category.name)}`}>
                   <div className="flex items-center gap-3">
