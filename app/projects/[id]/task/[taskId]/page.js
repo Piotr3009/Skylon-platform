@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
+import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 
 const formatCurrency = (value) => {
   if (!value || Number.isNaN(value)) return '—'
@@ -341,15 +342,23 @@ export default function PublicTaskPage() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 flex items-center gap-2">
               <button
                 onClick={() => router.push(`/projects/${params.id}`)}
                 className="hover:text-blue-600 transition"
               >
                 {project?.name}
               </button>
-              {' → '}
-              <span>{category?.name}</span>
+              <span>→</span>
+              {category && (
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const Icon = getCategoryIcon(category.name)
+                    return <Icon className="w-5 h-5" />
+                  })()}
+                  <span>{category.name}</span>
+                </div>
+              )}
             </div>
             <button
               onClick={() => router.push(`/projects/${params.id}`)}
@@ -849,8 +858,16 @@ export default function PublicTaskPage() {
               <h3 className="font-bold text-gray-900 mb-4">Task Information</h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <div className="text-gray-500">Category</div>
-                  <div className="font-medium text-gray-900">{category?.name}</div>
+                  <div className="text-gray-500 mb-2">Category</div>
+                  {category && (
+                    <div className={`flex items-center gap-3 p-3 rounded-lg border ${getCategoryColor(category.name)}`}>
+                      {(() => {
+                        const Icon = getCategoryIcon(category.name)
+                        return <Icon className="w-6 h-6 flex-shrink-0" />
+                      })()}
+                      <div className="font-semibold">{category.name}</div>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <div className="text-gray-500">Project</div>

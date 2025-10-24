@@ -480,13 +480,13 @@ const BuildingIcon = ({ type, projectType }) => {
   }
 }
 
-const CategoryNode = ({ name, categoryId, projectId, onClick }) => {
+const CategoryNode = ({ name, categoryId, projectId, tasks, onClick }) => {
   const { color, Icon } = getCategoryStyle(name)
 
   const handleClick = (e) => {
     e.stopPropagation()
     if (onClick) {
-      onClick(categoryId, projectId)
+      onClick(categoryId, projectId, tasks)
     }
   }
 
@@ -596,10 +596,17 @@ const ProjectTree = ({ project }) => {
                 name={category.name}
                 categoryId={category.id}
                 projectId={project.id}
-                onClick={(catId, projId) => {
-                  // Navigate to project page with category highlighted
+                tasks={category.tasks}
+                onClick={(catId, projId, tasks) => {
+                  // Navigate to first task in category, or project page if no tasks
                   if (typeof window !== 'undefined') {
-                    window.location.href = `/projects/${projId}#category-${catId}`
+                    if (tasks && tasks.length > 0) {
+                      // Go to first task in this category
+                      window.location.href = `/projects/${projId}/task/${tasks[0].id}`
+                    } else {
+                      // No tasks, go to project page with category highlighted
+                      window.location.href = `/projects/${projId}#category-${catId}`
+                    }
                   }
                 }}
               />
