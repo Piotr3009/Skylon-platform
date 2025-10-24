@@ -225,56 +225,64 @@ export default function PublicProjectPage() {
                 <div className="p-6">
                   {category.tasks && category.tasks.length > 0 ? (
                     <div className="space-y-3">
-                      {category.tasks.map((task) => (
-                        <div
-                          key={task.id}
-                          className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer group"
-                          onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
-                        >
-                          <div className="flex-1">
-                            <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
-                              {task.name}
-                            </div>
-                            {task.short_description && (
-                              <div className="text-sm text-gray-600 mt-1">
-                                {task.short_description}
+                      {category.tasks.map((task) => {
+                        const Icon = getCategoryIcon(category.name)
+                        return (
+                          <div
+                            key={task.id}
+                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer group"
+                            onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
+                          >
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className={`flex-shrink-0 p-2 rounded-lg ${getCategoryColor(category.name)}`}>
+                                <Icon className="w-5 h-5" />
                               </div>
-                            )}
-                            <div className="flex gap-4 mt-2 text-sm text-gray-500">
-                              {task.suggested_price && (
-                                <span>Budget: {formatCurrency(task.suggested_price)}</span>
-                              )}
-                              {task.estimated_duration && (
-                                <span>Duration: {task.estimated_duration} days</span>
-                              )}
+                              <div className="flex-1">
+                                <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                                  {task.name}
+                                </div>
+                                {task.short_description && (
+                                  <div className="text-sm text-gray-600 mt-1">
+                                    {task.short_description}
+                                  </div>
+                                )}
+                                <div className="flex gap-4 mt-2 text-sm text-gray-500">
+                                  {task.suggested_price && (
+                                    <span>Budget: {formatCurrency(task.suggested_price)}</span>
+                                  )}
+                                  {task.estimated_duration && (
+                                    <span>Duration: {task.estimated_duration} days</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                task.status === 'open' ? 'bg-green-100 text-green-800' :
+                                task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
+                                task.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {task.status}
+                              </span>
+                              <svg
+                                className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
                             </div>
                           </div>
-
-                          <div className="flex items-center gap-3">
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                              task.status === 'open' ? 'bg-green-100 text-green-800' :
-                              task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                              task.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {task.status}
-                            </span>
-                            <svg
-                              className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5l7 7-7 7"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   ) : (
                     <p className="text-gray-500 text-center py-8">

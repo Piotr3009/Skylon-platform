@@ -513,7 +513,7 @@ export default function AdminTaskDetailPage() {
 
                       {bid.status === 'accepted' && ratingBidId === bid.id && (
                         <div className="mt-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                          <div className="text-sm font-semibold text-gray-700 mb-3">Rate this subcontractor's performance</div>
+                          <div className="text-sm font-semibold text-gray-700 mb-3">Rate this subcontractor&apos;s performance</div>
                           <div className="mb-3">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                               Rating (1-10) *
