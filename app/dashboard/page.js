@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import Header from '@/app/components/Header'
 
 const formatCurrency = (value) => {
   if (!value || Number.isNaN(value)) return '—'
@@ -55,7 +56,7 @@ export default function DashboardPage() {
     // Load active projects
     const { data: projectsData } = await supabase
       .from('projects')
-      .select('id, name, description, status, start_date')
+      .select('id, name, description, status, start_date, project_image_url, project_type')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(6)
@@ -114,7 +115,7 @@ export default function DashboardPage() {
     // Load user's projects
     const { data: projectsData } = await supabase
       .from('projects')
-      .select('id, name, description, status, created_at')
+      .select('id, name, description, status, created_at, project_image_url, project_type')
       .order('created_at', { ascending: false })
       .limit(6)
 
@@ -156,39 +157,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Dashboard
-              </h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Welcome back, {profile?.full_name || profile?.email}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/')}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-              >
-                Home
-              </button>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium capitalize">
-                {profile?.role}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header
+        title="Dashboard"
+        subtitle={`Welcome back, ${profile?.full_name || profile?.email}`}
+        user={user}
+        profile={profile}
+        onLogout={handleLogout}
+        showHome={true}
+        showDashboard={false}
+        gradient={true}
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -441,7 +421,7 @@ export default function DashboardPage() {
               {projects.map((project) => (
                 <div
                   key={project.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer group"
+                  className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-300 hover:shadow-md transition cursor-pointer group bg-white"
                   onClick={() => {
                     if (profile?.role === 'owner' || profile?.role === 'coordinator') {
                       router.push(`/admin/projects/${project.id}`)
@@ -450,28 +430,47 @@ export default function DashboardPage() {
                     }
                   }}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
-                      {project.name}
-                    </h4>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      project.status === 'active' ? 'bg-green-100 text-green-800' :
-                      project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {project.status}
-                    </span>
-                  </div>
-                  {project.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-                      {project.description}
-                    </p>
+                  {project.project_image_url && (
+                    <img
+                      src={project.project_image_url}
+                      alt={project.name}
+                      className="w-full h-32 object-cover"
+                    />
                   )}
-                  {project.start_date && (
-                    <div className="text-xs text-gray-500">
-                      Start: {new Date(project.start_date).toLocaleDateString('en-GB')}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                        {project.name}
+                      </h4>
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ${
+                        project.status === 'active' ? 'bg-green-100 text-green-800' :
+                        project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {project.status}
+                      </span>
                     </div>
-                  )}
+                    {project.project_type && (
+                      <div className="mb-2">
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
+                          {project.project_type === 'commercial' ? 'Commercial & Domestic' :
+                           project.project_type === 'domestic' ? 'Domestic' :
+                           project.project_type === 'restaurant' ? 'Restaurant' :
+                           project.project_type}
+                        </span>
+                      </div>
+                    )}
+                    {project.description && (
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                        {project.description}
+                      </p>
+                    )}
+                    {project.start_date && (
+                      <div className="text-xs text-gray-500">
+                        Start: {new Date(project.start_date).toLocaleDateString('en-GB')}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

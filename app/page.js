@@ -399,55 +399,75 @@ const getProjectSchedule = (project) => {
   return { formattedStart, formattedEnd, procurementWindow }
 }
 
-const BuildingIcon = ({ type }) => {
+const BuildingIcon = ({ type, projectType }) => {
+  // Use projectType if available, otherwise fall back to type
+  const iconType = projectType || type
+
+  if (iconType === 'commercial') {
+    return (
+      <img
+        src="/office-building.svg"
+        alt="Commercial & Domestic Building"
+        className="h-50 w-50"
+      />
+    )
+  }
+
+  if (iconType === 'domestic') {
+    return (
+      <img
+        src="/domestic-house.svg"
+        alt="Domestic House"
+        className="h-50 w-50"
+      />
+    )
+  }
+
+  if (iconType === 'restaurant') {
+    return (
+      <img
+        src="/restaurant.svg"
+        alt="Restaurant"
+        className="h-50 w-50"
+      />
+    )
+  }
+
+  if (iconType === 'other') {
+    return (
+      <img
+        src="/other-building.svg"
+        alt="Other Building"
+        className="h-50 w-50"
+      />
+    )
+  }
+
+  // Legacy support for old type strings
   switch (type) {
     case 'industrial':
       return (
-        <svg
-          viewBox="0 0 120 120"
-          className="h-50 w-50 text-slate-600"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-        >
-          <rect x="12" y="50" width="96" height="58" rx="6" className="fill-white/70" />
-          <path d="M12 74h96" />
-          <path d="M36 50V30l18 10V30l18 10V30l18 10" />
-          <path d="M36 94h12M60 94h12M84 94h12" />
-        </svg>
+        <img
+          src="/other-building.svg"
+          alt="Industrial Building"
+          className="h-50 w-50"
+        />
       )
     case 'hospitality':
       return (
-        <svg
-          viewBox="0 0 120 120"
-          className="h-50 w-50 text-slate-600"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-        >
-          <path d="M20 98h80" />
-          <path d="M20 98V46l40-24 40 24v52" className="fill-white/70" />
-          <path d="M44 98V66h12v32" />
-          <path d="M64 98V66h12v32" />
-          <path d="M40 46h40" />
-          <path d="M52 34h16" />
-        </svg>
+        <img
+          src="/restaurant.svg"
+          alt="Hospitality"
+          className="h-50 w-50"
+        />
       )
     case 'residential':
       return (
-        <svg
-          viewBox="0 0 120 120"
-          className="h-50 w-50 text-slate-600"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="3"
-        >
-          <path d="M20 94h80" />
-          <path d="M24 94V56l36-26 36 26v38" className="fill-white/70" />
-          <path d="M48 94V74h24v20" />
-          <path d="M34 66h12M74 66h12" />
-          <path d="M20 56h80" />
-        </svg>
+        <img
+          src="/domestic-house.svg"
+          alt="Residential"
+          className="h-50 w-50"
+        />
       )
     default:
       return (
@@ -460,11 +480,20 @@ const BuildingIcon = ({ type }) => {
   }
 }
 
-const CategoryNode = ({ name }) => {
+const CategoryNode = ({ name, categoryId, projectId, onClick }) => {
   const { color, Icon } = getCategoryStyle(name)
+
+  const handleClick = (e) => {
+    e.stopPropagation()
+    if (onClick) {
+      onClick(categoryId, projectId)
+    }
+  }
+
   return (
     <div
-      className={`flex min-h-24 min-w-32 max-w-36 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-2 ${color}`}
+      onClick={handleClick}
+      className={`flex min-h-24 min-w-32 max-w-36 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-2 ${color} ${onClick ? 'cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-200' : ''}`}
     >
       <Icon className="h-6 w-6 flex-shrink-0" />
       <span className="mt-1 text-center text-[10px] font-semibold leading-tight break-words px-1">
@@ -478,6 +507,7 @@ const ProjectTree = ({ project }) => {
   const categories = clampCategories(project.categories ?? [])
   const total = categories.length
   const buildingType = determineBuildingType(project)
+  const projectType = project.project_type || buildingType
 
   return (
     <div className="relative mx-auto flex h-[600px] w-full items-center justify-center">
@@ -487,9 +517,12 @@ const ProjectTree = ({ project }) => {
         <div className="relative flex items-center justify-center rounded-3xl border border-indigo-100 bg-white/90 p-8 shadow-xl">
           <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-50 via-white to-slate-50 opacity-80" />
           <div className="relative">
-            <BuildingIcon type={buildingType} />
+            <BuildingIcon type={buildingType} projectType={projectType} />
             <div className="mt-3 text-center text-sm font-semibold uppercase tracking-wide text-slate-500">
-              {buildingType}
+              {projectType === 'commercial' ? 'Commercial & Domestic' :
+               projectType === 'domestic' ? 'Domestic' :
+               projectType === 'restaurant' ? 'Restaurant' :
+               projectType === 'other' ? 'Other' : buildingType}
             </div>
           </div>
         </div>
@@ -559,7 +592,17 @@ const ProjectTree = ({ project }) => {
               className="absolute left-1/2 top-1/2"
               style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}
             >
-              <CategoryNode name={category.name} />
+              <CategoryNode
+                name={category.name}
+                categoryId={category.id}
+                projectId={project.id}
+                onClick={(catId, projId) => {
+                  // Navigate to project page with category highlighted
+                  if (typeof window !== 'undefined') {
+                    window.location.href = `/projects/${projId}#category-${catId}`
+                  }
+                }}
+              />
             </div>
           </div>
         )
@@ -715,8 +758,8 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.25),_transparent_60%)]" />
         <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-white">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Skylon Build Network</h1>
-            <p className="mt-1 text-sm text-white">
+            <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-md">Skylon Build Network</h1>
+            <p className="mt-1 text-sm text-white/90 drop-shadow-sm">
               Commercial & Domestic refurbishment packages for subcontractors in Central London.
             </p>
           </div>
@@ -742,13 +785,13 @@ export default function HomePage() {
         <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-indigo-500/10 blur-3xl" />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-20 text-white md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
-            <span className="rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white">
+            <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm">
               Commercial & Domestic Refurbishment
             </span>
-            <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl">
+            <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl text-white drop-shadow-md">
               Break down complex fit-out projects into clear trade packages ready for bid.
             </h2>
-            <p className="mt-6 text-lg text-white">
+            <p className="mt-6 text-lg text-white/95 drop-shadow-sm">
               Our coordinators publish scope, drawings, programme expectations and suggested budgets for every workstream. Join the trusted network of London subcontractors and win the packages that match your crew.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
