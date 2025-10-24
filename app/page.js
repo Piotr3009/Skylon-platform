@@ -559,7 +559,6 @@ const ProjectTree = ({ project }) => {
         const arrowSize = 4
         const arrowX1 = lineLength - arrowSize
         const arrowY1 = -arrowSize / 2
-        const arrowX2 = lineLength - arrowSize
         const arrowY2 = arrowSize / 2
 
         return (
@@ -597,16 +596,10 @@ const ProjectTree = ({ project }) => {
                 categoryId={category.id}
                 projectId={project.id}
                 tasks={category.tasks}
-                onClick={(catId, projId, tasks) => {
-                  // Navigate to first task in category, or project page if no tasks
+                onClick={(catId, projId) => {
+                  // Navigate to project page with category highlighted
                   if (typeof window !== 'undefined') {
-                    if (tasks && tasks.length > 0) {
-                      // Go to first task in this category
-                      window.location.href = `/projects/${projId}/task/${tasks[0].id}`
-                    } else {
-                      // No tasks, go to project page with category highlighted
-                      window.location.href = `/projects/${projId}#category-${catId}`
-                    }
+                    window.location.href = `/projects/${projId}#category-${catId}`
                   }
                 }}
               />

@@ -160,7 +160,7 @@ export default function VerifyEmailPage() {
         </button>
 
         <p className="mt-4 text-xs text-gray-500 text-center">
-          Note: In production, this would send a verification email. For development, clicking "Verify Email Now" will automatically verify your account.
+          Note: In production, this would send a verification email. For development, clicking &quot;Verify Email Now&quot; will automatically verify your account.
         </p>
       </div>
     </div>
