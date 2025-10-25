@@ -570,7 +570,7 @@ const ProjectTree = ({ project, router }) => {
         const arrowY2 = arrowSize / 2
 
         return (
-          <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 z-20">
+          <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 z-50">
             <svg
               className="absolute overflow-visible pointer-events-none"
               style={{ 
