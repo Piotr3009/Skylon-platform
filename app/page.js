@@ -570,15 +570,16 @@ const ProjectTree = ({ project, router }) => {
         const arrowY2 = arrowSize / 2
 
         return (
-          <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 z-50 pointer-events-none">
+          <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 pointer-events-none" style={{ zIndex: 100 }}>
             <svg
-              className="absolute overflow-visible"
-              style={{ 
+              className="absolute overflow-visible pointer-events-none"
+              style={{
                 left: '50%',
                 top: '50%',
                 transform: `translate(calc(-50% + ${startX}px), calc(-50% + ${startY}px)) rotate(${rotation}deg)`,
                 width: `${lineLength}px`,
-                height: '20px'
+                height: '20px',
+                zIndex: 100
               }}
             >
               <line
@@ -596,8 +597,12 @@ const ProjectTree = ({ project, router }) => {
             </svg>
 
             <div
-              className="absolute left-1/2 top-1/2 pointer-events-auto"
-              style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}
+              className="absolute left-1/2 top-1/2"
+              style={{
+                transform: `translate(-50%, -50%) translate(${x}px, ${y}px)`,
+                zIndex: 101,
+                pointerEvents: 'auto'
+              }}
             >
               <CategoryNode
                 name={category.name}
