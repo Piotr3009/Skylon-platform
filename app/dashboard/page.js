@@ -316,7 +316,7 @@ export default function DashboardPage() {
           <div className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-lg shadow-sm p-6 mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Your Skylon Rating</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Your Rating</h3>
                 <p className="text-sm text-gray-600">Based on quality, timeliness, and budget adherence</p>
               </div>
               <div className="flex flex-col items-end">
@@ -439,29 +439,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Subcontractor Archived Works */}
-        {profile?.role === 'subcontractor' && (
-          <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-green-500 border-t border-r border-b border-gray-200 p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <div className="w-1 h-6 bg-green-500 rounded"></div>
-                Archived Works
-              </h3>
-              <div className="text-right">
-                <div className="text-sm text-gray-600">Total Value Completed</div>
-                <div className="text-2xl font-bold text-green-600">£0</div>
-              </div>
-            </div>
-            <div className="text-center py-8 text-gray-500">
-              <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p>No completed projects yet</p>
-              <p className="text-sm mt-2">Your finished work will appear here</p>
-            </div>
-          </div>
-        )}
-
         {/* Projects List */}
         <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-indigo-500 border-t border-r border-b border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
@@ -528,7 +505,7 @@ export default function DashboardPage() {
                     {project.project_type && (
                       <div className="mb-2">
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
-                          {project.project_type === 'commercial' ? 'Commercial & Domestic' :
+                          {project.project_type === 'commercial' ? 'Commercial' :
                            project.project_type === 'domestic' ? 'Domestic' :
                            project.project_type === 'restaurant' ? 'Restaurant' :
                            project.project_type}
@@ -551,6 +528,29 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Subcontractor Archived Works */}
+        {profile?.role === 'subcontractor' && (
+          <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-green-500 border-t border-r border-b border-gray-200 p-6 mt-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <div className="w-1 h-6 bg-green-500 rounded"></div>
+                Archived Works
+              </h3>
+              <div className="text-right">
+                <div className="text-sm text-gray-600">Total Value Completed</div>
+                <div className="text-2xl font-bold text-green-600">£0</div>
+              </div>
+            </div>
+            <div className="text-center py-8 text-gray-500">
+              <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p>No completed projects yet</p>
+              <p className="text-sm mt-2">Your finished work will appear here</p>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )

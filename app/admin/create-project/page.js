@@ -268,7 +268,7 @@ export default function CreateProjectPage() {
                 className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               >
-                <option value="commercial">Commercial & Domestic</option>
+                <option value="commercial">Commercial</option>
                 <option value="domestic">Domestic Only</option>
                 <option value="restaurant">Restaurant & Hospitality</option>
                 <option value="other">Other</option>
