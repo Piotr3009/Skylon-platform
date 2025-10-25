@@ -160,9 +160,10 @@ export default function PublicTaskPage() {
     setSubmitting(true)
     setError(null)
 
+    // Use upsert to allow updating existing bids
     const { data, error: bidError } = await supabase
       .from('bids')
-      .insert([
+      .upsert(
         {
           task_id: params.taskId,
           subcontractor_id: user.id,
@@ -170,8 +171,11 @@ export default function PublicTaskPage() {
           duration: parseInt(proposalDuration),
           comment: proposalComment,
           status: 'pending'
+        },
+        {
+          onConflict: 'task_id,subcontractor_id'
         }
-      ])
+      )
 
     if (bidError) {
       setError('Failed to submit proposal: ' + bidError.message)
@@ -188,6 +192,7 @@ export default function PublicTaskPage() {
       setProposalPrice('')
       setProposalDuration('')
       setProposalComment('')
+      loadTaskDetails() // Reload to show updated bid
     }, 2000)
   }
 
@@ -335,6 +340,16 @@ export default function PublicTaskPage() {
   }
 
   const canSubmitProposal = user && profile?.role === 'subcontractor' && task.status === 'open'
+
+  // Pre-fill form with existing bid data when opening the form
+  const handleOpenProposalForm = () => {
+    if (myBid) {
+      setProposalPrice(myBid.price.toString())
+      setProposalDuration(myBid.duration.toString())
+      setProposalComment(myBid.comment || '')
+    }
+    setShowProposalForm(true)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -639,17 +654,50 @@ export default function PublicTaskPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Submit proposal */}
-            {canSubmitProposal && !showProposalForm && (
+            {canSubmitProposal && !showProposalForm && !myBid && (
               <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white">
                 <h3 className="text-xl font-bold mb-2">Ready to bid?</h3>
                 <p className="text-blue-100 mb-4 text-sm">
                   Submit your proposal with pricing and timeline
                 </p>
                 <button
-                  onClick={() => setShowProposalForm(true)}
+                  onClick={handleOpenProposalForm}
                   className="w-full px-4 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition shadow"
                 >
                   Submit Proposal
+                </button>
+              </div>
+            )}
+
+            {/* Update existing bid */}
+            {canSubmitProposal && !showProposalForm && myBid && (
+              <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-lg shadow-lg p-6 text-white">
+                <h3 className="text-xl font-bold mb-2">Your Current Bid</h3>
+                <div className="space-y-2 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-100">Price:</span>
+                    <span className="font-semibold">£{myBid.price.toLocaleString('en-GB')}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-100">Duration:</span>
+                    <span className="font-semibold">{myBid.duration} days</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-100">Status:</span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      myBid.status === 'pending' ? 'bg-yellow-500 text-white' :
+                      myBid.status === 'accepted' ? 'bg-white text-green-600' :
+                      'bg-red-500 text-white'
+                    }`}>
+                      {myBid.status}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleOpenProposalForm}
+                  className="w-full px-4 py-3 bg-white text-green-600 font-semibold rounded-lg hover:bg-gray-100 transition shadow"
+                >
+                  Update Proposal
                 </button>
               </div>
             )}
@@ -678,7 +726,9 @@ export default function PublicTaskPage() {
             {/* Proposal form */}
             {showProposalForm && (
               <div className="bg-white rounded-lg shadow-lg border-2 border-blue-500 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Submit Your Proposal</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">
+                  {myBid ? 'Update Your Proposal' : 'Submit Your Proposal'}
+                </h3>
 
                 {error && (
                   <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
@@ -688,7 +738,7 @@ export default function PublicTaskPage() {
 
                 {success && (
                   <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                    Proposal submitted successfully!
+                    {myBid ? 'Proposal updated successfully!' : 'Proposal submitted successfully!'}
                   </div>
                 )}
 
@@ -741,7 +791,7 @@ export default function PublicTaskPage() {
                       disabled={submitting}
                       className="flex-1 px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition"
                     >
-                      {submitting ? 'Submitting...' : 'Submit Proposal'}
+                      {submitting ? (myBid ? 'Updating...' : 'Submitting...') : (myBid ? 'Update Proposal' : 'Submit Proposal')}
                     </button>
                     <button
                       type="button"

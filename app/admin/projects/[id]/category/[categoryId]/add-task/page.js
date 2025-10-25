@@ -97,6 +97,7 @@ export default function AddTaskPage() {
 
     // Upload documents if any
     if (documents.length > 0) {
+      let uploadedCount = 0
       for (const doc of documents) {
         const fileExt = doc.name.split('.').pop()
         const fileName = `${Math.random()}.${fileExt}`
@@ -126,7 +127,10 @@ export default function AddTaskPage() {
               uploaded_by: profile.id
             }
           ])
+
+        uploadedCount++
       }
+      console.log(`Successfully uploaded ${uploadedCount} of ${documents.length} documents`)
     }
 
     setSuccess(true)
@@ -297,20 +301,67 @@ export default function AddTaskPage() {
 
             <div className="mb-6">
               <label className="block font-bold mb-2">
-                Documents (PDF, DWG, etc.)
+                Documents (PDF, DWG, Images, etc.) - Multiple files allowed
               </label>
-              <input
-                type="file"
-                multiple
-                onChange={(e) => setDocuments(Array.from(e.target.files))}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Upload project documents, drawings, specifications
-              </p>
+              <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50/30 hover:bg-blue-50 transition">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+                  onChange={(e) => setDocuments(Array.from(e.target.files))}
+                  className="w-full px-3 py-2 border border-blue-300 bg-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-sm text-blue-600 mt-2 font-medium">
+                  📎 Upload multiple files: PDFs, drawings (DWG/DXF), images, documents
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Click "Choose Files" and select multiple documents at once (Ctrl/Cmd + Click)
+                </p>
+              </div>
+
               {documents.length > 0 && (
-                <div className="mt-2 text-sm">
-                  Selected: {documents.map(d => d.name).join(', ')}
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {documents.length} file{documents.length > 1 ? 's' : ''} selected
+                  </div>
+                  <div className="space-y-2">
+                    {documents.map((doc, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-green-200">
+                        <div className="flex items-center gap-3 flex-1">
+                          <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">{doc.name}</div>
+                            <div className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB</div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newDocs = documents.filter((_, i) => i !== index)
+                            setDocuments(newDocs)
+                          }}
+                          className="ml-3 p-1 text-red-600 hover:bg-red-100 rounded transition flex-shrink-0"
+                          title="Remove file"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDocuments([])}
+                    className="mt-3 text-sm text-red-600 hover:text-red-800 font-medium"
+                  >
+                    Clear all files
+                  </button>
                 </div>
               )}
             </div>
@@ -318,10 +369,19 @@ export default function AddTaskPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 disabled:bg-gray-400 font-bold"
+              className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 disabled:bg-gray-400 font-bold transition"
             >
-              {loading ? 'Creating Task...' : 'Create Task'}
+              {loading
+                ? (documents.length > 0
+                  ? `Creating Task & Uploading ${documents.length} Document${documents.length > 1 ? 's' : ''}...`
+                  : 'Creating Task...')
+                : 'Create Task'}
             </button>
+            {documents.length > 0 && (
+              <p className="text-sm text-gray-600 text-center mt-2">
+                All {documents.length} document{documents.length > 1 ? 's' : ''} will be uploaded when you create the task
+              </p>
+            )}
           </form>
         </div>
       </main>

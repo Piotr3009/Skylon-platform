@@ -624,8 +624,8 @@ const ProjectTree = ({ project, router }) => {
 
 const HeroStat = ({ value, label }) => (
   <div className="rounded-2xl border border-white/40 bg-white/10 px-6 py-4 text-left shadow-sm backdrop-blur">
-    <div className="text-3xl font-bold text-white drop-shadow-sm">{value}</div>
-    <div className="mt-1 text-sm font-medium uppercase tracking-wide text-white/80">{label}</div>
+    <div className="text-3xl font-bold text-[#FFF8DC] drop-shadow-sm">{value}</div>
+    <div className="mt-1 text-sm font-medium uppercase tracking-wide text-[#F5F5DC]">{label}</div>
   </div>
 )
 
@@ -633,11 +633,38 @@ export default function HomePage() {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
+    checkUser()
     loadProjects()
   }, [])
+
+  const checkUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+      setUser(user)
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (profileData) {
+        setProfile(profileData)
+      }
+    }
+  }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    setProfile(null)
+    router.refresh()
+  }
 
   const loadProjects = async () => {
     setLoading(true)
@@ -767,26 +794,58 @@ export default function HomePage() {
       {/* Header */}
       <header className="relative border-b border-white/10 bg-slate-900/70 backdrop-blur">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.25),_transparent_60%)]" />
-        <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-6 text-white">
+        <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white drop-shadow-md">Skylon Build Network</h1>
-            <p className="mt-1 text-sm text-white/90 drop-shadow-sm">
+            <h1 className="text-3xl font-bold tracking-tight text-[#FFF8DC] drop-shadow-md">Skylon Build Network</h1>
+            <p className="mt-1 text-sm text-[#F5F5DC] drop-shadow-sm">
               Commercial & Domestic refurbishment packages for subcontractors in Central London.
             </p>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => router.push('/login')}
-              className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
-            >
-              Log in
-            </button>
-            <button
-              onClick={() => router.push('/register')}
-              className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400"
-            >
-              Become a subcontractor
-            </button>
+          <div className="flex gap-3 items-center">
+            {user && profile ? (
+              <>
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-[#FFF8DC] transition hover:border-white/60 hover:bg-white/10"
+                >
+                  Dashboard
+                </button>
+                <div className="flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur rounded-xl border border-white/20">
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-[#FFF8DC]">
+                      {profile.full_name || profile.company_name || user.email}
+                    </div>
+                    {profile.company_name && profile.full_name && (
+                      <div className="text-xs text-[#F5F5DC]">{profile.company_name}</div>
+                    )}
+                  </div>
+                  <span className="px-3 py-1 bg-white/20 text-[#FFF8DC] rounded-full text-xs font-medium capitalize">
+                    {profile.role || 'user'}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => router.push('/login')}
+                  className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-[#FFF8DC] transition hover:border-white/60 hover:bg-white/10"
+                >
+                  Log in
+                </button>
+                <button
+                  onClick={() => router.push('/register')}
+                  className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-[#FFF8DC] shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400"
+                >
+                  Become a subcontractor
+                </button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -794,15 +853,15 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900">
         <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-20 text-white md:flex-row md:items-center md:justify-between">
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-20 md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
-            <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white shadow-sm">
+            <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#FFF8DC] shadow-sm">
               Commercial & Domestic Refurbishment
             </span>
-            <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl text-white drop-shadow-md">
+            <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl text-[#FFF8DC] drop-shadow-md">
               Break down complex fit-out projects into clear trade packages ready for bid.
             </h2>
-            <p className="mt-6 text-lg text-white/95 drop-shadow-sm">
+            <p className="mt-6 text-lg text-[#F5F5DC] drop-shadow-sm">
               Our coordinators publish scope, drawings, programme expectations and suggested budgets for every workstream. Join the trusted network of London subcontractors and win the packages that match your crew.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -814,7 +873,7 @@ export default function HomePage() {
               </button>
               <button
                 onClick={() => router.push('/login')}
-                className="rounded-2xl border border-white/30 px-6 py-3 text-base font-semibold text-white transition hover:border-white/60 hover:bg-white/10"
+                className="rounded-2xl border border-white/30 px-6 py-3 text-base font-semibold text-[#FFF8DC] transition hover:border-white/60 hover:bg-white/10"
               >
                 Explore active packages
               </button>

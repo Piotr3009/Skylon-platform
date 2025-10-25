@@ -183,30 +183,30 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {(profile?.role === 'owner' || profile?.role === 'coordinator') ? (
             <>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-blue-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
                 <div className="text-gray-600 text-sm font-medium mb-1">Active Projects</div>
                 <div className="text-4xl font-bold text-blue-600">{stats.activeProjects}</div>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-green-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
                 <div className="text-gray-600 text-sm font-medium mb-1">Total Projects</div>
                 <div className="text-4xl font-bold text-green-600">{stats.totalProjects}</div>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-purple-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
                 <div className="text-gray-600 text-sm font-medium mb-1">Subcontractors</div>
                 <div className="text-4xl font-bold text-purple-600">{stats.subcontractors}</div>
               </div>
             </>
           ) : (
             <>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-blue-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
                 <div className="text-gray-600 text-sm font-medium mb-1">Active Projects</div>
                 <div className="text-4xl font-bold text-blue-600">{stats.activeProjects}</div>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-green-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
                 <div className="text-gray-600 text-sm font-medium mb-1">Open Tasks</div>
                 <div className="text-4xl font-bold text-green-600">{stats.totalTasks}</div>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-purple-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
                 <div className="text-gray-600 text-sm font-medium mb-1">My Proposals</div>
                 <div className="text-4xl font-bold text-purple-600">{stats.myBids}</div>
               </div>
@@ -360,15 +360,18 @@ export default function DashboardPage() {
 
         {/* Subcontractor My Bids */}
         {profile?.role === 'subcontractor' && myBids.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">My Recent Proposals</h3>
+          <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-indigo-500 border-t border-r border-b border-gray-200 p-6 mb-8">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="w-1 h-6 bg-indigo-500 rounded"></div>
+              My Recent Proposals
+            </h3>
             <div className="space-y-3">
-              {myBids.map((bid) => (
-                <div
-                  key={bid.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer"
-                  onClick={() => router.push(`/projects/${bid.project_id}/task/${bid.task_id}`)}
-                >
+              {myBids.map((bid, index) => (
+                <div key={bid.id}>
+                  <div
+                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 hover:shadow-md transition cursor-pointer"
+                    onClick={() => router.push(`/projects/${bid.project_id}/task/${bid.task_id}`)}
+                  >
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900">{bid.task_name}</div>
                     <div className="text-sm text-gray-600 mt-1">
@@ -389,6 +392,9 @@ export default function DashboardPage() {
                       {bid.status}
                     </span>
                   </div>
+                  {index < myBids.length - 1 && (
+                    <div className="border-b border-blue-100 my-3"></div>
+                  )}
                 </div>
               ))}
             </div>
@@ -396,9 +402,10 @@ export default function DashboardPage() {
         )}
 
         {/* Projects List */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-indigo-500 border-t border-r border-b border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-gray-900">
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <div className="w-1 h-6 bg-indigo-500 rounded"></div>
               {(profile?.role === 'owner' || profile?.role === 'coordinator')
                 ? 'Recent Projects'
                 : 'Available Projects'}
