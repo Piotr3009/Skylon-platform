@@ -512,9 +512,9 @@ const ProjectTree = ({ project, router }) => {
 
   return (
     <div className="relative mx-auto flex h-[600px] w-full items-center justify-center">
-      <div className="absolute inset-6 rounded-[36px] bg-gradient-to-br from-indigo-100/80 via-indigo-50/60 to-slate-200/70 shadow-lg" />
-      <div className="absolute inset-6 blur-3xl bg-indigo-300/40" />
-      <div className="relative z-0 flex items-center justify-center">
+      <div className="absolute inset-6 rounded-[36px] bg-gradient-to-br from-indigo-100/80 via-indigo-50/60 to-slate-200/70 shadow-lg z-0" />
+      <div className="absolute inset-6 blur-3xl bg-indigo-300/40 z-0" />
+      <div className="relative z-10 flex items-center justify-center">
         <div className="relative flex items-center justify-center rounded-3xl border border-indigo-100 bg-white/90 p-8 shadow-xl">
           <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-50 via-white to-slate-50 opacity-80" />
           <div className="relative">
@@ -570,9 +570,9 @@ const ProjectTree = ({ project, router }) => {
         const arrowY2 = arrowSize / 2
 
         return (
-          <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 z-50">
+          <div key={category.id || `${category.name}-${index}`} className="absolute inset-0 z-50 pointer-events-none">
             <svg
-              className="absolute overflow-visible pointer-events-none"
+              className="absolute overflow-visible"
               style={{ 
                 left: '50%',
                 top: '50%',
@@ -596,7 +596,7 @@ const ProjectTree = ({ project, router }) => {
             </svg>
 
             <div
-              className="absolute left-1/2 top-1/2"
+              className="absolute left-1/2 top-1/2 pointer-events-auto"
               style={{ transform: `translate(-50%, -50%) translate(${x}px, ${y}px)` }}
             >
               <CategoryNode
