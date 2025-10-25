@@ -372,25 +372,26 @@ export default function DashboardPage() {
                     className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 hover:shadow-md transition cursor-pointer"
                     onClick={() => router.push(`/projects/${bid.project_id}/task/${bid.task_id}`)}
                   >
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-900">{bid.task_name}</div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {bid.project_name} → {bid.category_name}
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">{bid.task_name}</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        {bid.project_name} → {bid.category_name}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-gray-900">{formatCurrency(bid.price)}</div>
-                      <div className="text-sm text-gray-600">{bid.duration} days</div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-gray-900">{formatCurrency(bid.price)}</div>
+                        <div className="text-sm text-gray-600">{bid.duration} days</div>
+                      </div>
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                        bid.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        bid.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                        bid.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {bid.status}
+                      </span>
                     </div>
-                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                      bid.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      bid.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                      bid.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {bid.status}
-                    </span>
                   </div>
                   {index < myBids.length - 1 && (
                     <div className="border-b border-blue-100 my-3"></div>
