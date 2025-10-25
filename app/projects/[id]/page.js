@@ -157,9 +157,6 @@ export default function PublicProjectPage() {
                       {project.status}
                     </span>
                   </div>
-                  {project.description && (
-                    <p className="text-gray-600 text-sm mt-1">{project.description}</p>
-                  )}
                 </div>
               </div>
             </div>
@@ -290,15 +287,15 @@ export default function PublicProjectPage() {
                   </div>
                 </div>
 
-                <div className="p-6">
+                <div className="p-4">
                   {category.tasks && category.tasks.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {category.tasks.map((task) => {
                         const Icon = getCategoryIcon(category.name)
                         return (
                           <div
                             key={task.id}
-                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer group"
+                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer group"
                             onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
                           >
                             <div className="flex items-start gap-3 flex-1">
