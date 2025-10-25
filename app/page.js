@@ -858,7 +858,7 @@ export default function HomePage() {
             <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-[#FFF8DC] shadow-sm">
               Commercial & Domestic Refurbishment
             </span>
-            <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl text-[#FFF8DC] drop-shadow-md">
+            <h2 className="mt-6 text-4xl font-cream leading-tight sm:text-5xl text-[#FFF8DC] drop-shadow-md">
               Break down complex fit-out projects into clear trade packages ready for bid.
             </h2>
             <p className="mt-6 text-lg text-[#F5F5DC] drop-shadow-sm">
