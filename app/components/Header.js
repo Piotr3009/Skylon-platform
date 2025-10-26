@@ -31,9 +31,17 @@ export default function Header({
     <header className={headerClasses}>
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <div>
-            {title && <h1 className={titleClasses}>{title}</h1>}
-            {subtitle && <p className={subtitleClasses}>{subtitle}</p>}
+          <div className="flex items-center gap-4">
+            <img 
+              src="/logo.png" 
+              alt="Skylon Construction" 
+              className="h-10 cursor-pointer"
+              onClick={() => router.push('/')}
+            />
+            <div>
+              {title && <h1 className={titleClasses}>{title}</h1>}
+              {subtitle && <p className={subtitleClasses}>{subtitle}</p>}
+            </div>
           </div>
 
           <div className="flex items-center gap-3">

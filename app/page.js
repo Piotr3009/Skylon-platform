@@ -1089,11 +1089,48 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} Skylon Commercial & Domestic Refurbishment. All rights reserved.</p>
-          <div className="flex flex-wrap gap-4">
-            <span>info@skylonbuild.com</span>
-            <span>+44 (0)20 1234 5678</span>
+        <div className="mx-auto max-w-6xl px-4 py-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Logo */}
+            <div>
+              <img src="/logo.png" alt="Skylon Construction" className="h-16 mb-4" />
+              <p className="text-sm text-slate-600">
+                Commercial & Domestic Refurbishment specialists in Central London
+              </p>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-bold text-slate-900 mb-3">Contact</h4>
+              <div className="space-y-2 text-sm text-slate-600">
+                <p>
+                  <strong>E:</strong>{' '}
+                  <a href="mailto:info@skylonconstruction.com" className="hover:text-indigo-600">
+                    info@skylonconstruction.com
+                  </a>
+                </p>
+                <p>
+                  <strong>T:</strong>{' '}
+                  <a href="tel:+447842510066" className="hover:text-indigo-600">
+                    07842 510 066
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            {/* Address */}
+            <div>
+              <h4 className="font-bold text-slate-900 mb-3">Head Office</h4>
+              <address className="text-sm text-slate-600 not-italic">
+                Tyttenhanger House<br />
+                Coursers Road<br />
+                St Albans, AL4 0PF
+              </address>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200 pt-6 text-center text-sm text-slate-600">
+            <p>© {new Date().getFullYear()} Skylon Group UK. All rights reserved.</p>
           </div>
         </div>
       </footer>
