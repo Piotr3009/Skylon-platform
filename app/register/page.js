@@ -34,20 +34,23 @@ export default function RegisterPage() {
 
     // Update profile with additional info
     if (authData.user) {
-      // Czekamy chwilę, żeby trigger handle_new_user zdążył utworzyć profil
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
+      // Używamy upsert zamiast update - upsert działa nawet jeśli profil jeszcze nie istnieje
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({
+        .upsert({
+          id: authData.user.id,
+          email: authData.user.email,
           full_name: fullName,
           company_name: companyName,
           phone: phone || null,
+          role: 'subcontractor'
+        }, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
         })
-        .eq('id', authData.user.id)
 
       if (profileError) {
-        console.error('Profile update error:', profileError)
+        console.error('Profile upsert error:', profileError)
         setError(profileError.message)
         setLoading(false)
         return
