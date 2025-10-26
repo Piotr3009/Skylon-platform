@@ -624,7 +624,7 @@ const ProjectTree = ({ project, router }) => {
 
 const HeroStat = ({ value, label }) => (
   <div className="rounded-2xl border border-white/40 bg-white/10 px-6 py-4 text-left shadow-sm backdrop-blur">
-    <div className="text-3xl font-bold drop-shadow-sm text-cream">{value}</div>
+    <div className="text-3xl font-bold text-cream drop-shadow-sm">{value}</div>
     <div className="mt-1 text-sm font-medium uppercase tracking-wide text-cream-light">{label}</div>
   </div>
 )
@@ -796,8 +796,8 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.25),_transparent_60%)]" />
         <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight drop-shadow-md" class="text-cream">Skylon Build Network</h1>
-            <p className="mt-1 text-sm drop-shadow-sm" class="text-cream-light">
+            <h1 className="text-3xl font-bold tracking-tight text-cream drop-shadow-md">Skylon Build Network</h1>
+            <p className="mt-1 text-sm text-cream-light drop-shadow-sm">
               Commercial & Domestic refurbishment packages for subcontractors in Central London.
             </p>
           </div>
@@ -806,21 +806,20 @@ export default function HomePage() {
               <>
                 <button
                   onClick={() => router.push('/dashboard')}
-                  className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold transition hover:border-white/60 hover:bg-white/10"
-                  class="text-cream"
+                  className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-cream transition hover:border-white/60 hover:bg-white/10"
                 >
                   Dashboard
                 </button>
                 <div className="flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur rounded-xl border border-white/20">
                   <div className="text-right">
-                    <div className="text-sm font-semibold" class="text-cream">
+                    <div className="text-sm font-semibold text-cream">
                       {profile.full_name || profile.company_name || user.email}
                     </div>
                     {profile.company_name && profile.full_name && (
-                      <div className="text-xs" class="text-cream-light">{profile.company_name}</div>
+                      <div className="text-xs text-cream-light">{profile.company_name}</div>
                     )}
                   </div>
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium capitalize" class="text-cream">
+                  <span className="px-3 py-1 bg-white/20 text-cream rounded-full text-xs font-medium capitalize">
                     {profile.role || 'user'}
                   </span>
                 </div>
@@ -835,15 +834,13 @@ export default function HomePage() {
               <>
                 <button
                   onClick={() => router.push('/login')}
-                  className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold transition hover:border-white/60 hover:bg-white/10"
-                  class="text-cream"
+                  className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-cream transition hover:border-white/60 hover:bg-white/10"
                 >
                   Log in
                 </button>
                 <button
                   onClick={() => router.push('/register')}
-                  className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400"
-                  class="text-cream"
+                  className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-cream shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400"
                 >
                   Become a subcontractor
                 </button>
@@ -856,15 +853,15 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900">
         <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="relative mx-auto flex max-w-7xl flex-col gap-8 px-4 py-16 md:flex-row md:items-center md:justify-between">
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-20 md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
-            <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] shadow-sm text-cream">
+            <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-cream shadow-sm">
               Commercial & Domestic Refurbishment
             </span>
-            <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl drop-shadow-md text-cream">
+            <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl text-cream drop-shadow-md">
               Break down complex fit-out projects into clear trade packages ready for bid.
             </h2>
-            <p className="mt-6 text-lg drop-shadow-sm text-cream-light">
+            <p className="mt-6 text-lg text-cream-light drop-shadow-sm">
               Our coordinators publish scope, drawings, programme expectations and suggested budgets for every workstream. Join the trusted network of London subcontractors and win the packages that match your crew.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -876,7 +873,7 @@ export default function HomePage() {
               </button>
               <button
                 onClick={() => router.push('/login')}
-                className="rounded-2xl border border-white/30 px-6 py-3 text-base font-semibold transition hover:border-white/60 hover:bg-white/10 text-cream"
+                className="rounded-2xl border border-white/30 px-6 py-3 text-base font-semibold text-cream transition hover:border-white/60 hover:bg-white/10"
               >
                 Explore active packages
               </button>
@@ -1093,7 +1090,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} Skylon Group UK. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Skylon Commercial & Domestic Refurbishment. All rights reserved.</p>
           <div className="flex flex-wrap gap-4">
             <span>info@skylonbuild.com</span>
             <span>+44 (0)20 1234 5678</span>
