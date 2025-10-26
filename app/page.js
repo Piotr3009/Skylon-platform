@@ -624,8 +624,8 @@ const ProjectTree = ({ project, router }) => {
 
 const HeroStat = ({ value, label }) => (
   <div className="rounded-2xl border border-white/40 bg-white/10 px-6 py-4 text-left shadow-sm backdrop-blur">
-    <div className="text-3xl font-bold drop-shadow-sm" style={{color: '#FFF8DC'}}>{value}</div>
-    <div className="mt-1 text-sm font-medium uppercase tracking-wide" style={{color: '#F5F5DC'}}>{label}</div>
+    <div className="text-3xl font-bold drop-shadow-sm text-cream">{value}</div>
+    <div className="mt-1 text-sm font-medium uppercase tracking-wide text-cream-light">{label}</div>
   </div>
 )
 
@@ -796,8 +796,8 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.25),_transparent_60%)]" />
         <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight drop-shadow-md" style={{color: '#FFF8DC'}}>Skylon Build Network</h1>
-            <p className="mt-1 text-sm drop-shadow-sm" style={{color: '#F5F5DC'}}>
+            <h1 className="text-3xl font-bold tracking-tight drop-shadow-md" class="text-cream">Skylon Build Network</h1>
+            <p className="mt-1 text-sm drop-shadow-sm" class="text-cream-light">
               Commercial & Domestic refurbishment packages for subcontractors in Central London.
             </p>
           </div>
@@ -807,20 +807,20 @@ export default function HomePage() {
                 <button
                   onClick={() => router.push('/dashboard')}
                   className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold transition hover:border-white/60 hover:bg-white/10"
-                  style={{color: '#FFF8DC'}}
+                  class="text-cream"
                 >
                   Dashboard
                 </button>
                 <div className="flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur rounded-xl border border-white/20">
                   <div className="text-right">
-                    <div className="text-sm font-semibold" style={{color: '#FFF8DC'}}>
+                    <div className="text-sm font-semibold" class="text-cream">
                       {profile.full_name || profile.company_name || user.email}
                     </div>
                     {profile.company_name && profile.full_name && (
-                      <div className="text-xs" style={{color: '#F5F5DC'}}>{profile.company_name}</div>
+                      <div className="text-xs" class="text-cream-light">{profile.company_name}</div>
                     )}
                   </div>
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium capitalize" style={{color: '#FFF8DC'}}>
+                  <span className="px-3 py-1 bg-white/20 rounded-full text-xs font-medium capitalize" class="text-cream">
                     {profile.role || 'user'}
                   </span>
                 </div>
@@ -836,14 +836,14 @@ export default function HomePage() {
                 <button
                   onClick={() => router.push('/login')}
                   className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold transition hover:border-white/60 hover:bg-white/10"
-                  style={{color: '#FFF8DC'}}
+                  class="text-cream"
                 >
                   Log in
                 </button>
                 <button
                   onClick={() => router.push('/register')}
                   className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400"
-                  style={{color: '#FFF8DC'}}
+                  class="text-cream"
                 >
                   Become a subcontractor
                 </button>
@@ -858,13 +858,13 @@ export default function HomePage() {
         <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-indigo-500/10 blur-3xl" />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-8 px-4 py-16 md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
-            <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] shadow-sm" style={{color: '#FFF8DC'}}>
+            <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] shadow-sm text-cream">
               Commercial & Domestic Refurbishment
             </span>
-            <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl drop-shadow-md" style={{color: '#FFF8DC'}}>
+            <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl drop-shadow-md text-cream">
               Break down complex fit-out projects into clear trade packages ready for bid.
             </h2>
-            <p className="mt-6 text-lg drop-shadow-sm" style={{color: '#F5F5DC'}}>
+            <p className="mt-6 text-lg drop-shadow-sm text-cream-light">
               Our coordinators publish scope, drawings, programme expectations and suggested budgets for every workstream. Join the trusted network of London subcontractors and win the packages that match your crew.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -876,8 +876,7 @@ export default function HomePage() {
               </button>
               <button
                 onClick={() => router.push('/login')}
-                className="rounded-2xl border border-white/30 px-6 py-3 text-base font-semibold transition hover:border-white/60 hover:bg-white/10"
-                style={{color: '#FFF8DC'}}
+                className="rounded-2xl border border-white/30 px-6 py-3 text-base font-semibold transition hover:border-white/60 hover:bg-white/10 text-cream"
               >
                 Explore active packages
               </button>
@@ -893,33 +892,24 @@ export default function HomePage() {
       </section>
 
       {/* About Skylon Build Network */}
-      <section className="bg-gradient-to-b from-slate-50 to-white py-12">
-        <div className="mx-auto max-w-4xl px-4">
-          <div className="rounded-2xl bg-white border border-slate-200 p-8 shadow-sm">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0">
-                <svg className="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-4">More Than Just a Platform</h3>
-                <div className="space-y-4 text-slate-700 leading-relaxed">
-                  <p>
-                    <strong>Skylon Build Network</strong> is more than just a platform — it's an opportunity for smaller construction companies to enter the world of commercial projects in London. We help subcontractors gain hands-on experience working with major clients, learning industry standards, planning, and coordination within a main contractor environment.
-                  </p>
-                  <p>
-                    Skylon is always open to share knowledge, expertise, and technical support — from bid preparation to on-site delivery. It's a great chance to grow your business, build reputation, and secure long-term contracts in the commercial and refurbishment sector.
-                  </p>
-                </div>
-              </div>
+      <section className="bg-gradient-to-b from-slate-50 to-white py-8">
+        <div className="mx-auto max-w-5xl px-4">
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
+            <h3 className="text-2xl font-bold text-slate-900 mb-4">More Than Just a Platform</h3>
+            <div className="space-y-3 text-slate-700 leading-relaxed">
+              <p>
+                <strong>Skylon Build Network</strong> is more than just a platform — it's an opportunity for smaller construction companies to enter the world of commercial projects in London. We help subcontractors gain hands-on experience working with major clients, learning industry standards, planning, and coordination within a main contractor environment.
+              </p>
+              <p>
+                Skylon is always open to share knowledge, expertise, and technical support — from bid preparation to on-site delivery. It's a great chance to grow your business, build reputation, and secure long-term contracts in the commercial and refurbishment sector.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="bg-white py-12">
+      <section className="bg-white py-10">
         <div className="mx-auto max-w-6xl px-4">
           <h3 className="text-center text-3xl font-bold text-slate-900">
             How project packages flow through Skylon
