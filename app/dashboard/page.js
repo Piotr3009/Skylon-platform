@@ -144,9 +144,11 @@ export default function DashboardPage() {
       .eq('role', 'subcontractor')
 
     // Get all bids stats for admin
-    const { count: totalBidsCount } = await supabase
+    const { count: totalBidsCount, error: totalBidsError } = await supabase
       .from('bids')
       .select('*', { count: 'exact', head: true })
+
+    console.log('Total bids:', totalBidsCount, totalBidsError)
 
     const { count: pendingBidsCount } = await supabase
       .from('bids')
@@ -157,37 +159,6 @@ export default function DashboardPage() {
       .from('bids')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'accepted')
-
-    const { count: rejectedBidsCount } = await supabase
-      .from('bids')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'rejected')
-
-    // Get top bidders
-    const { data: topBiddersData } = await supabase
-      .from('bids')
-      .select(`
-        subcontractor_id,
-        profiles!bids_subcontractor_id_fkey (
-          company_name,
-          full_name
-        )
-      `)
-      .limit(1000)
-
-    // Count bids per subcontractor
-    const bidderCounts = {}
-    if (topBiddersData) {
-      topBiddersData.forEach(bid => {
-        const name = bid.profiles?.company_name || bid.profiles?.full_name || 'Unknown'
-        bidderCounts[name] = (bidderCounts[name] || 0) + 1
-      })
-    }
-
-    const topBidders = Object.entries(bidderCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([name, count]) => ({ name, count }))
 
     // Calculate average bid price
     const { data: bidsWithPrices } = await supabase
@@ -213,8 +184,6 @@ export default function DashboardPage() {
       totalBids: totalBidsCount || 0,
       pendingBids: pendingBidsCount || 0,
       acceptedBids: acceptedBidsCount || 0,
-      rejectedBids: rejectedBidsCount || 0,
-      topBidders: topBidders,
       avgBidPrice: avgBidPrice,
       conversionRate: conversionRate
     })
@@ -341,34 +310,6 @@ export default function DashboardPage() {
               </div>
               <div className="text-3xl font-bold text-blue-600">£{(stats.avgBidPrice || 0).toLocaleString()}</div>
               <div className="text-xs text-gray-500 mt-1">Average proposal</div>
-            </div>
-          </div>
-        )}
-
-        {/* Top Bidders - Admin Only */}
-        {(profile?.role === 'owner' || profile?.role === 'coordinator') && stats.topBidders && stats.topBidders.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-              </svg>
-              Top 5 Most Active Bidders
-            </h3>
-            <div className="space-y-3">
-              {stats.topBidders.map((bidder, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-600">
-                      #{index + 1}
-                    </div>
-                    <div className="font-medium text-gray-900">{bidder.name}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-bold text-indigo-600">{bidder.count}</span>
-                    <span className="text-sm text-gray-500">proposals</span>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         )}
