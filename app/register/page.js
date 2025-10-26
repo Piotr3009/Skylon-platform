@@ -33,6 +33,9 @@ export default function RegisterPage() {
 
     // Update profile with additional info
     if (authData.user) {
+      // Czekamy chwilę, żeby trigger handle_new_user zdążył utworzyć profil
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
