@@ -416,7 +416,7 @@ const BuildingIcon = ({ type, projectType }) => {
   if (iconType === 'domestic') {
     return (
       <img
-        src="/domestic-house.svg"
+        src="/domestic.png"
         alt="Domestic House"
         className="h-50 w-50"
       />
@@ -426,7 +426,7 @@ const BuildingIcon = ({ type, projectType }) => {
   if (iconType === 'restaurant') {
     return (
       <img
-        src="/restaurant.svg"
+        src="/restaurant.png"
         alt="Restaurant"
         className="h-50 w-50"
       />
@@ -456,7 +456,7 @@ const BuildingIcon = ({ type, projectType }) => {
     case 'hospitality':
       return (
         <img
-          src="/restaurant.svg"
+          src="/restaurant.png"
           alt="Hospitality"
           className="h-50 w-50"
         />
@@ -464,7 +464,7 @@ const BuildingIcon = ({ type, projectType }) => {
     case 'residential':
       return (
         <img
-          src="/domestic-house.svg"
+          src="/domestic.png"
           alt="Residential"
           className="h-50 w-50"
         />
