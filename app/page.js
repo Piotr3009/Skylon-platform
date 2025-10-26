@@ -856,7 +856,7 @@ export default function HomePage() {
         <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-20 md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
             <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-cream shadow-sm">
-              Domestic Refurbishment
+              Commercial, Domestic & New Build
             </span>
             <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl text-cream drop-shadow-md">
               Break down complex fit-out projects into clear trade packages ready for bid.
