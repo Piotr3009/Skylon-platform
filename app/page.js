@@ -487,7 +487,6 @@ const CategoryNode = ({ name, categoryId, projectId, tasks, onClick }) => {
 
   const handleClick = (e) => {
     e.stopPropagation()
-    console.log('CLICKED!', categoryId, projectId, tasks)
     if (onClick) {
       onClick(categoryId, projectId, tasks)
     }
@@ -538,13 +537,6 @@ const ProjectTree = ({ project, router }) => {
       )}
 
       {categories.map((category, index) => {
-        console.log('=== DEBUG ===')
-        console.log('Category name:', category.name)
-        console.log('Category ID:', category.id)
-        console.log('Tasks:', category.tasks)
-        console.log('Tasks length:', category.tasks?.length || 0)
-        console.log('============')
-        
         const angle = (index / total) * Math.PI * 2 - Math.PI / 2
         const distance = 290  // Zwiększone z 270 na 290
         const x = Math.cos(angle) * distance
@@ -766,7 +758,6 @@ export default function HomePage() {
 
       setProjects(enhancedProjects)
     } catch (err) {
-      console.error('Failed to load projects', err)
       setError('Unable to load projects from Supabase at the moment. Please try again shortly.')
     } finally {
       setLoading(false)
