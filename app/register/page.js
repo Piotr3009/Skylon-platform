@@ -71,8 +71,8 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <form onSubmit={handleRegister}>
-          <div className="mb-4">
+        <form onSubmit={handleRegister} suppressHydrationWarning>
+          <div className="mb-4" suppressHydrationWarning>
             <label className="block text-gray-700 mb-2">Full Name *</label>
             <input
               type="text"
@@ -82,10 +82,11 @@ export default function RegisterPage() {
               onChange={(e) => setFullName(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              suppressHydrationWarning
             />
           </div>
 
-          <div className="mb-4">
+          <div className="mb-4" suppressHydrationWarning>
             <label className="block text-gray-700 mb-2">Company Name</label>
             <input
               type="text"
@@ -94,10 +95,11 @@ export default function RegisterPage() {
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              suppressHydrationWarning
             />
           </div>
 
-          <div className="mb-4">
+          <div className="mb-4" suppressHydrationWarning>
             <label className="block text-gray-700 mb-2">Email *</label>
             <input
               type="email"
@@ -107,10 +109,11 @@ export default function RegisterPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              suppressHydrationWarning
             />
           </div>
 
-          <div className="mb-6">
+          <div className="mb-6" suppressHydrationWarning>
             <label className="block text-gray-700 mb-2">Password *</label>
             <input
               type="password"
@@ -121,6 +124,7 @@ export default function RegisterPage() {
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
               minLength={6}
+              suppressHydrationWarning
             />
           </div>
 

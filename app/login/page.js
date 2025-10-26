@@ -40,21 +40,22 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleLogin}>
-          <div className="mb-4">
+        <form onSubmit={handleLogin} suppressHydrationWarning>
+          <div className="mb-4" suppressHydrationWarning>
             <label className="block text-gray-700 mb-2">Email</label>
             <input
               type="email"
               name="email"
               autoComplete="email"
               value={email}
+              suppressHydrationWarning
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
-          <div className="mb-6">
+          <div className="mb-6" suppressHydrationWarning>
             <label className="block text-gray-700 mb-2">Password</label>
             <input
               type="password"
@@ -64,6 +65,7 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              suppressHydrationWarning
             />
           </div>
 
