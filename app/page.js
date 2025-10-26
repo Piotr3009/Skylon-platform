@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useTranslations } from 'next-intl'
+import { useLocale } from './components/LocaleProvider'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import LanguageSwitcher from './components/LanguageSwitcher'
@@ -632,7 +632,7 @@ const HeroStat = ({ value, label }) => (
 )
 
 export default function HomePage() {
-  const t = useTranslations()
+  const { t } = useLocale()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
