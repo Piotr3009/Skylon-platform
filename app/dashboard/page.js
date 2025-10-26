@@ -160,18 +160,6 @@ export default function DashboardPage() {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'accepted')
 
-    // Calculate average bid price
-    const { data: bidsWithPrices } = await supabase
-      .from('bids')
-      .select('proposed_price')
-      .not('proposed_price', 'is', null)
-
-    let avgBidPrice = 0
-    if (bidsWithPrices && bidsWithPrices.length > 0) {
-      const total = bidsWithPrices.reduce((sum, bid) => sum + (parseFloat(bid.proposed_price) || 0), 0)
-      avgBidPrice = Math.round(total / bidsWithPrices.length)
-    }
-
     // Calculate conversion rate
     const conversionRate = totalBidsCount > 0 
       ? Math.round((acceptedBidsCount / totalBidsCount) * 100) 
@@ -184,7 +172,6 @@ export default function DashboardPage() {
       totalBids: totalBidsCount || 0,
       pendingBids: pendingBidsCount || 0,
       acceptedBids: acceptedBidsCount || 0,
-      avgBidPrice: avgBidPrice,
       conversionRate: conversionRate
     })
   }
@@ -259,7 +246,7 @@ export default function DashboardPage() {
 
         {/* Proposals Breakdown - Admin Only */}
         {(profile?.role === 'owner' || profile?.role === 'coordinator') && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-gray-600 text-sm font-medium">Pending</div>
@@ -297,19 +284,6 @@ export default function DashboardPage() {
               </div>
               <div className="text-3xl font-bold text-indigo-600">{stats.conversionRate || 0}%</div>
               <div className="text-xs text-gray-500 mt-1">Acceptance rate</div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-gray-600 text-sm font-medium">Avg Bid Price</div>
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              </div>
-              <div className="text-3xl font-bold text-blue-600">£{(stats.avgBidPrice || 0).toLocaleString()}</div>
-              <div className="text-xs text-gray-500 mt-1">Average proposal</div>
             </div>
           </div>
         )}
