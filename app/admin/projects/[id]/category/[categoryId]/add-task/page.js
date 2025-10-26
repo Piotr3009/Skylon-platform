@@ -333,7 +333,7 @@ export default function AddTaskPage() {
                   className="w-full px-3 py-2 border border-blue-300 bg-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-sm text-blue-600 mt-2 font-medium">
-                  📎 Click "Choose Files" multiple times to add more documents
+                  📎 Click &quot;Choose Files&quot; multiple times to add more documents
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
                   You can select multiple files at once (Ctrl/Cmd + Click) or add them one by one

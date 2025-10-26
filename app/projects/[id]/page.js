@@ -263,7 +263,7 @@ export default function PublicProjectPage() {
               </h3>
               <p className="text-gray-700 mb-3 text-sm leading-relaxed">
                 We choose our partners based on comprehensive evaluation criteria. 
-                <strong className="text-gray-900"> We don't just accept the lowest bid.</strong>
+                <strong className="text-gray-900"> We don&apos;t just accept the lowest bid.</strong>
               </p>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
