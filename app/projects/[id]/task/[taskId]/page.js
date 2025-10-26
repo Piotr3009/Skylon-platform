@@ -77,7 +77,6 @@ export default function PublicTaskPage() {
       .single()
 
     if (taskError) {
-      console.error('Task error:', taskError)
       setLoading(false)
       return
     }
@@ -217,7 +216,6 @@ export default function PublicTaskPage() {
       ])
 
     if (questionError) {
-      console.error('Question error:', questionError)
       setAskingQuestion(false)
       return
     }

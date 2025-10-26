@@ -22,14 +22,12 @@ export default function ProjectDetailPage() {
   const params = useParams()
 
   useEffect(() => {
-    console.log('🚀 useEffect started, project ID:', params.id)
     checkAuth()
     loadProject()
     loadCategories()
   }, [])
 
   const checkAuth = async () => {
-    console.log('🔐 Checking auth...')
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
@@ -49,19 +47,15 @@ export default function ProjectDetailPage() {
     }
 
     setProfile(profileData)
-    console.log('✅ Auth OK, role:', profileData?.role)
   }
 
   const loadProject = async () => {
-    console.log('📋 Loading project...')
     const { data, error } = await supabase
       .from('projects')
       .select('*')
       .eq('id', params.id)
       .single()
 
-    console.log('Project data:', data)
-    console.log('Project error:', error)
 
     if (!error) {
       setProject(data)
@@ -70,8 +64,6 @@ export default function ProjectDetailPage() {
   }
 
   const loadCategories = async () => {
-    console.log('🔍 START loadCategories')
-    console.log('Project ID:', params.id)
     
     // Pobierz kategorie
     const { data: categoriesData, error: categoriesError } = await supabase
@@ -81,7 +73,6 @@ export default function ProjectDetailPage() {
       .order('display_order')
 
     if (categoriesError) {
-      console.log('💥 BŁĄD kategorii:', categoriesError)
       return
     }
 
@@ -94,12 +85,9 @@ export default function ProjectDetailPage() {
       .in('category_id', categoryIds)
 
     if (tasksError) {
-      console.log('💥 BŁĄD tasks:', tasksError)
       return
     }
 
-    console.log('📦 Categories:', categoriesData.length)
-    console.log('📦 Tasks:', tasksData.length)
 
     // Połącz tasks z kategoriami
     const categoriesWithTasks = categoriesData.map(category => ({
@@ -107,7 +95,6 @@ export default function ProjectDetailPage() {
       tasks: tasksData.filter(task => task.category_id === category.id)
     }))
 
-    console.log('✅ Categories with tasks:', categoriesWithTasks)
     setCategories(categoriesWithTasks)
   }
 

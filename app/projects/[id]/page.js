@@ -61,7 +61,6 @@ export default function PublicProjectPage() {
       .single()
 
     if (projectError) {
-      console.error('Project error:', projectError)
       setLoading(false)
       return
     }
@@ -76,7 +75,6 @@ export default function PublicProjectPage() {
       .order('display_order')
 
     if (categoriesError) {
-      console.error('Categories error:', categoriesError)
       setLoading(false)
       return
     }

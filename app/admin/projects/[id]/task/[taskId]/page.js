@@ -76,7 +76,6 @@ export default function AdminTaskDetailPage() {
       .single()
 
     if (taskError) {
-      console.error('Task error:', taskError)
       setLoading(false)
       return
     }

@@ -125,7 +125,6 @@ export default function AddTaskPage() {
           .upload(filePath, doc)
 
         if (uploadError) {
-          console.error('Failed to upload document:', uploadError)
           continue
         }
 
@@ -147,7 +146,6 @@ export default function AddTaskPage() {
 
         uploadedCount++
       }
-      console.log(`Successfully uploaded ${uploadedCount} of ${documents.length} documents`)
     }
 
     setSuccess(true)
