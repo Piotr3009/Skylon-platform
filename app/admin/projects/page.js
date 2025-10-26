@@ -2,27 +2,32 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { archiveProject } from '@/lib/archiveProject'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
+import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 import Header from '@/app/components/Header'
+import Breadcrumbs from '@/app/components/Breadcrumbs'
 
-export default function ProjectsListPage() {
+export default function ProjectDetailPage() {
   const [profile, setProfile] = useState(null)
-  const [projects, setProjects] = useState([])
+  const [project, setProject] = useState(null)
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editingProject, setEditingProject] = useState(null)
+  const [showCategoryForm, setShowCategoryForm] = useState(false)
+  const [categoryName, setCategoryName] = useState('')
   const [showEditModal, setShowEditModal] = useState(false)
-  const [showArchiveModal, setShowArchiveModal] = useState(false)
-  const [archivingProject, setArchivingProject] = useState(null)
-  const [archiving, setArchiving] = useState(false)
+  const [editingProject, setEditingProject] = useState(null)
   const router = useRouter()
+  const params = useParams()
 
   useEffect(() => {
+    console.log('🚀 useEffect started, project ID:', params.id)
     checkAuth()
-    loadProjects()
+    loadProject()
+    loadCategories()
   }, [])
 
   const checkAuth = async () => {
+    console.log('🔐 Checking auth...')
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
@@ -42,110 +47,119 @@ export default function ProjectsListPage() {
     }
 
     setProfile(profileData)
+    console.log('✅ Auth OK, role:', profileData?.role)
   }
 
-  const loadProjects = async () => {
+  const loadProject = async () => {
+    console.log('📋 Loading project...')
     const { data, error } = await supabase
       .from('projects')
       .select('*')
-      .order('created_at', { ascending: false })
+      .eq('id', params.id)
+      .single()
 
-    if (!error && data) {
-      // Get bid counts for each project
-      const projectsWithBids = await Promise.all(
-        data.map(async (project) => {
-          // First get categories for this project
-          const { data: categories } = await supabase
-            .from('categories')
-            .select('id')
-            .eq('project_id', project.id)
+    console.log('Project data:', data)
+    console.log('Project error:', error)
 
-          const categoryIds = categories?.map(c => c.id) || []
-
-          // Count total tasks (through categories)
-          const { count: tasksCount } = await supabase
-            .from('tasks')
-            .select('*', { count: 'exact', head: true })
-            .in('category_id', categoryIds)
-
-          // Count bids (through tasks)
-          if (categoryIds.length > 0) {
-            const { data: tasks } = await supabase
-              .from('tasks')
-              .select('id')
-              .in('category_id', categoryIds)
-
-            const taskIds = tasks?.map(t => t.id) || []
-
-            const { count: bidsCount } = await supabase
-              .from('bids')
-              .select('*', { count: 'exact', head: true })
-              .in('task_id', taskIds)
-
-            return {
-              ...project,
-              tasksCount: tasksCount || 0,
-              bidsCount: bidsCount || 0
-            }
-          }
-
-          return {
-            ...project,
-            tasksCount: tasksCount || 0,
-            bidsCount: 0
-          }
-        })
-      )
-      setProjects(projectsWithBids)
+    if (!error) {
+      setProject(data)
     }
     setLoading(false)
   }
 
-  const handleEdit = (e, project) => {
-    e.stopPropagation()
+  const loadCategories = async () => {
+    console.log('🔍 START loadCategories')
+    console.log('Project ID:', params.id)
+    
+    // Pobierz kategorie
+    const { data: categoriesData, error: categoriesError } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('project_id', params.id)
+      .order('display_order')
+
+    if (categoriesError) {
+      console.log('💥 BŁĄD kategorii:', categoriesError)
+      return
+    }
+
+    // Pobierz wszystkie tasks dla tych kategorii
+    const categoryIds = categoriesData.map(c => c.id)
+    
+    const { data: tasksData, error: tasksError } = await supabase
+      .from('tasks')
+      .select('id, name, status, suggested_price, category_id')
+      .in('category_id', categoryIds)
+
+    if (tasksError) {
+      console.log('💥 BŁĄD tasks:', tasksError)
+      return
+    }
+
+    console.log('📦 Categories:', categoriesData.length)
+    console.log('📦 Tasks:', tasksData.length)
+
+    // Połącz tasks z kategoriami
+    const categoriesWithTasks = categoriesData.map(category => ({
+      ...category,
+      tasks: tasksData.filter(task => task.category_id === category.id)
+    }))
+
+    console.log('✅ Categories with tasks:', categoriesWithTasks)
+    setCategories(categoriesWithTasks)
+  }
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault()
+    
+    const { error } = await supabase
+      .from('categories')
+      .insert([
+        {
+          project_id: params.id,
+          name: categoryName,
+          display_order: categories.length
+        }
+      ])
+
+    if (!error) {
+      setCategoryName('')
+      setShowCategoryForm(false)
+      loadCategories()
+    }
+  }
+
+  const handleDeleteCategory = async (categoryId) => {
+    if (!confirm('Delete this category and all its tasks?')) return
+
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', categoryId)
+
+    if (!error) {
+      loadCategories()
+    }
+  }
+
+  const handleEdit = () => {
     setEditingProject({...project})
     setShowEditModal(true)
   }
 
-  const handleDelete = async (e, projectId) => {
-    e.stopPropagation()
-    if (!confirm('Are you sure you want to delete this project?')) return
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this project? All categories and tasks will be deleted.')) return
 
     const { error } = await supabase
       .from('projects')
       .delete()
-      .eq('id', projectId)
+      .eq('id', params.id)
 
     if (!error) {
-      loadProjects()
+      router.push('/admin/projects')
     } else {
       alert('Error deleting project')
     }
-  }
-
-  const handleArchiveClick = (e, project) => {
-    e.stopPropagation()
-    setArchivingProject(project)
-    setShowArchiveModal(true)
-  }
-
-  const handleArchiveConfirm = async () => {
-    if (!archivingProject || !profile) return
-
-    setArchiving(true)
-
-    const result = await archiveProject(archivingProject.id, profile.id)
-
-    if (result.success) {
-      alert(`✅ ${result.message}\n\nStats:\n- Tasks: ${result.stats.totalTasks}\n- Proposals: ${result.stats.totalBids}\n- Files deleted: ${result.stats.filesDeleted}`)
-      setShowArchiveModal(false)
-      setArchivingProject(null)
-      loadProjects() // Reload list
-    } else {
-      alert(`❌ Error: ${result.message}`)
-    }
-
-    setArchiving(false)
   }
 
   const handleSaveEdit = async (e) => {
@@ -160,12 +174,12 @@ export default function ProjectsListPage() {
         start_date: editingProject.start_date,
         end_date: editingProject.end_date
       })
-      .eq('id', editingProject.id)
+      .eq('id', params.id)
 
     if (!error) {
       setShowEditModal(false)
       setEditingProject(null)
-      loadProjects()
+      loadProject()
     } else {
       alert('Error updating project')
     }
@@ -185,11 +199,11 @@ export default function ProjectsListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
       <Header
-        title="All Projects"
-        subtitle="Manage your construction projects"
+        title={project?.name || 'Project Details'}
+        subtitle="Manage categories and tasks"
         user={profile}
         profile={profile}
         onLogout={handleLogout}
@@ -197,153 +211,203 @@ export default function ProjectsListPage() {
         showDashboard={true}
         gradient={true}
       >
-        <div className="flex gap-3">
-          <button
-            onClick={() => router.push('/admin/archive')}
-            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition font-semibold shadow-sm"
-          >
-            📦 Archive
-          </button>
-          <button
-            onClick={() => router.push('/admin/create-project')}
-            className="px-4 py-2 bg-white text-indigo-600 rounded-lg hover:bg-indigo-50 transition font-semibold shadow-sm"
-          >
-            + New Project
-          </button>
-        </div>
+        <button
+          onClick={handleEdit}
+          className="px-4 py-2 bg-white/20 text-white border border-white/30 rounded-lg hover:bg-white/30 transition"
+        >
+          Edit
+        </button>
+        <button
+          onClick={handleArchiveClick}
+          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
+        >
+          Archive
+        </button>
+        <button
+          onClick={handleDelete}
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+        >
+          Delete
+        </button>
       </Header>
 
-      {/* Projects List */}
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {projects.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <p className="text-gray-600 mb-4">No projects yet</p>
-            <button
-              onClick={() => router.push('/admin/create-project')}
-              className="px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Create Your First Project
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow"
-              >
-                <div
-                  className="cursor-pointer"
-                  onClick={() => router.push(`/admin/projects/${project.id}`)}
-                >
-                  {(project.project_image_url || project.gantt_image_url) && (
-                    <img
-                      src={project.project_image_url || project.gantt_image_url}
-                      alt={project.name}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                  )}
-                  <div className="p-4">
-                    <h3 className="text-xl font-bold mb-2">{project.name}</h3>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                      {project.description || 'No description'}
-                    </p>
-                    <div className="flex justify-between items-center text-sm mb-3">
-                      <span className={`px-2 py-1 rounded text-white ${
-                        project.status === 'active' ? 'bg-green-500' : 
-                        project.status === 'completed' ? 'bg-blue-500' : 
-                        'bg-gray-500'
-                      }`}>
-                        {project.status}
-                      </span>
-                      {project.start_date && (
-                        <span className="text-gray-500">
-                          {new Date(project.start_date).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                    {/* Proposals & Tasks Count */}
-                    <div className="flex items-center gap-4 pt-3 border-t border-gray-200">
-                      <div className="flex items-center gap-2 text-sm">
-                        <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span className="font-semibold text-indigo-600">{project.bidsCount || 0}</span>
-                        <span className="text-gray-600">proposals</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        <span className="font-semibold text-gray-700">{project.tasksCount || 0}</span>
-                        <span className="text-gray-600">packages</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="px-4 pb-4 flex gap-2">
-                  <button
-                    onClick={(e) => handleEdit(e, project)}
-                    className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={(e) => handleArchiveClick(e, project)}
-                    className="flex-1 px-3 py-2 bg-orange-600 text-white text-sm rounded hover:bg-orange-700"
-                  >
-                    Archive
-                  </button>
-                  <button
-                    onClick={(e) => handleDelete(e, project.id)}
-                    className="flex-1 px-3 py-2 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <Breadcrumbs
+          items={[
+            { label: 'Home', href: '/' },
+            { label: 'Projects', href: '/admin/projects' },
+            { label: project?.name || 'Loading...' }
+          ]}
+        />
+
+        {project && (
+          <div className="bg-white/80 backdrop-blur rounded-lg shadow-sm border border-indigo-100 p-4 mb-6">
+            <div className="flex gap-4 text-sm flex-wrap">
+              {project.start_date && (
+                <span className="text-gray-700">
+                  <span className="font-semibold">Start:</span> {new Date(project.start_date).toLocaleDateString()}
+                </span>
+              )}
+              {project.end_date && (
+                <span className="text-gray-700">
+                  <span className="font-semibold">End:</span> {new Date(project.end_date).toLocaleDateString()}
+                </span>
+              )}
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                {project.status}
+              </span>
+              {project.project_type && (
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                  {project.project_type === 'commercial' ? 'Commercial & Domestic' :
+                   project.project_type === 'domestic' ? 'Domestic' :
+                   project.project_type === 'restaurant' ? 'Restaurant' :
+                   project.project_type}
+                </span>
+              )}
+            </div>
           </div>
         )}
-      </main>
+      </div>
 
-      {/* Archive Confirmation Modal */}
-      {showArchiveModal && archivingProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold mb-4 text-orange-600">⚠️ Archive Project</h2>
-            <div className="mb-6">
-              <p className="text-gray-700 mb-3">
-                You are about to archive: <strong>{archivingProject.name}</strong>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 py-0">
+        {/* Project Description */}
+        {project?.description && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Project Description
+            </h2>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {project.description}
               </p>
-              <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">
-                <strong>Warning:</strong> All PDFs and images will be permanently deleted from storage.
-                <br/>
-                Only data (text) will be saved to archive.
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleArchiveConfirm}
-                disabled={archiving}
-                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:bg-gray-400"
-              >
-                {archiving ? 'Archiving...' : 'Confirm Archive'}
-              </button>
-              <button
-                onClick={() => {
-                  setShowArchiveModal(false)
-                  setArchivingProject(null)
-                }}
-                disabled={archiving}
-                className="flex-1 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 disabled:bg-gray-300"
-              >
-                Cancel
-              </button>
             </div>
           </div>
+        )}
+
+        {/* Gantt Chart */}
+        {project?.gantt_image_url && (
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 className="text-xl font-bold mb-4">Project Timeline</h2>
+            <img 
+              src={project.gantt_image_url} 
+              alt="Gantt Chart" 
+              className="w-full rounded"
+            />
+          </div>
+        )}
+
+        {/* Categories Section */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Categories & Tasks</h2>
+            <button
+              onClick={() => setShowCategoryForm(!showCategoryForm)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              + Add Category
+            </button>
+          </div>
+
+          {/* Add Category Form */}
+          {showCategoryForm && (
+            <form onSubmit={handleAddCategory} className="mb-6 p-4 bg-blue-50 rounded">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  placeholder="Category name (e.g., M&E, Construction, Finishes)"
+                  className="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCategoryForm(false)}
+                  className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Categories List */}
+          {categories.length === 0 ? (
+            <p className="text-gray-600 text-center py-8">
+              No categories yet. Add your first category to organize tasks.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {categories.map((category) => (
+                <div key={category.id} className={`border rounded-lg p-4 ${getCategoryColor(category.name)}`}>
+                  <div className="flex justify-between items-center mb-3">
+                    <div className="flex items-center gap-3">
+                      {(() => {
+                        const Icon = getCategoryIcon(category.name)
+                        return <Icon className="w-6 h-6" />
+                      })()}
+                      <h3 className="text-lg font-bold">{category.name}</h3>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => router.push(`/admin/projects/${params.id}/category/${category.id}/add-task`)}
+                        className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                      >
+                        + Add Task
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCategory(category.id)}
+                        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tasks in this category */}
+                  {category.tasks && category.tasks.length > 0 ? (
+                    <div className="space-y-2">
+                      {category.tasks.map((task) => (
+                        <div
+                          key={task.id}
+                          className="flex justify-between items-center p-3 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer"
+                          onClick={() => router.push(`/admin/projects/${params.id}/task/${task.id}`)}
+                        >
+                          <div>
+                            <div className="font-medium">{task.name}</div>
+                            <div className="text-sm text-gray-600">
+                              {task.suggested_price && `£${task.suggested_price}`}
+                            </div>
+                          </div>
+                          <span className={`px-2 py-1 text-xs rounded ${
+                            task.status === 'open' ? 'bg-green-100 text-green-800' :
+                            task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {task.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No tasks yet</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </main>
 
       {/* Edit Modal */}
       {showEditModal && editingProject && (
