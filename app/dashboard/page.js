@@ -395,9 +395,9 @@ export default function DashboardPage() {
 
         {/* Subcontractor My Bids */}
         {profile?.role === 'subcontractor' && myBids.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-indigo-500 border-t border-r border-b border-gray-200 p-6 mb-8">
+          <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-purple-500 border-t border-r border-b border-gray-200 p-6 mb-8">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <div className="w-1 h-6 bg-indigo-500 rounded"></div>
+              <div className="w-1 h-6 bg-purple-500 rounded"></div>
               My Recent Proposals
             </h3>
             <div className="space-y-3">
