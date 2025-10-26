@@ -49,7 +49,7 @@ export default function HistoryPage() {
   }
 
   const loadHistory = async (userId) => {
-    // Load accepted/completed bids
+    // Load ALL bids (pending, negotiation, accepted, rejected)
     const { data: bidsData } = await supabase
       .from('bids')
       .select(`
@@ -59,7 +59,6 @@ export default function HistoryPage() {
         projects!inner(name, project_image_url)
       `)
       .eq('subcontractor_id', userId)
-      .in('status', ['accepted'])
       .order('created_at', { ascending: false })
 
     if (bidsData) {
@@ -72,7 +71,8 @@ export default function HistoryPage() {
         category_name: bid.categories?.name || 'Unknown',
         price: bid.price,
         duration: bid.duration,
-        status: bid.tasks?.status,
+        bid_status: bid.status, // pending, negotiation, accepted, rejected
+        task_status: bid.tasks?.status, // open, assigned, in_progress, completed
         created_at: bid.created_at
       }))
       setCompletedTasks(formattedTasks)
@@ -137,9 +137,9 @@ export default function HistoryPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="text-gray-600 text-sm font-medium mb-1">All Accepted Tasks</div>
+            <div className="text-gray-600 text-sm font-medium mb-1">All My Proposals</div>
             <div className="text-4xl font-bold text-blue-600">{completedTasks.length}</div>
-            <div className="text-xs text-gray-500 mt-1">Including ongoing</div>
+            <div className="text-xs text-gray-500 mt-1">All statuses included</div>
           </div>
         </div>
 
@@ -189,16 +189,15 @@ export default function HistoryPage() {
           )}
         </div>
 
-        {/* Completed Tasks Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Project History ({completedTasks.length})
-          </h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div className="text-xl font-bold text-gray-900 mb-4">
+              My Proposals History ({completedTasks.length})
+            </div>
 
-          {completedTasks.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">
-              No accepted projects yet. Browse available projects and submit proposals to get started.
-            </p>
+            {completedTasks.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                No proposals yet. Browse available projects and submit proposals to get started.
+              </p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {completedTasks.map((task) => (
@@ -226,17 +225,31 @@ export default function HistoryPage() {
                       <div className="text-lg font-bold text-gray-900">{formatCurrency(task.price)}</div>
                       <div className="text-xs text-gray-500">{task.duration} days</div>
                     </div>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      task.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      task.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {task.status}
-                    </span>
+                    <div className="flex flex-col gap-1 items-end">
+                      {/* Bid Status */}
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        task.bid_status === 'accepted' ? 'bg-green-100 text-green-800' :
+                        task.bid_status === 'negotiation' ? 'bg-orange-100 text-orange-800' :
+                        task.bid_status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {task.bid_status}
+                      </span>
+                      {/* Task Status (only for accepted bids) */}
+                      {task.bid_status === 'accepted' && (
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          task.task_status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                          task.task_status === 'in_progress' ? 'bg-indigo-100 text-indigo-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {task.task_status}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mt-3 text-xs text-gray-500">
-                    Accepted: {new Date(task.created_at).toLocaleDateString('en-GB')}
+                    Submitted: {new Date(task.created_at).toLocaleDateString('en-GB')}
                   </div>
                 </div>
               ))}
