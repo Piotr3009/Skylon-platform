@@ -148,7 +148,6 @@ export default function DashboardPage() {
       .from('bids')
       .select('*', { count: 'exact', head: true })
 
-    console.log('Total bids:', totalBidsCount, totalBidsError)
 
     const { count: pendingBidsCount } = await supabase
       .from('bids')
