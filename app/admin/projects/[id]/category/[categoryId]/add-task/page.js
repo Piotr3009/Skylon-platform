@@ -301,21 +301,25 @@ export default function AddTaskPage() {
 
             <div className="mb-6">
               <label className="block font-bold mb-2">
-                Documents (PDF, DWG, Images, etc.) - Multiple files allowed
+                Documents (PDF, DWG, Images, etc.) - Add files one by one or multiple at once
               </label>
               <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50/30 hover:bg-blue-50 transition">
                 <input
                   type="file"
                   multiple
                   accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
-                  onChange={(e) => setDocuments(Array.from(e.target.files))}
+                  onChange={(e) => {
+                    const newFiles = Array.from(e.target.files)
+                    setDocuments([...documents, ...newFiles])
+                    e.target.value = '' // Reset input to allow adding more files
+                  }}
                   className="w-full px-3 py-2 border border-blue-300 bg-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <p className="text-sm text-blue-600 mt-2 font-medium">
-                  📎 Upload multiple files: PDFs, drawings (DWG/DXF), images, documents
+                  📎 Click "Choose Files" multiple times to add more documents
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Click "Choose Files" and select multiple documents at once (Ctrl/Cmd + Click)
+                  You can select multiple files at once (Ctrl/Cmd + Click) or add them one by one
                 </p>
               </div>
 
