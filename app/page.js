@@ -544,7 +544,7 @@ const ProjectTree = ({ project, router }) => {
         console.log('============')
         
         const angle = (index / total) * Math.PI * 2 - Math.PI / 2
-        const distance = 270
+        const distance = 290  // Zwiększone z 270 na 290
         const x = Math.cos(angle) * distance
         const y = Math.sin(angle) * distance
         
