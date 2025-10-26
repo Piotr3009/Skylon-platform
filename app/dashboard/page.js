@@ -143,10 +143,80 @@ export default function DashboardPage() {
       .select('*', { count: 'exact', head: true })
       .eq('role', 'subcontractor')
 
+    // Get all bids stats for admin
+    const { count: totalBidsCount } = await supabase
+      .from('bids')
+      .select('*', { count: 'exact', head: true })
+
+    const { count: pendingBidsCount } = await supabase
+      .from('bids')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending')
+
+    const { count: acceptedBidsCount } = await supabase
+      .from('bids')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'accepted')
+
+    const { count: rejectedBidsCount } = await supabase
+      .from('bids')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'rejected')
+
+    // Get top bidders
+    const { data: topBiddersData } = await supabase
+      .from('bids')
+      .select(`
+        subcontractor_id,
+        profiles!bids_subcontractor_id_fkey (
+          company_name,
+          full_name
+        )
+      `)
+      .limit(1000)
+
+    // Count bids per subcontractor
+    const bidderCounts = {}
+    if (topBiddersData) {
+      topBiddersData.forEach(bid => {
+        const name = bid.profiles?.company_name || bid.profiles?.full_name || 'Unknown'
+        bidderCounts[name] = (bidderCounts[name] || 0) + 1
+      })
+    }
+
+    const topBidders = Object.entries(bidderCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count }))
+
+    // Calculate average bid price
+    const { data: bidsWithPrices } = await supabase
+      .from('bids')
+      .select('proposed_price')
+      .not('proposed_price', 'is', null)
+
+    let avgBidPrice = 0
+    if (bidsWithPrices && bidsWithPrices.length > 0) {
+      const total = bidsWithPrices.reduce((sum, bid) => sum + (parseFloat(bid.proposed_price) || 0), 0)
+      avgBidPrice = Math.round(total / bidsWithPrices.length)
+    }
+
+    // Calculate conversion rate
+    const conversionRate = totalBidsCount > 0 
+      ? Math.round((acceptedBidsCount / totalBidsCount) * 100) 
+      : 0
+
     setStats({
       activeProjects: projectCount || 0,
       totalProjects: totalProjectCount || 0,
-      subcontractors: subcontractorCount || 0
+      subcontractors: subcontractorCount || 0,
+      totalBids: totalBidsCount || 0,
+      pendingBids: pendingBidsCount || 0,
+      acceptedBids: acceptedBidsCount || 0,
+      rejectedBids: rejectedBidsCount || 0,
+      topBidders: topBidders,
+      avgBidPrice: avgBidPrice,
+      conversionRate: conversionRate
     })
   }
 
@@ -180,7 +250,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {(profile?.role === 'owner' || profile?.role === 'coordinator') ? (
             <>
               <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-blue-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
@@ -194,6 +264,10 @@ export default function DashboardPage() {
               <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-purple-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
                 <div className="text-gray-600 text-sm font-medium mb-1">Subcontractors</div>
                 <div className="text-4xl font-bold text-purple-600">{stats.subcontractors}</div>
+              </div>
+              <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-orange-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
+                <div className="text-gray-600 text-sm font-medium mb-1">Total Proposals</div>
+                <div className="text-4xl font-bold text-orange-600">{stats.totalBids || 0}</div>
               </div>
             </>
           ) : (
@@ -213,6 +287,91 @@ export default function DashboardPage() {
             </>
           )}
         </div>
+
+        {/* Proposals Breakdown - Admin Only */}
+        {(profile?.role === 'owner' || profile?.role === 'coordinator') && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-gray-600 text-sm font-medium">Pending</div>
+                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-yellow-600">{stats.pendingBids || 0}</div>
+              <div className="text-xs text-gray-500 mt-1">Awaiting review</div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-gray-600 text-sm font-medium">Accepted</div>
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-green-600">{stats.acceptedBids || 0}</div>
+              <div className="text-xs text-gray-500 mt-1">Awarded contracts</div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-gray-600 text-sm font-medium">Conversion Rate</div>
+                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-indigo-600">{stats.conversionRate || 0}%</div>
+              <div className="text-xs text-gray-500 mt-1">Acceptance rate</div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-gray-600 text-sm font-medium">Avg Bid Price</div>
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-3xl font-bold text-blue-600">£{(stats.avgBidPrice || 0).toLocaleString()}</div>
+              <div className="text-xs text-gray-500 mt-1">Average proposal</div>
+            </div>
+          </div>
+        )}
+
+        {/* Top Bidders - Admin Only */}
+        {(profile?.role === 'owner' || profile?.role === 'coordinator') && stats.topBidders && stats.topBidders.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+              <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
+              Top 5 Most Active Bidders
+            </h3>
+            <div className="space-y-3">
+              {stats.topBidders.map((bidder, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center font-bold text-indigo-600">
+                      #{index + 1}
+                    </div>
+                    <div className="font-medium text-gray-900">{bidder.name}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-indigo-600">{bidder.count}</span>
+                    <span className="text-sm text-gray-500">proposals</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Verification Alerts */}
         {profile && !profile.email_verified && (

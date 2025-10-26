@@ -46,8 +46,30 @@ export default function ProjectsListPage() {
       .select('*')
       .order('created_at', { ascending: false })
 
-    if (!error) {
-      setProjects(data)
+    if (!error && data) {
+      // Get bid counts for each project
+      const projectsWithBids = await Promise.all(
+        data.map(async (project) => {
+          // Count total tasks
+          const { count: tasksCount } = await supabase
+            .from('tasks')
+            .select('*', { count: 'exact', head: true })
+            .eq('project_id', project.id)
+
+          // Count bids for this project
+          const { count: bidsCount } = await supabase
+            .from('bids')
+            .select('*', { count: 'exact', head: true })
+            .eq('project_id', project.id)
+
+          return {
+            ...project,
+            tasksCount: tasksCount || 0,
+            bidsCount: bidsCount || 0
+          }
+        })
+      )
+      setProjects(projectsWithBids)
     }
     setLoading(false)
   }
@@ -179,6 +201,23 @@ export default function ProjectsListPage() {
                           {new Date(project.start_date).toLocaleDateString()}
                         </span>
                       )}
+                    </div>
+                    {/* Proposals & Tasks Count */}
+                    <div className="flex items-center gap-4 pt-3 border-t border-gray-200">
+                      <div className="flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span className="font-semibold text-indigo-600">{project.bidsCount || 0}</span>
+                        <span className="text-gray-600">proposals</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <span className="font-semibold text-gray-700">{project.tasksCount || 0}</span>
+                        <span className="text-gray-600">packages</span>
+                      </div>
                     </div>
                   </div>
                 </div>
