@@ -30,6 +30,23 @@ export default function AddTaskPage() {
     loadCategory()
   }, [])
 
+  // Auto-calculate End Date when Start Date or Duration changes
+  useEffect(() => {
+    if (startDate && estimatedDuration) {
+      const start = new Date(startDate)
+      const duration = parseInt(estimatedDuration)
+      
+      if (!isNaN(duration) && duration > 0) {
+        const end = new Date(start)
+        end.setDate(end.getDate() + duration)
+        
+        // Format to YYYY-MM-DD for input[type="date"]
+        const formattedEndDate = end.toISOString().split('T')[0]
+        setEndDate(formattedEndDate)
+      }
+    }
+  }, [startDate, estimatedDuration])
+
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     
