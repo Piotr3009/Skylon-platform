@@ -215,51 +215,27 @@ export default function DashboardPage() {
         </div>
 
         {/* Verification Alerts */}
-        {profile && (!profile.email_verified || !profile.phone_verified) && (
-          <div className="space-y-3 mb-8">
-            {!profile.email_verified && (
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <div>
-                      <p className="font-semibold text-yellow-800">Email Verification Required</p>
-                      <p className="text-sm text-yellow-700">Verify your email to download documents and access all features</p>
-                    </div>
+        {profile && !profile.email_verified && (
+          <div className="mb-8">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <p className="font-semibold text-yellow-800">Email Verification Required</p>
+                    <p className="text-sm text-yellow-700">Verify your email to download documents and access all features</p>
                   </div>
-                  <button
-                    onClick={() => router.push('/verify-email')}
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
-                  >
-                    Verify Now
-                  </button>
                 </div>
+                <button
+                  onClick={() => router.push('/verify-email')}
+                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
+                >
+                  Verify Now
+                </button>
               </div>
-            )}
-
-            {!profile.phone_verified && (
-              <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                    <div>
-                      <p className="font-semibold text-blue-800">Phone Verification Optional</p>
-                      <p className="text-sm text-blue-700">Verify your phone to receive SMS notifications and secure your account</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => router.push('/verify-phone')}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-                  >
-                    Verify Phone
-                  </button>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         )}
 
