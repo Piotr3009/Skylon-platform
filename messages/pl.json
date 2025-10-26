@@ -1,0 +1,99 @@
+{
+  "nav": {
+    "home": "Strona główna",
+    "dashboard": "Panel",
+    "projects": "Projekty",
+    "logout": "Wyloguj",
+    "login": "Zaloguj",
+    "register": "Zarejestruj"
+  },
+  "hero": {
+    "badge": "Komercyjne, Mieszkaniowe i Nowe Budynki",
+    "title": "Rozdziel złożone projekty wykończeniowe na jasne pakiety zadań gotowe do wyceny",
+    "description": "Nasi koordynatorzy publikują zakres, rysunki, harmonogram i sugerowane budżety dla każdego pakietu. Dołącz do zaufanej sieci londyńskich podwykonawców i wygrywaj pakiety dopasowane do Twojej ekipy.",
+    "registerButton": "Zarejestruj się jako podwykonawca",
+    "loginButton": "Zaloguj się"
+  },
+  "sections": {
+    "activeProjects": "Aktywne drzewa projektów",
+    "activeProjectsDesc": "Kliknij w projekt, aby przejrzeć każdy pakiet, dokumenty i złożyć swoją cenę za pracę, którą możesz wykonać.",
+    "howItWorks": "Jak pakiety projektów przepływają przez Skylon",
+    "selectSubcontractors": "Jak Wybieramy Podwykonawców",
+    "selectSubcontractorsDesc": "Wybieramy naszych partnerów na podstawie kompleksowych kryteriów oceny. Nie akceptujemy tylko najniższej oferty."
+  },
+  "criteria": {
+    "quality": "Jakość",
+    "qualityDesc": "Doskonałość wykonania",
+    "timeliness": "Terminowość",
+    "timelinessDesc": "Dostarczenie na czas",
+    "professionalism": "Profesjonalizm",
+    "professionalismDesc": "Profesjonalne zachowanie",
+    "healthSafety": "Zdrowie i Bezpieczeństwo",
+    "healthSafetyDesc": "Zgodność z bezpieczeństwem",
+    "price": "Cena",
+    "priceDesc": "Konkurencyjna wartość"
+  },
+  "project": {
+    "suggestedBudget": "Sugerowany Budżet",
+    "packages": "Pakiety",
+    "combinedDuration": "Łączny Czas Trwania",
+    "start": "Start",
+    "targetCompletion": "Planowane zakończenie",
+    "scopedTasks": "zdefiniowane zadania",
+    "procurementWindow": "Okno Zamówień",
+    "viewDetails": "Zobacz szczegóły",
+    "projectDescription": "Opis Projektu",
+    "projectTimeline": "Harmonogram Projektu",
+    "categoriesTasks": "Pakiety i Zadania"
+  },
+  "buttons": {
+    "submit": "Zatwierdź",
+    "cancel": "Anuluj",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "archive": "Archiwizuj",
+    "save": "Zapisz",
+    "add": "Dodaj",
+    "addCategory": "+ Dodaj Kategorię",
+    "addTask": "+ Dodaj Zadanie",
+    "viewDetails": "Zobacz szczegóły",
+    "submitProposal": "Złóż Propozycję"
+  },
+  "forms": {
+    "email": "Email",
+    "password": "Hasło",
+    "name": "Nazwa",
+    "description": "Opis",
+    "suggestedPrice": "Sugerowana Cena (£)",
+    "estimatedDuration": "Szacowany Czas (dni)",
+    "expectedStartDate": "Oczekiwana Data Rozpoczęcia",
+    "expectedEndDate": "Oczekiwana Data Zakończenia",
+    "deadline": "Termin / Oczekiwana Data Ukończenia",
+    "documents": "Dokumenty (PDF, DWG, Obrazy, itp.)",
+    "chooseFiles": "Wybierz pliki",
+    "noFileChosen": "Nie wybrano pliku"
+  },
+  "status": {
+    "planning": "Planowanie",
+    "active": "Aktywny",
+    "completed": "Ukończony",
+    "onHold": "Wstrzymany",
+    "open": "Otwarty",
+    "assigned": "Przypisany",
+    "closed": "Zamknięty"
+  },
+  "messages": {
+    "loading": "Ładowanie...",
+    "success": "Sukces!",
+    "error": "Błąd",
+    "noProjects": "Obecnie nie ma aktywnych projektów remontowych otwartych do licytacji. Sprawdź ponownie wkrótce lub skontaktuj się z naszym zespołem.",
+    "noCategories": "Brak kategorii. Dodaj pierwszą kategorię, aby uporządkować zadania.",
+    "noTasks": "Brak zadań",
+    "confirmDelete": "Czy na pewno chcesz to usunąć?",
+    "confirmArchive": "Czy na pewno chcesz zarchiwizować ten projekt?"
+  },
+  "admin": {
+    "manageCategories": "Zarządzaj kategoriami i zadaniami",
+    "projectDetails": "Szczegóły Projektu"
+  }
+}

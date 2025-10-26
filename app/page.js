@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import LanguageSwitcher from './components/LanguageSwitcher'
 
 const CATEGORY_PRESETS = [
   {
@@ -630,6 +632,7 @@ const HeroStat = ({ value, label }) => (
 )
 
 export default function HomePage() {
+  const t = useTranslations()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -802,13 +805,14 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex gap-3 items-center">
+            <LanguageSwitcher />
             {user && profile ? (
               <>
                 <button
                   onClick={() => router.push('/dashboard')}
                   className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-cream transition hover:border-white/60 hover:bg-white/10"
                 >
-                  Dashboard
+                  {t('nav.dashboard')}
                 </button>
                 <div className="flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur rounded-xl border border-white/20">
                   <div className="text-right">
@@ -827,7 +831,7 @@ export default function HomePage() {
                   onClick={handleLogout}
                   className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition"
                 >
-                  Logout
+                  {t('nav.logout')}
                 </button>
               </>
             ) : (
@@ -836,13 +840,13 @@ export default function HomePage() {
                   onClick={() => router.push('/login')}
                   className="rounded-xl border border-white/30 px-4 py-2 text-sm font-semibold text-cream transition hover:border-white/60 hover:bg-white/10"
                 >
-                  Log in
+                  {t('nav.login')}
                 </button>
                 <button
                   onClick={() => router.push('/register')}
                   className="rounded-xl bg-indigo-500 px-4 py-2 text-sm font-semibold text-cream shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-400"
                 >
-                  Become a subcontractor
+                  {t('nav.register')}
                 </button>
               </>
             )}
@@ -856,26 +860,26 @@ export default function HomePage() {
         <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-20 md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
             <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-cream shadow-sm">
-              Commercial, Domestic & New Build
+              {t('hero.badge')}
             </span>
             <h2 className="mt-6 text-4xl font-black leading-tight sm:text-5xl text-cream drop-shadow-md">
-              Break down complex fit-out projects into clear trade packages ready for bid.
+              {t('hero.title')}
             </h2>
             <p className="mt-6 text-lg text-cream-light drop-shadow-sm">
-              Our coordinators publish scope, drawings, programme expectations and suggested budgets for every workstream. Join the trusted network of London subcontractors and win the packages that match your crew.
+              {t('hero.description')}
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <button
                 onClick={() => router.push('/register')}
                 className="rounded-2xl bg-white px-6 py-3 text-base font-semibold text-slate-900 shadow-lg shadow-white/20 transition hover:-translate-y-0.5 hover:shadow-xl"
               >
-                Create subcontractor profile
+                {t('hero.registerButton')}
               </button>
               <button
                 onClick={() => router.push('/login')}
                 className="rounded-2xl border border-white/30 px-6 py-3 text-base font-semibold text-cream transition hover:border-white/60 hover:bg-white/10"
               >
-                Explore active packages
+                {t('hero.loginButton')}
               </button>
             </div>
           </div>

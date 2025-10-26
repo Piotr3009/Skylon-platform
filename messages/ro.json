@@ -1,0 +1,99 @@
+{
+  "nav": {
+    "home": "Acasă",
+    "dashboard": "Panou",
+    "projects": "Proiecte",
+    "logout": "Deconectare",
+    "login": "Autentificare",
+    "register": "Înregistrare"
+  },
+  "hero": {
+    "badge": "Comercial, Rezidențial și Clădiri Noi",
+    "title": "Împărțiți proiectele complexe de amenajare în pachete clare de lucrări, gata pentru licitație",
+    "description": "Coordonatorii noștri publică domeniul de aplicare, desenele, așteptările programului și bugetele sugerate pentru fiecare flux de lucru. Alăturați-vă rețelei de încredere a antreprenorilor londonezi și câștigați pachetele potrivite echipei dumneavoastră.",
+    "registerButton": "Înregistrați-vă ca subcontractor",
+    "loginButton": "Autentificare"
+  },
+  "sections": {
+    "activeProjects": "Arbori de proiecte active",
+    "activeProjectsDesc": "Faceți clic pe un proiect pentru a examina fiecare pachet, documente și pentru a trimite prețul dvs. pentru fluxul de lucru pe care îl puteți livra.",
+    "howItWorks": "Cum circulă pachetele de proiecte prin Skylon",
+    "selectSubcontractors": "Cum Selectăm Subcontractorii",
+    "selectSubcontractorsDesc": "Alegem partenerii pe baza unor criterii cuprinzătoare de evaluare. Nu acceptăm doar cea mai mică ofertă."
+  },
+  "criteria": {
+    "quality": "Calitate",
+    "qualityDesc": "Excelență în meșteșug",
+    "timeliness": "Punctualitate",
+    "timelinessDesc": "Livrare la timp",
+    "professionalism": "Profesionalism",
+    "professionalismDesc": "Conduită profesională",
+    "healthSafety": "Sănătate și Siguranță",
+    "healthSafetyDesc": "Conformitate cu siguranța",
+    "price": "Preț",
+    "priceDesc": "Valoare competitivă"
+  },
+  "project": {
+    "suggestedBudget": "Buget Sugerat",
+    "packages": "Pachete",
+    "combinedDuration": "Durată Combinată",
+    "start": "Start",
+    "targetCompletion": "Finalizare țintă",
+    "scopedTasks": "sarcini definite",
+    "procurementWindow": "Fereastră de Achiziție",
+    "viewDetails": "Vedeți detaliile",
+    "projectDescription": "Descrierea Proiectului",
+    "projectTimeline": "Cronologia Proiectului",
+    "categoriesTasks": "Pachete și Sarcini"
+  },
+  "buttons": {
+    "submit": "Trimiteți",
+    "cancel": "Anulare",
+    "edit": "Editați",
+    "delete": "Ștergeți",
+    "archive": "Arhivați",
+    "save": "Salvați",
+    "add": "Adăugați",
+    "addCategory": "+ Adăugați Categorie",
+    "addTask": "+ Adăugați Sarcină",
+    "viewDetails": "Vedeți detaliile",
+    "submitProposal": "Trimiteți Propunerea"
+  },
+  "forms": {
+    "email": "Email",
+    "password": "Parolă",
+    "name": "Nume",
+    "description": "Descriere",
+    "suggestedPrice": "Preț Sugerat (£)",
+    "estimatedDuration": "Durată Estimată (zile)",
+    "expectedStartDate": "Data de Început Așteptată",
+    "expectedEndDate": "Data de Încheiere Așteptată",
+    "deadline": "Termen Limită / Data de Finalizare Așteptată",
+    "documents": "Documente (PDF, DWG, Imagini, etc.)",
+    "chooseFiles": "Alegeți fișiere",
+    "noFileChosen": "Niciun fișier ales"
+  },
+  "status": {
+    "planning": "Planificare",
+    "active": "Activ",
+    "completed": "Finalizat",
+    "onHold": "În Așteptare",
+    "open": "Deschis",
+    "assigned": "Atribuit",
+    "closed": "Închis"
+  },
+  "messages": {
+    "loading": "Se încarcă...",
+    "success": "Succes!",
+    "error": "Eroare",
+    "noProjects": "În prezent, nu există proiecte active de renovare deschise pentru licitație. Reveniți în curând sau contactați echipa noastră pentru licitații viitoare.",
+    "noCategories": "Nu există încă categorii. Adăugați prima categorie pentru a organiza sarcinile.",
+    "noTasks": "Nu există încă sarcini",
+    "confirmDelete": "Sunteți sigur că doriți să ștergeți acest lucru?",
+    "confirmArchive": "Sunteți sigur că doriți să arhivați acest proiect?"
+  },
+  "admin": {
+    "manageCategories": "Gestionați categoriile și sarcinile",
+    "projectDetails": "Detalii Proiect"
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "hero": {
+    "badge": "Commercial, Domestic & New Build",
+    "title": "Break down complex fit-out projects into clear trade packages ready for bid",
+    "description": "Our coordinators publish scope, drawings, programme expectations and suggested budgets for every workstream. Join the trusted network of London subcontractors and win the packages that match your crew.",
+    "registerButton": "Register as subcontractor",
+    "loginButton": "Sign in"
+  },
+  "sections": {
+    "activeProjects": "Active project trees",
+    "activeProjectsDesc": "Click into a project to review every package, documents and submit your price for the workstream you can deliver.",
+    "howItWorks": "How project packages flow through Skylon",
+    "selectSubcontractors": "How We Select Subcontractors",
+    "selectSubcontractorsDesc": "We choose our partners based on comprehensive evaluation criteria. We don't just accept the lowest bid."
+  },
+  "criteria": {
+    "quality": "Quality",
+    "qualityDesc": "Excellence in workmanship",
+    "timeliness": "Timeliness",
+    "timelinessDesc": "On-time delivery",
+    "professionalism": "Professionalism",
+    "professionalismDesc": "Professional conduct",
+    "healthSafety": "Health & Safety",
+    "healthSafetyDesc": "Safety compliance",
+    "price": "Price",
+    "priceDesc": "Competitive value"
+  },
+  "project": {
+    "suggestedBudget": "Suggested Budget",
+    "packages": "Packages",
+    "combinedDuration": "Combined Duration",
+    "start": "Start",
+    "targetCompletion": "Target completion",
+    "scopedTasks": "scoped tasks",
+    "procurementWindow": "Procurement Window",
+    "viewDetails": "View details",
+    "projectDescription": "Project Description",
+    "projectTimeline": "Project Timeline",
+    "categoriesTasks": "Trade Packages & Tasks"
+  },
+  "buttons": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "archive": "Archive",
+    "save": "Save",
+    "add": "Add",
+    "addCategory": "+ Add Category",
+    "addTask": "+ Add Task",
+    "viewDetails": "View details",
+    "submitProposal": "Submit Proposal"
+  },
+  "forms": {
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "description": "Description",
+    "suggestedPrice": "Suggested Price (£)",
+    "estimatedDuration": "Estimated Duration (days)",
+    "expectedStartDate": "Expected Start Date",
+    "expectedEndDate": "Expected End Date",
+    "deadline": "Deadline / Expected Completion Date",
+    "documents": "Documents (PDF, DWG, Images, etc.)",
+    "chooseFiles": "Choose files",
+    "noFileChosen": "No file chosen"
+  },
+  "status": {
+    "planning": "Planning",
+    "active": "Active",
+    "completed": "Completed",
+    "onHold": "On Hold",
+    "open": "Open",
+    "assigned": "Assigned",
+    "closed": "Closed"
+  },
+  "messages": {
+    "loading": "Loading...",
+    "success": "Success!",
+    "error": "Error",
+    "noProjects": "No active refurbishment projects are open for bidding right now. Check back soon or contact our team for upcoming tenders.",
+    "noCategories": "No categories yet. Add your first category to organize tasks.",
+    "noTasks": "No tasks yet",
+    "confirmDelete": "Are you sure you want to delete this?",
+    "confirmArchive": "Are you sure you want to archive this project?"
+  },
+  "admin": {
+    "manageCategories": "Manage categories and tasks",
+    "projectDetails": "Project Details"
+  }
+}
