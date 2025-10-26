@@ -1093,7 +1093,17 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             {/* Logo */}
             <div>
-              <img src="/logo.png" alt="Skylon Construction" className="h-16 mb-4" />
+              <a 
+                href="https://www.skylongroup.co.uk/" 
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img 
+                  src="/logo.png" 
+                  alt="Skylon Construction" 
+                  className="h-16 mb-4 cursor-pointer hover:opacity-80 transition"
+                />
+              </a>
               <p className="text-sm text-slate-600">
                 Commercial & Domestic Refurbishment specialists in Central London
               </p>

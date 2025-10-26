@@ -32,12 +32,17 @@ export default function Header({
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <img 
-              src="/logo.png" 
-              alt="Skylon Construction" 
-              className="h-10 cursor-pointer"
-              onClick={() => router.push('/')}
-            />
+            <a 
+              href="https://www.skylongroup.co.uk/" 
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img 
+                src="/logo.png" 
+                alt="Skylon Construction" 
+                className="h-10 cursor-pointer hover:opacity-80 transition"
+              />
+            </a>
             <div>
               {title && <h1 className={titleClasses}>{title}</h1>}
               {subtitle && <p className={subtitleClasses}>{subtitle}</p>}
