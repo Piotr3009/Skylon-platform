@@ -899,10 +899,10 @@ export default function HomePage() {
             <h3 className="text-2xl font-bold text-slate-900 mb-4">More Than Just a Platform</h3>
             <div className="space-y-3 text-slate-700 leading-relaxed">
               <p>
-                <strong>Skylon Build Network</strong> is more than just a platform — it's an opportunity for smaller construction companies to enter the world of commercial projects in London. We help subcontractors gain hands-on experience working with major clients, learning industry standards, planning, and coordination within a main contractor environment.
+                <strong>Skylon Build Network</strong> is more than just a platform — it&apos;s an opportunity for smaller construction companies to enter the world of commercial projects in London. We help subcontractors gain hands-on experience working with major clients, learning industry standards, planning, and coordination within a main contractor environment.
               </p>
               <p>
-                Skylon is always open to share knowledge, expertise, and technical support — from bid preparation to on-site delivery. It's a great chance to grow your business, build reputation, and secure long-term contracts in the commercial and refurbishment sector.
+                Skylon is always open to share knowledge, expertise, and technical support — from bid preparation to on-site delivery. It&apos;s a great chance to grow your business, build reputation, and secure long-term contracts in the commercial and refurbishment sector.
               </p>
             </div>
           </div>
