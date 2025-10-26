@@ -54,22 +54,45 @@ export default function ProjectsListPage() {
       // Get bid counts for each project
       const projectsWithBids = await Promise.all(
         data.map(async (project) => {
-          // Count total tasks
+          // First get categories for this project
+          const { data: categories } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('project_id', project.id)
+
+          const categoryIds = categories?.map(c => c.id) || []
+
+          // Count total tasks (through categories)
           const { count: tasksCount } = await supabase
             .from('tasks')
             .select('*', { count: 'exact', head: true })
-            .eq('project_id', project.id)
+            .in('category_id', categoryIds)
 
-          // Count bids for this project
-          const { count: bidsCount } = await supabase
-            .from('bids')
-            .select('*', { count: 'exact', head: true })
-            .eq('project_id', project.id)
+          // Count bids (through tasks)
+          if (categoryIds.length > 0) {
+            const { data: tasks } = await supabase
+              .from('tasks')
+              .select('id')
+              .in('category_id', categoryIds)
+
+            const taskIds = tasks?.map(t => t.id) || []
+
+            const { count: bidsCount } = await supabase
+              .from('bids')
+              .select('*', { count: 'exact', head: true })
+              .in('task_id', taskIds)
+
+            return {
+              ...project,
+              tasksCount: tasksCount || 0,
+              bidsCount: bidsCount || 0
+            }
+          }
 
           return {
             ...project,
             tasksCount: tasksCount || 0,
-            bidsCount: bidsCount || 0
+            bidsCount: 0
           }
         })
       )
