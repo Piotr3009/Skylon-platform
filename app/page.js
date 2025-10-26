@@ -856,7 +856,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900">
         <div className="absolute left-1/2 top-0 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-indigo-500/10 blur-3xl" />
-        <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-4 py-20 md:flex-row md:items-center md:justify-between">
+        <div className="relative mx-auto flex max-w-7xl flex-col gap-8 px-4 py-16 md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
             <span className="rounded-full border border-white/40 bg-white/10 backdrop-blur px-3 py-1 text-xs font-semibold uppercase tracking-[0.3em] shadow-sm" style={{color: '#FFF8DC'}}>
               Commercial & Domestic Refurbishment
@@ -892,8 +892,34 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* About Skylon Build Network */}
+      <section className="bg-gradient-to-b from-slate-50 to-white py-12">
+        <div className="mx-auto max-w-4xl px-4">
+          <div className="rounded-2xl bg-white border border-slate-200 p-8 shadow-sm">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="flex-shrink-0">
+                <svg className="w-12 h-12 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900 mb-4">More Than Just a Platform</h3>
+                <div className="space-y-4 text-slate-700 leading-relaxed">
+                  <p>
+                    <strong>Skylon Build Network</strong> is more than just a platform — it's an opportunity for smaller construction companies to enter the world of commercial projects in London. We help subcontractors gain hands-on experience working with major clients, learning industry standards, planning, and coordination within a main contractor environment.
+                  </p>
+                  <p>
+                    Skylon is always open to share knowledge, expertise, and technical support — from bid preparation to on-site delivery. It's a great chance to grow your business, build reputation, and secure long-term contracts in the commercial and refurbishment sector.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How it works */}
-      <section className="bg-white py-16">
+      <section className="bg-white py-12">
         <div className="mx-auto max-w-6xl px-4">
           <h3 className="text-center text-3xl font-bold text-slate-900">
             How project packages flow through Skylon
