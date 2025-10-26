@@ -20,10 +20,17 @@ export default function RegisterPage() {
     setLoading(true)
     setError(null)
 
-    // Sign up with Supabase Auth
+    // Sign up with Supabase Auth - przekazujemy dane w metadata
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: fullName,
+          company_name: companyName,
+          phone: phone || null
+        }
+      }
     })
 
     if (authError) {
@@ -32,30 +39,8 @@ export default function RegisterPage() {
       return
     }
 
-    // Update profile with additional info
+    // Profil zostanie utworzony automatycznie przez trigger z metadanych
     if (authData.user) {
-      // Używamy upsert zamiast update - upsert działa nawet jeśli profil jeszcze nie istnieje
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: authData.user.id,
-          email: authData.user.email,
-          full_name: fullName,
-          company_name: companyName,
-          phone: phone || null,
-          role: 'subcontractor'
-        }, { 
-          onConflict: 'id',
-          ignoreDuplicates: false 
-        })
-
-      if (profileError) {
-        console.error('Profile upsert error:', profileError)
-        setError(profileError.message)
-        setLoading(false)
-        return
-      }
-
       setSuccess(true)
       setTimeout(() => {
         router.push('/login')
