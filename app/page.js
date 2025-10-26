@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useLocale } from './components/LocaleProvider'
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import LanguageSwitcher from '@/app/components/LanguageSwitcher'
+import LanguageSwitcher from './components/LanguageSwitcher'
 
 const CATEGORY_PRESETS = [
   {
@@ -632,7 +632,7 @@ const HeroStat = ({ value, label }) => (
 )
 
 export default function HomePage() {
-  const { t } = useLocale()
+  const t = useTranslations()
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -795,16 +795,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-900">
       {/* Header */}
-      <header className="relative border-b border-white/10 bg-slate-900/70 backdrop-blur">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.25),_transparent_60%)]" />
-        <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-6">
+      <header className="relative border-b border-white/10 bg-slate-900/70">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(120,119,198,0.25),_transparent_60%)] backdrop-blur" />
+        <div className="relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-6 z-10">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-cream drop-shadow-md">Skylon Build Network</h1>
             <p className="mt-1 text-sm text-cream-light drop-shadow-sm">
               Commercial & Domestic refurbishment packages for subcontractors in Central London.
             </p>
           </div>
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-3 items-center relative z-[200]">
             <LanguageSwitcher />
             {user && profile ? (
               <>
