@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { archiveProject } from '@/lib/archiveProject'
 import { useRouter, useParams } from 'next/navigation'
 import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 import Header from '@/app/components/Header'
@@ -17,8 +16,6 @@ export default function ProjectDetailPage() {
   const [categoryName, setCategoryName] = useState('')
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingProject, setEditingProject] = useState(null)
-  const [showArchiveModal, setShowArchiveModal] = useState(false)
-  const [archiving, setArchiving] = useState(false)
   const router = useRouter()
   const params = useParams()
 
@@ -165,26 +162,6 @@ export default function ProjectDetailPage() {
     }
   }
 
-  const handleArchiveClick = () => {
-    setShowArchiveModal(true)
-  }
-
-  const handleArchiveConfirm = async () => {
-    if (!project || !profile) return
-
-    setArchiving(true)
-
-    const result = await archiveProject(project.id, profile.id)
-
-    if (result.success) {
-      alert(`✅ ${result.message}\n\nStats:\n- Tasks: ${result.stats.totalTasks}\n- Proposals: ${result.stats.totalBids}\n- Files deleted: ${result.stats.filesDeleted}`)
-      router.push('/admin/projects') // Redirect to projects list
-    } else {
-      alert(`❌ Error: ${result.message}`)
-      setArchiving(false)
-    }
-  }
-
   const handleSaveEdit = async (e) => {
     e.preventDefault()
 
@@ -226,7 +203,7 @@ export default function ProjectDetailPage() {
       {/* Header */}
       <Header
         title={project?.name || 'Project Details'}
-        subtitle={project?.description || 'Manage categories and tasks'}
+        subtitle="Manage categories and tasks"
         user={profile}
         profile={profile}
         onLogout={handleLogout}
@@ -294,6 +271,23 @@ export default function ProjectDetailPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-0">
+        {/* Project Description */}
+        {project?.description && (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              Project Description
+            </h2>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {project.description}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Gantt Chart */}
         {project?.gantt_image_url && (
           <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -414,40 +408,6 @@ export default function ProjectDetailPage() {
           )}
         </div>
       </main>
-      {/* Archive Confirmation Modal */}
-      {showArchiveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold mb-4 text-orange-600">⚠️ Archive Project</h2>
-            <div className="mb-6">
-              <p className="text-gray-700 mb-3">
-                You are about to archive: <strong>{project?.name}</strong>
-              </p>
-              <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">
-                <strong>Warning:</strong> All PDFs and images will be permanently deleted from storage.
-                <br/>
-                Only data (text) will be saved to archive.
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={handleArchiveConfirm}
-                disabled={archiving}
-                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:bg-gray-400"
-              >
-                {archiving ? 'Archiving...' : 'Confirm Archive'}
-              </button>
-              <button
-                onClick={() => setShowArchiveModal(false)}
-                disabled={archiving}
-                className="flex-1 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 disabled:bg-gray-300"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Edit Modal */}
       {showEditModal && editingProject && (
