@@ -95,5 +95,22 @@
   "admin": {
     "manageCategories": "Zarządzaj kategoriami i zadaniami",
     "projectDetails": "Szczegóły Projektu"
+  },
+  "homepage": {
+    "moreThanPlatform": "More Than Just a Platform",
+    "moreThanPlatformDesc1": "Skylon Build Network is more than just a platform — it's an opportunity for smaller construction companies to enter the world of commercial projects in London. We help subcontractors gain hands-on experience working with major clients, learning industry standards, planning, and coordination within a main contractor environment.",
+    "moreThanPlatformDesc2": "Skylon is always open to share knowledge, expertise, and technical support — from bid preparation to on-site delivery. It's a great chance to grow your business, build reputation, and secure long-term contracts in the commercial and refurbishment sector.",
+    "howItWorksTitle": "How project packages flow through Skylon",
+    "step1Title": "Scope & programme published",
+    "step1Desc": "Our project coordinators split the master schedule into focused trade packages with drawings, technical notes and target dates.",
+    "step2Title": "Subcontractors submit proposals",
+    "step2Desc": "Prequalified partners review the package board, ask clarification questions and drop in their pricing with resource availability.",
+    "step3Title": "Award & deliver with clarity",
+    "step3Desc": "Winning teams get access to shared files, real-time programme updates and milestone tracking tied to the main commercial fit-out.",
+    "activeProjectsTitle": "Active project trees",
+    "activeProjectsDesc": "Click into a project to review every package, documents and submit your price for the workstream you can deliver.",
+    "activeProjects": "ACTIVE PROJECTS",
+    "packagesToBid": "PACKAGES TO BID",
+    "totalBudgetLive": "TOTAL BUDGET LIVE"
   }
 }
