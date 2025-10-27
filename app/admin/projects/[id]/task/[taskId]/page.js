@@ -392,11 +392,19 @@ export default function AdminTaskDetailPage() {
               <h2 className="text-xl font-bold text-gray-900 mb-4">Task Details</h2>
 
               <div className="grid grid-cols-2 gap-6 mb-6">
-                {task.suggested_price && (
+                {(task.budget_min || task.budget_max || task.suggested_price) && (
                   <div>
                     <div className="text-sm text-gray-500 mb-1">Suggested Budget</div>
                     <div className="text-2xl font-bold text-gray-900">
-                      {formatCurrency(task.suggested_price)}
+                      {task.budget_min && task.budget_max ? (
+                        `${formatCurrency(task.budget_min)} - ${formatCurrency(task.budget_max)}`
+                      ) : task.budget_min ? (
+                        `From ${formatCurrency(task.budget_min)}`
+                      ) : task.budget_max ? (
+                        `Up to ${formatCurrency(task.budget_max)}`
+                      ) : (
+                        formatCurrency(task.suggested_price)
+                      )}
                     </div>
                   </div>
                 )}
