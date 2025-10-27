@@ -409,7 +409,7 @@ const BuildingIcon = ({ type, projectType }) => {
     return (
       <img
         src="/office-building.svg"
-        alt="Commercial & Domestic Building"
+        alt="Commercial Building"
         className="h-50 w-50"
       />
     )
