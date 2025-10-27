@@ -10,30 +10,40 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
-  const [sessionChecked, setSessionChecked] = useState(false)
+  const [sessionReady, setSessionReady] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    // Supabase automatically handles the token from URL hash
-    // Just check if session exists
+    // Listen for auth state change - Supabase automatically processes hash
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || session) {
+        setSessionReady(true)
+      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        setError('Auth session missing! Please request a new password reset link.')
+        setSessionReady(true)
+      }
+    })
+
+    // Also check current session
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
-        // Wait a bit for the session to be established from URL hash
+      if (session) {
+        setSessionReady(true)
+      } else {
+        // Give it 2 seconds for hash processing
         setTimeout(async () => {
           const { data: { session: retrySession } } = await supabase.auth.getSession()
           if (!retrySession) {
             setError('Auth session missing! Please request a new password reset link.')
           }
-          setSessionChecked(true)
-        }, 1000)
-      } else {
-        setSessionChecked(true)
+          setSessionReady(true)
+        }, 2000)
       }
     }
 
     checkSession()
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const handleResetPassword = async (e) => {
@@ -71,7 +81,7 @@ export default function ResetPasswordPage() {
     }, 2000)
   }
 
-  if (!sessionChecked) {
+  if (!sessionReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="text-gray-600">Verifying reset link...</div>
