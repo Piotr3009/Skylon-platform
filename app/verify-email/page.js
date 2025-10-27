@@ -1,23 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 export default function VerifyEmailPage() {
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [message, setMessage] = useState(null)
   const [error, setError] = useState(null)
   const router = useRouter()
 
-  useEffect(() => {
-    checkUser()
-  }, [])
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -34,8 +29,6 @@ export default function VerifyEmailPage() {
       .eq('id', user.id)
       .single()
 
-    setProfile(profileData)
-
     // If already verified, redirect to dashboard
     if (profileData?.email_verified) {
       router.push('/dashboard')
@@ -43,7 +36,11 @@ export default function VerifyEmailPage() {
     }
 
     setLoading(false)
-  }
+  }, [router])
+
+  useEffect(() => {
+    checkUser()
+  }, [checkUser])
 
   const handleResendVerification = async () => {
     setSending(true)

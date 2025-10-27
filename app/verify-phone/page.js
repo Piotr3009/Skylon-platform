@@ -1,12 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 export default function VerifyPhonePage() {
   const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
@@ -17,11 +16,7 @@ export default function VerifyPhonePage() {
   const [error, setError] = useState(null)
   const router = useRouter()
 
-  useEffect(() => {
-    checkUser()
-  }, [])
-
-  const checkUser = async () => {
+  const checkUser = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
@@ -38,8 +33,6 @@ export default function VerifyPhonePage() {
       .eq('id', user.id)
       .single()
 
-    setProfile(profileData)
-
     // Pre-fill phone number if available
     if (profileData?.phone) {
       setPhoneNumber(profileData.phone)
@@ -52,7 +45,11 @@ export default function VerifyPhonePage() {
     }
 
     setLoading(false)
-  }
+  }, [router])
+
+  useEffect(() => {
+    checkUser()
+  }, [checkUser])
 
   const handleSendCode = async (e) => {
     e.preventDefault()
