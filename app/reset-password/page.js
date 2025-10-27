@@ -10,15 +10,30 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const [sessionChecked, setSessionChecked] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user came from email link
-    supabase.auth.onAuthStateChange((event, session) => {
+    // Check if we have an active session (from recovery link)
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        setError('Auth session missing! Please request a new password reset link.')
+      }
+      setSessionChecked(true)
+    }
+
+    checkSession()
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
-        // User is ready to reset password
+        setSessionChecked(true)
       }
     })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const handleResetPassword = async (e) => {
@@ -54,6 +69,14 @@ export default function ResetPasswordPage() {
     setTimeout(() => {
       router.push('/login')
     }, 2000)
+  }
+
+  if (!sessionChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -106,6 +129,12 @@ export default function ResetPasswordPage() {
             {loading ? 'Updating...' : 'Reset Password'}
           </button>
         </form>
+
+        <p className="mt-4 text-center text-sm text-gray-600">
+          <a href="/login" className="text-blue-600 hover:underline">
+            Back to Login
+          </a>
+        </p>
       </div>
     </div>
   )
