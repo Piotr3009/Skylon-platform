@@ -14,26 +14,26 @@ export default function ResetPasswordPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if we have an active session (from recovery link)
+    // Supabase automatically handles the token from URL hash
+    // Just check if session exists
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       
       if (!session) {
-        setError('Auth session missing! Please request a new password reset link.')
+        // Wait a bit for the session to be established from URL hash
+        setTimeout(async () => {
+          const { data: { session: retrySession } } = await supabase.auth.getSession()
+          if (!retrySession) {
+            setError('Auth session missing! Please request a new password reset link.')
+          }
+          setSessionChecked(true)
+        }, 1000)
+      } else {
+        setSessionChecked(true)
       }
-      setSessionChecked(true)
     }
 
     checkSession()
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setSessionChecked(true)
-      }
-    })
-
-    return () => subscription.unsubscribe()
   }, [])
 
   const handleResetPassword = async (e) => {
@@ -74,7 +74,7 @@ export default function ResetPasswordPage() {
   if (!sessionChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-gray-600">Loading...</div>
+        <div className="text-gray-600">Verifying reset link...</div>
       </div>
     )
   }
@@ -96,39 +96,41 @@ export default function ResetPasswordPage() {
           </div>
         )}
 
-        <form onSubmit={handleResetPassword}>
-          <div className="mb-4">
-            <label className="block text-gray-700 mb-2">New Password *</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              minLength={6}
-            />
-          </div>
+        {!error && (
+          <form onSubmit={handleResetPassword}>
+            <div className="mb-4">
+              <label className="block text-gray-700 mb-2">New Password *</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                minLength={6}
+              />
+            </div>
 
-          <div className="mb-6">
-            <label className="block text-gray-700 mb-2">Confirm Password *</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-              minLength={6}
-            />
-          </div>
+            <div className="mb-6">
+              <label className="block text-gray-700 mb-2">Confirm Password *</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                minLength={6}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {loading ? 'Updating...' : 'Reset Password'}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+            >
+              {loading ? 'Updating...' : 'Reset Password'}
+            </button>
+          </form>
+        )}
 
         <p className="mt-4 text-center text-sm text-gray-600">
           <a href="/login" className="text-blue-600 hover:underline">
