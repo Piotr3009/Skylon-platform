@@ -14,22 +14,28 @@ export default function ResetPasswordPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check for existing session or wait for hash to be processed
-    const timer = setTimeout(async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session) {
-        setIsReady(true)
-      } else {
-        setError('Session expired or invalid. Please request a new password reset link.')
-        setIsReady(true)
-      }
-    }, 500)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const accessToken = hashParams.get('access_token')
+    const type = hashParams.get('type')
 
-    return () => clearTimeout(timer)
+    if (accessToken && type === 'recovery') {
+      // Set the session with the token from URL
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: hashParams.get('refresh_token') || ''
+      }).then(({ data, error }) => {
+        if (error) {
+          setError('Invalid or expired link. Please request a new password reset.')
+        }
+        setIsReady(true)
+      })
+    } else {
+      setError('Invalid reset link. Please request a new password reset.')
+      setIsReady(true)
+    }
   }, [])
 
-  const handleResetPassword = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
@@ -46,9 +52,7 @@ export default function ResetPasswordPage() {
       return
     }
 
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: password
-    })
+    const { error: updateError } = await supabase.auth.updateUser({ password })
 
     if (updateError) {
       setError(updateError.message)
@@ -57,15 +61,13 @@ export default function ResetPasswordPage() {
     }
 
     setSuccess(true)
-    setTimeout(() => {
-      router.push('/login')
-    }, 2000)
+    setTimeout(() => router.push('/login'), 2000)
   }
 
   if (!isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-gray-600">Loading...</div>
+        <div className="text-gray-600">Verifying...</div>
       </div>
     )
   }
@@ -83,14 +85,14 @@ export default function ResetPasswordPage() {
 
         {success && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            Password updated! Redirecting to login...
+            Password updated! Redirecting...
           </div>
         )}
 
         {!error && !success && (
-          <form onSubmit={handleResetPassword}>
+          <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label className="block text-gray-700 mb-2">New Password *</label>
+              <label className="block text-gray-700 mb-2">New Password</label>
               <input
                 type="password"
                 value={password}
@@ -102,7 +104,7 @@ export default function ResetPasswordPage() {
             </div>
 
             <div className="mb-6">
-              <label className="block text-gray-700 mb-2">Confirm Password *</label>
+              <label className="block text-gray-700 mb-2">Confirm Password</label>
               <input
                 type="password"
                 value={confirmPassword}
@@ -124,9 +126,7 @@ export default function ResetPasswordPage() {
         )}
 
         <p className="mt-4 text-center text-sm text-gray-600">
-          <a href="/login" className="text-blue-600 hover:underline">
-            Back to Login
-          </a>
+          <a href="/login" className="text-blue-600 hover:underline">Back to Login</a>
         </p>
       </div>
     </div>
