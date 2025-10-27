@@ -10,40 +10,23 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
-  const [sessionReady, setSessionReady] = useState(false)
+  const [isReady, setIsReady] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    // Listen for auth state change - Supabase automatically processes hash
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || session) {
-        setSessionReady(true)
-      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-        setError('Auth session missing! Please request a new password reset link.')
-        setSessionReady(true)
-      }
-    })
-
-    // Also check current session
-    const checkSession = async () => {
+    // Check for existing session or wait for hash to be processed
+    const timer = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      
       if (session) {
-        setSessionReady(true)
+        setIsReady(true)
       } else {
-        // Give it 2 seconds for hash processing
-        setTimeout(async () => {
-          const { data: { session: retrySession } } = await supabase.auth.getSession()
-          if (!retrySession) {
-            setError('Auth session missing! Please request a new password reset link.')
-          }
-          setSessionReady(true)
-        }, 2000)
+        setError('Session expired or invalid. Please request a new password reset link.')
+        setIsReady(true)
       }
-    }
+    }, 500)
 
-    checkSession()
-
-    return () => subscription.unsubscribe()
+    return () => clearTimeout(timer)
   }, [])
 
   const handleResetPassword = async (e) => {
@@ -51,7 +34,6 @@ export default function ResetPasswordPage() {
     setLoading(true)
     setError(null)
 
-    // Validation
     if (password.length < 6) {
       setError('Password must be at least 6 characters')
       setLoading(false)
@@ -64,7 +46,6 @@ export default function ResetPasswordPage() {
       return
     }
 
-    // Update password
     const { error: updateError } = await supabase.auth.updateUser({
       password: password
     })
@@ -81,10 +62,10 @@ export default function ResetPasswordPage() {
     }, 2000)
   }
 
-  if (!sessionReady) {
+  if (!isReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-gray-600">Verifying reset link...</div>
+        <div className="text-gray-600">Loading...</div>
       </div>
     )
   }
@@ -106,7 +87,7 @@ export default function ResetPasswordPage() {
           </div>
         )}
 
-        {!error && (
+        {!error && !success && (
           <form onSubmit={handleResetPassword}>
             <div className="mb-4">
               <label className="block text-gray-700 mb-2">New Password *</label>
