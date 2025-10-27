@@ -15,6 +15,8 @@ export default function AddTaskPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [suggestedPrice, setSuggestedPrice] = useState('')
+  const [budgetMin, setBudgetMin] = useState('')
+  const [budgetMax, setBudgetMax] = useState('')
   const [estimatedDuration, setEstimatedDuration] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -96,6 +98,8 @@ export default function AddTaskPage() {
           name,
           description,
           suggested_price: suggestedPrice ? parseFloat(suggestedPrice) : null,
+          budget_min: budgetMin ? parseFloat(budgetMin) : null,
+          budget_max: budgetMax ? parseFloat(budgetMax) : null,
           estimated_duration: estimatedDuration ? parseInt(estimatedDuration) : null,
           start_date: startDate || null,
           end_date: endDate || null,
@@ -246,17 +250,51 @@ export default function AddTaskPage() {
               />
             </div>
 
+            <div className="mb-4">
+              <label className="block font-bold mb-2">
+                Budget Range (£) *
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Minimum</label>
+                  <input
+                    type="number"
+                    value={budgetMin}
+                    onChange={(e) => setBudgetMin(e.target.value)}
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="10000"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 mb-1">Maximum</label>
+                  <input
+                    type="number"
+                    value={budgetMax}
+                    onChange={(e) => setBudgetMax(e.target.value)}
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="15000"
+                    step="0.01"
+                    required
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Set the expected budget range for this task</p>
+            </div>
+
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block font-bold mb-2">
                   Suggested Price (£)
+                  <span className="text-sm font-normal text-gray-500 ml-2">(optional - for reference)</span>
                 </label>
                 <input
                   type="number"
                   value={suggestedPrice}
                   onChange={(e) => setSuggestedPrice(e.target.value)}
                   className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="15000"
+                  placeholder="12500"
                   step="0.01"
                 />
               </div>
