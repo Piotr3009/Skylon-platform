@@ -635,6 +635,13 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
+    // Check if URL has password recovery hash and redirect
+    const hash = window.location.hash
+    if (hash && hash.includes('type=recovery')) {
+      router.push(`/reset-password${hash}`)
+      return
+    }
+    
     checkUser()
     loadProjects()
   }, [])
