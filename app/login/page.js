@@ -9,6 +9,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetSuccess, setResetSuccess] = useState(false)
   const router = useRouter()
 
   const handleLogin = async (e) => {
@@ -26,6 +30,24 @@ export default function LoginPage() {
       setLoading(false)
     } else {
       router.push('/dashboard')
+    }
+  }
+
+  const handleForgotPassword = async (e) => {
+    e.preventDefault()
+    setResetLoading(true)
+    setError(null)
+
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+
+    if (error) {
+      setError(error.message)
+      setResetLoading(false)
+    } else {
+      setResetSuccess(true)
+      setResetLoading(false)
     }
   }
 
@@ -67,6 +89,13 @@ export default function LoginPage() {
               required
               suppressHydrationWarning
             />
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className="text-sm text-blue-600 hover:underline mt-1"
+            >
+              Forgot password?
+            </button>
           </div>
 
           <button
@@ -85,6 +114,77 @@ export default function LoginPage() {
           </a>
         </p>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            setShowForgotPassword(false)
+            setResetSuccess(false)
+            setError(null)
+          }}
+        >
+          <div 
+            className="bg-white p-8 rounded-lg shadow-lg w-96"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-xl font-bold mb-4">Reset Password</h2>
+            
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {error}
+              </div>
+            )}
+
+            {resetSuccess ? (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                <p className="font-semibold">Check your email!</p>
+                <p className="text-sm mt-1">We sent you a password reset link.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword}>
+                <p className="text-sm text-gray-600 mb-4">
+                  Enter your email address and we&apos;ll send you a link to reset your password.
+                </p>
+                
+                <div className="mb-4">
+                  <label className="block text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowForgotPassword(false)
+                      setResetSuccess(false)
+                      setError(null)
+                    }}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={resetLoading}
+                    className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                  >
+                    {resetLoading ? 'Sending...' : 'Send Link'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
