@@ -81,7 +81,7 @@ export default function ProjectDetailPage() {
     
     const { data: tasksData, error: tasksError } = await supabase
       .from('tasks')
-      .select('id, name, status, suggested_price, category_id')
+      .select('id, name, status, suggested_price, budget_min, budget_max, category_id')
       .in('category_id', categoryIds)
 
     if (tasksError) {
@@ -395,7 +395,15 @@ export default function ProjectDetailPage() {
                           <div>
                             <div className="font-medium">{task.name}</div>
                             <div className="text-sm text-gray-600">
-                              {task.suggested_price && `£${task.suggested_price}`}
+                              {task.budget_min && task.budget_max ? (
+                                `£${task.budget_min} - £${task.budget_max}`
+                              ) : task.budget_min ? (
+                                `From £${task.budget_min}`
+                              ) : task.budget_max ? (
+                                `Up to £${task.budget_max}`
+                              ) : task.suggested_price ? (
+                                `£${task.suggested_price}`
+                              ) : ''}
                             </div>
                           </div>
                           <span className={`px-2 py-1 text-xs rounded ${
