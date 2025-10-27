@@ -714,7 +714,7 @@ export default function HomePage() {
       if (categoryIds.length) {
         const { data: fetchedTasks, error: tasksError } = await supabase
           .from('tasks')
-          .select('id, category_id, status, suggested_price, estimated_duration')
+          .select('id, category_id, status, suggested_price, estimated_duration, budget_min, budget_max')
           .in('category_id', categoryIds)
 
         if (tasksError) {
@@ -743,7 +743,17 @@ export default function HomePage() {
         const totalBudget = projectCategories.reduce(
           (sum, category) =>
             sum +
-            category.tasks.reduce((taskSum, task) => taskSum + (Number(task.suggested_price) || 0), 0),
+            category.tasks.reduce((taskSum, task) => {
+              // Calculate average from budget range
+              if (task.budget_min && task.budget_max) {
+                return taskSum + ((Number(task.budget_min) + Number(task.budget_max)) / 2)
+              }
+              // Fallback to single values
+              if (task.budget_min) return taskSum + Number(task.budget_min)
+              if (task.budget_max) return taskSum + Number(task.budget_max)
+              if (task.suggested_price) return taskSum + Number(task.suggested_price)
+              return taskSum
+            }, 0),
           0
         )
         const totalDuration = projectCategories.reduce(
