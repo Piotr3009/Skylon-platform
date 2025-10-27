@@ -17,6 +17,7 @@ export default function PublicProjectPage() {
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState(null)
+  const [showGanttModal, setShowGanttModal] = useState(false)
   const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
@@ -327,7 +328,8 @@ export default function PublicProjectPage() {
             <img
               src={project.gantt_image_url}
               alt="Project Gantt Chart"
-              className="w-full rounded-lg"
+              className="w-full rounded-lg cursor-pointer hover:opacity-90 transition"
+              onClick={() => setShowGanttModal(true)}
             />
           </div>
         </section>
@@ -457,6 +459,29 @@ export default function PublicProjectPage() {
             </div>
           </div>
         </section>
+      )}
+
+      {/* Gantt Modal */}
+      {showGanttModal && project?.gantt_image_url && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowGanttModal(false)}
+        >
+          <div className="relative max-w-7xl max-h-[90vh] overflow-auto bg-white rounded-lg">
+            <button
+              onClick={() => setShowGanttModal(false)}
+              className="sticky top-4 right-4 float-right bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-600 transition z-10"
+            >
+              ✕
+            </button>
+            <img
+              src={project.gantt_image_url}
+              alt="Gantt Chart"
+              className="w-full h-auto"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
       )}
     </div>
   )

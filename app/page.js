@@ -630,6 +630,8 @@ export default function HomePage() {
   const [error, setError] = useState(null)
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
+  const [showGanttModal, setShowGanttModal] = useState(false)
+  const [selectedGantt, setSelectedGantt] = useState(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -1048,12 +1050,16 @@ export default function HomePage() {
                           </div>
 
                           {project.gantt_image_url && (
-                            <div className="overflow-hidden rounded-2xl border border-slate-200">
+                            <div className="overflow-hidden rounded-2xl border border-slate-200 cursor-pointer hover:border-indigo-400 transition">
                               <img
                                 src={project.gantt_image_url}
                                 alt={`${project.name} Gantt preview`}
-                                className="h-40 w-full object-cover"
+                                className="h-40 w-full object-contain bg-white"
                                 loading="lazy"
+                                onClick={() => {
+                                  setSelectedGantt(project.gantt_image_url)
+                                  setShowGanttModal(true)
+                                }}
                               />
                             </div>
                           )}
@@ -1082,6 +1088,29 @@ export default function HomePage() {
           )}
         </div>
       </section>
+
+      {/* Gantt Modal */}
+      {showGanttModal && (
+        <div 
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowGanttModal(false)}
+        >
+          <div className="relative max-w-7xl max-h-[90vh] overflow-auto bg-white rounded-lg">
+            <button
+              onClick={() => setShowGanttModal(false)}
+              className="sticky top-4 right-4 float-right bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-600 transition z-10"
+            >
+              ✕
+            </button>
+            <img
+              src={selectedGantt}
+              alt="Gantt Chart"
+              className="w-full h-auto"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="border-t border-slate-200 bg-white">
