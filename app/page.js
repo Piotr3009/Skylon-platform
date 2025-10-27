@@ -859,20 +859,6 @@ export default function HomePage() {
             <p className="mt-6 text-lg text-cream-light drop-shadow-sm">
               {t('hero.description')}
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <button
-                onClick={() => router.push('/register')}
-                className="rounded-2xl bg-white px-6 py-3 text-base font-semibold text-slate-900 shadow-lg shadow-white/20 transition hover:-translate-y-0.5 hover:shadow-xl"
-              >
-                {t('hero.registerButton')}
-              </button>
-              <button
-                onClick={() => router.push('/login')}
-                className="rounded-2xl border border-white/30 px-6 py-3 text-base font-semibold text-cream transition hover:border-white/60 hover:bg-white/10"
-              >
-                {t('hero.loginButton')}
-              </button>
-            </div>
           </div>
 
           <div className="grid w-full max-w-sm grid-cols-1 gap-4 sm:grid-cols-2">
