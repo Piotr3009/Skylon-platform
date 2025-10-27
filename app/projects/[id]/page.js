@@ -464,13 +464,13 @@ export default function PublicProjectPage() {
       {/* Gantt Modal */}
       {showGanttModal && project?.gantt_image_url && (
         <div 
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4"
           onClick={() => setShowGanttModal(false)}
         >
-          <div className="relative max-w-7xl max-h-[90vh] overflow-auto bg-white rounded-lg">
+          <div className="relative w-[95vw] max-w-[1800px] max-h-[95vh] overflow-auto bg-white rounded-lg shadow-2xl">
             <button
               onClick={() => setShowGanttModal(false)}
-              className="sticky top-4 right-4 float-right bg-red-500 text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-red-600 transition z-10"
+              className="sticky top-4 right-4 float-right bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-red-600 transition z-10 text-xl font-bold shadow-lg"
             >
               ✕
             </button>
