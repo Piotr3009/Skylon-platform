@@ -123,14 +123,14 @@ export default function PublicTaskPage() {
     // Load my bid if logged in
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
-      const { data: bidData } = await supabase
+      const { data: bidData, error: bidError } = await supabase
         .from('bids')
         .select('*')
         .eq('task_id', params.taskId)
         .eq('subcontractor_id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (bidData) setMyBid(bidData)
+      if (bidData && !bidError) setMyBid(bidData)
     }
 
     // Load task photos
