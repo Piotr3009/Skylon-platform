@@ -216,7 +216,10 @@ export default function DashboardPage() {
                 <div className="text-gray-600 text-sm font-medium mb-1">Total Projects</div>
                 <div className="text-4xl font-bold text-green-600">{stats.totalProjects}</div>
               </div>
-              <div className="bg-white rounded-lg shadow-sm border-l-4 border-l-purple-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition">
+              <div 
+                className="bg-white rounded-lg shadow-sm border-l-4 border-l-purple-500 border-t border-r border-b border-gray-200 p-6 hover:shadow-md transition cursor-pointer"
+                onClick={() => router.push('/admin/subcontractors')}
+              >
                 <div className="text-gray-600 text-sm font-medium mb-1">Subcontractors</div>
                 <div className="text-4xl font-bold text-purple-600">{stats.subcontractors}</div>
               </div>
