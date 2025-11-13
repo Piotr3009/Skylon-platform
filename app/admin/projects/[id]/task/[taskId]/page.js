@@ -28,6 +28,7 @@ export default function AdminTaskDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingTask, setEditingTask] = useState(null)
   const [savingTask, setSavingTask] = useState(false)
+  const [newDocuments, setNewDocuments] = useState([]) // For uploading new documents during edit
 
   // Rating state
   const [ratingBidId, setRatingBidId] = useState(null)
@@ -234,8 +235,46 @@ export default function AdminTaskDetailPage() {
       return
     }
 
+    // Upload new documents if any
+    if (newDocuments.length > 0) {
+      let uploadedCount = 0
+      for (const doc of newDocuments) {
+        const fileExt = doc.name.split('.').pop()
+        const fileName = `${Math.random()}.${fileExt}`
+        const filePath = `documents/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('project-files')
+          .upload(filePath, doc)
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError)
+          continue
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('project-files')
+          .getPublicUrl(filePath)
+
+        await supabase
+          .from('task_documents')
+          .insert([
+            {
+              task_id: params.taskId,
+              file_name: doc.name,
+              file_url: publicUrl,
+              file_type: doc.type,
+              uploaded_by: profile.id
+            }
+          ])
+
+        uploadedCount++
+      }
+    }
+
     setSavingTask(false)
     setShowEditModal(false)
+    setNewDocuments([])
     loadTaskDetails()
   }
 
@@ -780,6 +819,124 @@ export default function AdminTaskDetailPage() {
                     <option value="completed">Completed</option>
                   </select>
                 </div>
+
+                {/* Existing Documents */}
+                {documents.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Current Documents ({documents.length})</label>
+                    <div className="space-y-2 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-40 overflow-y-auto">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-2 bg-white rounded border">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span className="text-sm text-gray-700 truncate">{doc.file_name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (confirm('Delete this document?')) {
+                                // Extract file path from URL
+                                const urlParts = doc.file_url.split('/')
+                                const filePath = `documents/${urlParts[urlParts.length - 1]}`
+                                
+                                // Delete from storage
+                                await supabase.storage
+                                  .from('project-files')
+                                  .remove([filePath])
+                                
+                                // Delete from database
+                                await supabase
+                                  .from('task_documents')
+                                  .delete()
+                                  .eq('id', doc.id)
+                                
+                                loadTaskDetails()
+                              }
+                            }}
+                            className="ml-2 p-1 text-red-600 hover:bg-red-100 rounded flex-shrink-0"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add New Documents */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Add New Documents (PDF, DWG, Images, etc.)
+                  </label>
+                  <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50/30 hover:bg-blue-50 transition">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+                      onChange={(e) => {
+                        const newFiles = Array.from(e.target.files)
+                        setNewDocuments([...newDocuments, ...newFiles])
+                        e.target.value = ''
+                      }}
+                      className="w-full px-3 py-2 border border-blue-300 bg-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    />
+                    <p className="text-xs text-blue-600 mt-2 font-medium">
+                      📎 Click &quot;Choose Files&quot; multiple times to add more documents
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      You can select multiple files at once (Ctrl/Cmd + Click) or add them one by one
+                    </p>
+                  </div>
+
+                  {newDocuments.length > 0 && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="font-semibold text-green-800 mb-2 flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {newDocuments.length} new file{newDocuments.length > 1 ? 's' : ''} to upload
+                      </div>
+                      <div className="space-y-2">
+                        {newDocuments.map((doc, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-white rounded border border-green-200">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium text-gray-900 truncate">{doc.name}</div>
+                                <div className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB</div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newDocs = newDocuments.filter((_, i) => i !== index)
+                                setNewDocuments(newDocs)
+                              }}
+                              className="ml-2 p-1 text-red-600 hover:bg-red-100 rounded flex-shrink-0"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setNewDocuments([])}
+                        className="mt-2 text-xs text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Clear all new files
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex gap-2 mt-6">
@@ -795,6 +952,7 @@ export default function AdminTaskDetailPage() {
                   onClick={() => {
                     setShowEditModal(false)
                     setEditingTask(task)
+                    setNewDocuments([])
                   }}
                   className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                 >
