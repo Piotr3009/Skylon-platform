@@ -249,7 +249,10 @@ export default function DashboardPage() {
         {/* Proposals Breakdown - Admin Only */}
         {(profile?.role === 'owner' || profile?.role === 'coordinator') && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div 
+              className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition cursor-pointer"
+              onClick={() => router.push('/admin/pending')}
+            >
               <div className="flex items-center justify-between mb-2">
                 <div className="text-gray-600 text-sm font-medium">Pending</div>
                 <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
