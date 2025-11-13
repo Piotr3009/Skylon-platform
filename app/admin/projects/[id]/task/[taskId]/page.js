@@ -223,6 +223,8 @@ export default function AdminTaskDetailPage() {
         name: editingTask.name,
         description: editingTask.description,
         short_description: editingTask.short_description,
+        budget_min: editingTask.budget_min,
+        budget_max: editingTask.budget_max,
         suggested_price: editingTask.suggested_price,
         estimated_duration: editingTask.estimated_duration,
         status: editingTask.status
@@ -783,25 +785,64 @@ export default function AdminTaskDetailPage() {
                   />
                 </div>
 
+                <div>
+                  <label className="block font-bold mb-2">
+                    Budget Range (£) *
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Minimum</label>
+                      <input
+                        type="number"
+                        value={editingTask.budget_min || ''}
+                        onChange={(e) => setEditingTask({...editingTask, budget_min: e.target.value})}
+                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="10000"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Maximum</label>
+                      <input
+                        type="number"
+                        value={editingTask.budget_max || ''}
+                        onChange={(e) => setEditingTask({...editingTask, budget_max: e.target.value})}
+                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="15000"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Set the expected budget range for this task</p>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Suggested Price (£)</label>
+                    <label className="block font-bold mb-2">
+                      Suggested Price (£)
+                      <span className="text-sm font-normal text-gray-500 ml-2">(optional - for reference)</span>
+                    </label>
                     <input
                       type="number"
                       value={editingTask.suggested_price || ''}
                       onChange={(e) => setEditingTask({...editingTask, suggested_price: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="12500"
                       step="0.01"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium mb-1">Duration (days)</label>
+                    <label className="block font-bold mb-2">
+                      Estimated Duration (days)
+                    </label>
                     <input
                       type="number"
                       value={editingTask.estimated_duration || ''}
                       onChange={(e) => setEditingTask({...editingTask, estimated_duration: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="20"
                     />
                   </div>
                 </div>
