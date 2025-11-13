@@ -18,6 +18,10 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
   const [businessType, setBusinessType] = useState('')
   const [yearsInBusiness, setYearsInBusiness] = useState('')
   
+  // Specialization
+  const [specialization, setSpecialization] = useState([])
+  const [editingSpec, setEditingSpec] = useState(false)
+  
   // Bank fields
   const [bankName, setBankName] = useState('')
   const [accountHolderName, setAccountHolderName] = useState('')
@@ -39,6 +43,20 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
   const [industryAccreditations, setIndustryAccreditations] = useState('')
   const [editingCerts, setEditingCerts] = useState(false)
 
+  // Available specializations
+  const availableSpecializations = [
+    'Demolition & Site Clearance',
+    'Groundworks & Foundations',
+    'Structural Frame',
+    'Joinery Installation',
+    'Mechanical Installation AC/VRF',
+    'Finishing',
+    'General Construction',
+    'Electrical Installation',
+    'Plumbing & Heating',
+    'Other'
+  ]
+
   useEffect(() => {
     if (profile) {
       // Registration
@@ -48,6 +66,9 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
       setTradingName(profile.trading_name || '')
       setBusinessType(profile.business_type || '')
       setYearsInBusiness(profile.years_in_business || '')
+      
+      // Specialization
+      setSpecialization(profile.specialization || [])
       
       // Bank
       setBankName(profile.bank_name || '')
@@ -120,6 +141,7 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
     if (tradingName) filled++
     if (businessType) filled++
     if (yearsInBusiness) filled++
+    if (specialization.length > 0) filled++
     if (bankName) filled++
     if (accountHolderName) filled++
     if (accountNumber) filled++
@@ -157,6 +179,36 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
       alert('Registration details saved!')
     } else {
       alert('Error saving: ' + error.message)
+    }
+  }
+
+  const handleSaveSpecialization = async () => {
+    if (!profile) return
+    setSaving(true)
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        specialization: specialization,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', profile.id)
+
+    setSaving(false)
+    if (!error) {
+      setEditingSpec(false)
+      if (onUpdate) onUpdate()
+      alert('Specialization saved!')
+    } else {
+      alert('Error saving: ' + error.message)
+    }
+  }
+
+  const handleToggleSpecialization = (spec) => {
+    if (specialization.includes(spec)) {
+      setSpecialization(specialization.filter(s => s !== spec))
+    } else {
+      setSpecialization([...specialization, spec])
     }
   }
 
@@ -394,7 +446,7 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         <div className="border-b border-gray-200">
           <div className="flex overflow-x-auto">
-            {['registration', 'bank', 'insurance', 'health_safety', 'certificates', 'documents'].map((tab) => (
+            {['registration', 'specialization', 'bank', 'insurance', 'health_safety', 'certificates', 'documents'].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -405,6 +457,7 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
                 }`}
               >
                 {tab === 'registration' && 'Registration'}
+                {tab === 'specialization' && `Specialization (${specialization.length})`}
                 {tab === 'bank' && 'Bank Details'}
                 {tab === 'insurance' && `Insurance (${insuranceList.length})`}
                 {tab === 'health_safety' && 'Health & Safety'}
@@ -498,6 +551,73 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
                       <p className="font-medium text-gray-900">{yearsInBusiness || '—'}</p>
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* SPECIALIZATION TAB */}
+          {activeTab === 'specialization' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Your Specializations</h3>
+                {!readOnly && !editingSpec ? (
+                  <button onClick={() => setEditingSpec(true)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Edit</button>
+                ) : !readOnly && editingSpec ? (
+                  <div className="flex gap-2">
+                    <button onClick={() => setEditingSpec(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg">Cancel</button>
+                    <button onClick={handleSaveSpecialization} disabled={saving} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                      {saving ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
+              {editingSpec ? (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 mb-4">Select all specializations that apply to your company:</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {availableSpecializations.map((spec) => (
+                      <label 
+                        key={spec}
+                        className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
+                          specialization.includes(spec)
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={specialization.includes(spec)}
+                          onChange={() => handleToggleSpecialization(spec)}
+                          className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                        />
+                        <span className="font-medium text-gray-900">{spec}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {specialization.length === 0 && (
+                    <p className="text-sm text-red-600 mt-2">⚠️ Please select at least one specialization</p>
+                  )}
+                </div>
+              ) : (
+                <div>
+                  {specialization.length === 0 ? (
+                    <div className="text-center py-12">
+                      <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p className="text-gray-500">No specializations selected yet</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {specialization.map((spec) => (
+                        <span key={spec} className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-medium">
+                          {spec}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
