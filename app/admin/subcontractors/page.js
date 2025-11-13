@@ -240,7 +240,6 @@ export default function SubcontractorsPage() {
                   <th className="px-4 py-3 text-left text-sm font-semibold">Stats</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Pending Bids</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Company Details</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -434,16 +433,6 @@ export default function SubcontractorsPage() {
                           </div>
                         </div>
                       </details>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-4 py-4">
-                      <button
-                        onClick={() => router.push(`/dashboard/profile?id=${sub.id}`)}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                      >
-                        View Profile
-                      </button>
                     </td>
                   </tr>
                 ))}
