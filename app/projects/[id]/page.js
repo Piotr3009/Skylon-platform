@@ -82,7 +82,7 @@ export default function PublicProjectPage() {
 
     // Load tasks for these categories
     const categoryIds = categoriesData.map(c => c.id)
-
+    
     if (categoryIds.length > 0) {
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
@@ -362,6 +362,7 @@ export default function PublicProjectPage() {
                 </div>
 
                 <div className="p-4">
+                  {/* Tasks in this category */}
                   {category.tasks && category.tasks.length > 0 ? (
                     <div className="space-y-2">
                       {category.tasks.map((task) => {
