@@ -1,73 +1,74 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
-import Header from '@/app/components/Header'
-import Breadcrumbs from '@/app/components/Breadcrumbs'
 
-export default function ProjectDetailPage() {
-  const [profile, setProfile] = useState(null)
+const formatCurrency = (value) => {
+  if (!value || Number.isNaN(value)) return '—'
+  if (value >= 1_000_000) return `£${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `£${(value / 1_000).toFixed(0)}k`
+  return `£${Math.round(value)}`
+}
+
+export default function PublicProjectPage() {
   const [project, setProject] = useState(null)
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showCategoryForm, setShowCategoryForm] = useState(false)
-  const [categoryName, setCategoryName] = useState('')
-  const [showEditModal, setShowEditModal] = useState(false)
-  const [editingProject, setEditingProject] = useState(null)
-  const [showArchiveModal, setShowArchiveModal] = useState(false)
-  const [archiving, setArchiving] = useState(false)
-  const [newProjectLogo, setNewProjectLogo] = useState(null)
-  const [newGanttImage, setNewGanttImage] = useState(null)
+  const [user, setUser] = useState(null)
+  const [showGanttModal, setShowGanttModal] = useState(false)
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
+  const categoryRefs = useRef({})
 
   useEffect(() => {
-    checkAuth()
-    loadProject()
-    loadCategories()
+    checkUser()
+    loadProjectDetails()
   }, [])
 
-  const checkAuth = async () => {
+  // Scroll to category when URL has category parameter
+  useEffect(() => {
+    const categoryId = searchParams.get('category')
+    if (categoryId && !loading && categories.length > 0) {
+      const element = categoryRefs.current[categoryId]
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          // Add highlight effect
+          element.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2')
+          setTimeout(() => {
+            element.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2')
+          }, 2000)
+        }, 100)
+      }
+    }
+  }, [searchParams, loading, categories])
+
+  const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    if (profileData?.role !== 'owner' && profileData?.role !== 'coordinator') {
-      router.push('/dashboard')
-      return
-    }
-
-    setProfile(profileData)
+    setUser(user)
   }
 
-  const loadProject = async () => {
-    const { data, error } = await supabase
+  const loadProjectDetails = async () => {
+    setLoading(true)
+
+    // Load project
+    const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .select('*')
       .eq('id', params.id)
       .single()
 
-
-    if (!error) {
-      setProject(data)
+    if (projectError) {
+      setLoading(false)
+      return
     }
-    setLoading(false)
-  }
 
-  const loadCategories = async () => {
-    
-    // Pobierz kategorie
+    setProject(projectData)
+
+    // Load categories with tasks
     const { data: categoriesData, error: categoriesError } = await supabase
       .from('categories')
       .select('*')
@@ -75,667 +76,410 @@ export default function ProjectDetailPage() {
       .order('display_order')
 
     if (categoriesError) {
+      setLoading(false)
       return
     }
 
-    // Pobierz wszystkie tasks dla tych kategorii
+    // Load tasks for these categories
     const categoryIds = categoriesData.map(c => c.id)
-    
-    const { data: tasksData, error: tasksError } = await supabase
-      .from('tasks')
-      .select('id, name, status, suggested_price, budget_min, budget_max, category_id')
-      .in('category_id', categoryIds)
 
-    if (tasksError) {
-      return
-    }
+    if (categoryIds.length > 0) {
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('tasks')
+        .select('id, name, status, suggested_price, estimated_duration, short_description, category_id')
+        .in('category_id', categoryIds)
+        .order('created_at', { ascending: true })
 
-
-    // Połącz tasks z kategoriami
-    const categoriesWithTasks = categoriesData.map(category => ({
-      ...category,
-      tasks: tasksData.filter(task => task.category_id === category.id)
-    }))
-
-    setCategories(categoriesWithTasks)
-  }
-
-  const handleAddCategory = async (e) => {
-    e.preventDefault()
-    
-    const { error } = await supabase
-      .from('categories')
-      .insert([
-        {
-          project_id: params.id,
-          name: categoryName,
-          display_order: categories.length
-        }
-      ])
-
-    if (!error) {
-      setCategoryName('')
-      setShowCategoryForm(false)
-      loadCategories()
-    }
-  }
-
-  const handleDeleteCategory = async (categoryId) => {
-    if (!confirm('Delete this category and all its tasks?')) return
-
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', categoryId)
-
-    if (!error) {
-      loadCategories()
-    }
-  }
-
-  const handleEdit = () => {
-    setEditingProject({...project})
-    setShowEditModal(true)
-  }
-
-  const handleArchiveClick = () => {
-    setShowArchiveModal(true)
-  }
-
-  const handleArchiveConfirm = async () => {
-    if (!project || !profile) return
-
-    setArchiving(true)
-
-    const result = await archiveProject(project.id, profile.id)
-
-    if (result.success) {
-      alert(`✅ ${result.message}\n\nStats:\n- Tasks: ${result.stats.totalTasks}\n- Proposals: ${result.stats.totalBids}\n- Files deleted: ${result.stats.filesDeleted}`)
-      router.push('/admin/projects')
+      if (!tasksError) {
+        const categoriesWithTasks = categoriesData.map(category => ({
+          ...category,
+          tasks: tasksData.filter(task => task.category_id === category.id)
+        }))
+        setCategories(categoriesWithTasks)
+      }
     } else {
-      alert(`❌ Error: ${result.message}`)
-      setArchiving(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this project? All categories and tasks will be deleted.')) return
-
-    const { error } = await supabase
-      .from('projects')
-      .delete()
-      .eq('id', params.id)
-
-    if (!error) {
-      router.push('/admin/projects')
-    } else {
-      alert('Error deleting project')
-    }
-  }
-
-  const handleSaveEdit = async (e) => {
-    e.preventDefault()
-
-    let projectLogoUrl = editingProject.project_image_url
-    let ganttImageUrl = editingProject.gantt_image_url
-
-    // Upload new project logo if provided
-    if (newProjectLogo) {
-      // Validate file size (5MB max)
-      if (newProjectLogo.size > 5 * 1024 * 1024) {
-        alert('Project logo must be less than 5MB')
-        return
-      }
-
-      // Delete old logo if exists
-      if (editingProject.project_image_url) {
-        const oldFileName = editingProject.project_image_url.split('/').pop()
-        await supabase.storage
-          .from('project-files')
-          .remove([`project-logos/${oldFileName}`])
-      }
-
-      const fileExt = newProjectLogo.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
-      const filePath = `project-logos/${fileName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('project-files')
-        .upload(filePath, newProjectLogo)
-
-      if (uploadError) {
-        alert('Failed to upload project logo: ' + uploadError.message)
-        return
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('project-files')
-        .getPublicUrl(filePath)
-
-      projectLogoUrl = publicUrl
+      setCategories(categoriesData)
     }
 
-    // Upload new Gantt image if provided
-    if (newGanttImage) {
-      // Delete old Gantt if exists
-      if (editingProject.gantt_image_url) {
-        const oldFileName = editingProject.gantt_image_url.split('/').pop()
-        await supabase.storage
-          .from('project-files')
-          .remove([`gantt/${oldFileName}`])
-      }
-
-      const fileExt = newGanttImage.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
-      const filePath = `gantt/${fileName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('project-files')
-        .upload(filePath, newGanttImage)
-
-      if (uploadError) {
-        alert('Failed to upload Gantt image: ' + uploadError.message)
-        return
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('project-files')
-        .getPublicUrl(filePath)
-
-      ganttImageUrl = publicUrl
-    }
-
-    const { error } = await supabase
-      .from('projects')
-      .update({
-        name: editingProject.name,
-        description: editingProject.description,
-        status: editingProject.status,
-        start_date: editingProject.start_date,
-        end_date: editingProject.end_date,
-        project_image_url: projectLogoUrl,
-        gantt_image_url: ganttImageUrl
-      })
-      .eq('id', params.id)
-
-    if (!error) {
-      setShowEditModal(false)
-      setEditingProject(null)
-      setNewProjectLogo(null)
-      setNewGanttImage(null)
-      loadProject()
-    } else {
-      alert('Error updating project')
-    }
+    setLoading(false)
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-xl">Loading project...</div>
       </div>
     )
   }
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
+  if (!project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Project not found</h1>
+          <button
+            onClick={() => router.push('/')}
+            className="text-blue-600 hover:underline"
+          >
+            Return to homepage
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <Header
-        title={project?.name || 'Project Details'}
-        subtitle="Manage categories and tasks"
-        user={profile}
-        profile={profile}
-        onLogout={handleLogout}
-        showHome={true}
-        showDashboard={true}
-        gradient={true}
-      >
-        <button
-          onClick={handleEdit}
-          className="px-4 py-2 bg-white/20 text-white border border-white/30 rounded-lg hover:bg-white/30 transition"
-        >
-          Edit
-        </button>
-        <button
-          onClick={handleArchiveClick}
-          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
-        >
-          Archive
-        </button>
-        <button
-          onClick={handleDelete}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-        >
-          Delete
-        </button>
-      </Header>
-
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <Breadcrumbs
-          items={[
-            { label: 'Home', href: '/' },
-            { label: 'Projects', href: '/admin/projects' },
-            { label: project?.name || 'Loading...' }
-          ]}
-        />
-
-        {project && (
-          <div className="bg-white/80 backdrop-blur rounded-lg shadow-sm border border-indigo-100 p-4 mb-6">
-            <div className="flex gap-4 text-sm flex-wrap">
-              {project.start_date && (
-                <span className="text-gray-700">
-                  <span className="font-semibold">Start:</span> {new Date(project.start_date).toLocaleDateString()}
-                </span>
-              )}
-              {project.end_date && (
-                <span className="text-gray-700">
-                  <span className="font-semibold">End:</span> {new Date(project.end_date).toLocaleDateString()}
-                </span>
-              )}
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                {project.status}
-              </span>
-              {project.project_type && (
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
-                  {project.project_type === 'commercial' ? 'Commercial & Domestic' :
-                   project.project_type === 'domestic' ? 'Domestic' :
-                   project.project_type === 'restaurant' ? 'Restaurant' :
-                   project.project_type}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-0">
-        {/* Project Description */}
-        {project?.description && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              Project Description
-            </h2>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {project.description}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Gantt Chart */}
-        {project?.gantt_image_url && (
-          <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-bold mb-4">Project Timeline</h2>
-            <img 
-              src={project.gantt_image_url} 
-              alt="Gantt Chart" 
-              className="w-full rounded"
-            />
-          </div>
-        )}
-
-        {/* Categories Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Categories & Tasks</h2>
-            <button
-              onClick={() => setShowCategoryForm(!showCategoryForm)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              + Add Category
-            </button>
-          </div>
-
-          {/* Add Category Form */}
-          {showCategoryForm && (
-            <form onSubmit={handleAddCategory} className="mb-6 p-4 bg-blue-50 rounded">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={categoryName}
-                  onChange={(e) => setCategoryName(e.target.value)}
-                  placeholder="Category name (e.g., M&E, Construction, Finishes)"
-                  className="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Add
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowCategoryForm(false)}
-                  className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Categories List */}
-          {categories.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">
-              No categories yet. Add your first category to organize tasks.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {categories.map((category) => (
-                <div key={category.id} className={`border rounded-lg p-4 ${getCategoryColor(category.name)}`}>
-                  <div className="flex justify-between items-center mb-3">
-                    <div className="flex items-center gap-3">
-                      {(() => {
-                        const Icon = getCategoryIcon(category.name)
-                        return <Icon className="w-6 h-6" />
-                      })()}
-                      <h3 className="text-lg font-bold">{category.name}</h3>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => router.push(`/admin/projects/${params.id}/category/${category.id}/add-task`)}
-                        className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                      >
-                        + Add Task
-                      </button>
-                      <button
-                        onClick={() => handleDeleteCategory(category.id)}
-                        className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </div>
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              {/* Project name with image */}
+              <div className="flex items-center gap-4 mb-2">
+                {/* Project image */}
+                {project.project_image_url ? (
+                  <img 
+                    src={project.project_image_url} 
+                    alt={project.name}
+                    className="w-24 h-24 object-cover rounded-lg border-2 border-indigo-300 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-lg flex items-center justify-center border-2 border-indigo-300 flex-shrink-0">
+                    <svg className="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
                   </div>
-
-                  {/* Tasks in this category */}
-                  {category.tasks && category.tasks.length > 0 ? (
-                    <div className="space-y-2">
-                      {category.tasks.map((task) => (
-                        <div
-                          key={task.id}
-                          className="flex justify-between items-center p-3 bg-gray-50 rounded hover:bg-gray-100 cursor-pointer"
-                          onClick={() => router.push(`/admin/projects/${params.id}/task/${task.id}`)}
-                        >
-                          <div>
-                            <div className="font-medium">{task.name}</div>
-                            <div className="text-sm text-gray-600">
-                              {task.budget_min && task.budget_max ? (
-                                `£${task.budget_min} - £${task.budget_max}`
-                              ) : task.budget_min ? (
-                                `From £${task.budget_min}`
-                              ) : task.budget_max ? (
-                                `Up to £${task.budget_max}`
-                              ) : task.suggested_price ? (
-                                `£${task.suggested_price}`
-                              ) : ''}
-                            </div>
-                          </div>
-                          <span className={`px-2 py-1 text-xs rounded ${
-                            task.status === 'open' ? 'bg-green-100 text-green-800' :
-                            task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {task.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-sm">No tasks yet</p>
-                  )}
+                )}
+                
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
+                    <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                      project.status === 'active' ? 'bg-green-100 text-green-800' :
+                      project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                      project.status === 'planning' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {project.status}
+                    </span>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </main>
-
-      {/* Archive Confirmation Modal */}
-      {showArchiveModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold mb-4 text-orange-600">⚠️ Archive Project</h2>
-            <div className="mb-6">
-              <p className="text-gray-700 mb-3">
-                You are about to archive: <strong>{project?.name}</strong>
-              </p>
-              <div className="bg-red-50 border border-red-200 rounded p-3 text-sm text-red-800">
-                <strong>Warning:</strong> All PDFs and images will be permanently deleted from storage.
-                <br/>
-                Only data (text) will be saved to archive.
               </div>
             </div>
             <div className="flex gap-2">
-              <button
-                onClick={handleArchiveConfirm}
-                disabled={archiving}
-                className="flex-1 px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:bg-gray-400"
-              >
-                {archiving ? 'Archiving...' : 'Confirm Archive'}
-              </button>
-              <button
-                onClick={() => setShowArchiveModal(false)}
-                disabled={archiving}
-                className="flex-1 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 disabled:bg-gray-300"
-              >
-                Cancel
-              </button>
+              {user ? (
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                >
+                  Dashboard
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => router.push('/login')}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => router.push('/register')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Register to Bid
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-6 text-sm border-t border-gray-100 pt-4">
+            {project.start_date && (
+              <div>
+                <span className="font-semibold text-gray-700">Start:</span>{' '}
+                <span className="text-gray-600">
+                  {new Date(project.start_date).toLocaleDateString('en-GB')}
+                </span>
+              </div>
+            )}
+            {project.end_date && (
+              <div>
+                <span className="font-semibold text-gray-700">Target completion:</span>{' '}
+                <span className="text-gray-600">
+                  {new Date(project.end_date).toLocaleDateString('en-GB')}
+                </span>
+              </div>
+            )}
+            <div>
+              <span className="font-semibold text-gray-700">Trade packages:</span>{' '}
+              <span className="text-gray-600">{categories.length}</span>
             </div>
           </div>
         </div>
+      </header>
+
+      {/* Project Description Section */}
+      <section className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Project Description
+          </h2>
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-6">
+            {project.description ? (
+              <div>
+                <p className="text-sm text-gray-700 font-semibold mb-2">📋 About This Project:</p>
+                <p className="text-gray-700 leading-relaxed">
+                  {project.description}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600 italic">
+                Detailed project description will be added soon. Please check individual trade packages for specific requirements.
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Selection Criteria Banner */}
+      <section className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                🏆 How We Select Subcontractors
+              </h3>
+              <p className="text-gray-700 mb-3 text-sm leading-relaxed">
+                We choose our partners based on comprehensive evaluation criteria. 
+                <strong className="text-gray-900"> We don&apos;t just accept the lowest bid.</strong>
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Quality</span>
+                  </div>
+                  <p className="text-xs text-blue-700">Excellence in workmanship</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Timeliness</span>
+                  </div>
+                  <p className="text-xs text-blue-700">On-time delivery</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Professionalism</span>
+                  </div>
+                  <p className="text-xs text-blue-700">Professional conduct</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Health & Safety</span>
+                  </div>
+                  <p className="text-xs text-blue-700">Safety compliance</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Price</span>
+                  </div>
+                  <p className="text-xs text-blue-700">Competitive value</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Gantt Chart */}
+      {project.gantt_image_url && (
+        <section className="max-w-7xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Project Timeline</h2>
+            <img
+              src={project.gantt_image_url}
+              alt="Project Gantt Chart"
+              className="w-full rounded-lg cursor-pointer hover:opacity-90 transition"
+              onClick={() => setShowGanttModal(true)}
+            />
+          </div>
+        </section>
       )}
 
-      {/* Edit Modal */}
-      {showEditModal && editingProject && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4">Edit Project</h2>
-            <form onSubmit={handleSaveEdit}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Project Name</label>
-                  <input
-                    type="text"
-                    value={editingProject.name}
-                    onChange={(e) => setEditingProject({...editingProject, name: e.target.value})}
-                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
+      {/* Categories & Tasks */}
+      <section className="max-w-7xl mx-auto px-4 py-6 pb-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Trade Packages & Tasks</h2>
+
+        {categories.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <p className="text-gray-500">No trade packages have been published yet.</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {categories.map((category) => (
+              <div
+                key={category.id}
+                ref={(el) => categoryRefs.current[category.id] = el}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-300"
+              >
+                <div className={`px-6 py-4 border-b border-gray-200 ${getCategoryColor(category.name)}`}>
+                  <div className="flex items-center gap-3">
+                    {(() => {
+                      const Icon = getCategoryIcon(category.name)
+                      return <Icon className="w-6 h-6" />
+                    })()}
+                    <h3 className="text-lg font-bold">{category.name}</h3>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <textarea
-                    value={editingProject.description || ''}
-                    onChange={(e) => setEditingProject({...editingProject, description: e.target.value})}
-                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    rows="3"
-                  />
-                </div>
+                <div className="p-4">
+                  {category.tasks && category.tasks.length > 0 ? (
+                    <div className="space-y-2">
+                      {category.tasks.map((task) => {
+                        const Icon = getCategoryIcon(category.name)
+                        return (
+                          <div
+                            key={task.id}
+                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer group"
+                            onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
+                          >
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className={`flex-shrink-0 p-2 rounded-lg ${getCategoryColor(category.name)}`}>
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                                  {task.name}
+                                </div>
+                                {task.short_description && (
+                                  <div className="text-sm text-gray-600 mt-1">
+                                    {task.short_description}
+                                  </div>
+                                )}
+                                <div className="flex gap-4 mt-2 text-sm text-gray-500">
+                                  {task.suggested_price && (
+                                    <span>Budget: {formatCurrency(task.suggested_price)}</span>
+                                  )}
+                                  {task.estimated_duration && (
+                                    <span>Duration: {task.estimated_duration} days</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
 
-                {/* Current Project Logo */}
-                {editingProject.project_image_url && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Current Project Logo</label>
-                    <div className="relative inline-block">
-                      <img 
-                        src={editingProject.project_image_url} 
-                        alt="Current logo" 
-                        className="w-32 h-32 object-cover rounded border"
-                      />
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (confirm('Delete current project logo?')) {
-                            const oldFileName = editingProject.project_image_url.split('/').pop()
-                            await supabase.storage
-                              .from('project-files')
-                              .remove([`project-logos/${oldFileName}`])
-                            
-                            await supabase
-                              .from('projects')
-                              .update({ project_image_url: null })
-                              .eq('id', params.id)
-                            
-                            loadProject()
-                            setShowEditModal(false)
-                          }
-                        }}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+                            <div className="flex items-center gap-3">
+                              <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                                task.status === 'open' ? 'bg-green-100 text-green-800' :
+                                task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
+                                task.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                                'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {task.status}
+                              </span>
+                              <svg
+                                className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
-                  </div>
-                )}
-
-                {/* Upload New Project Logo */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    {editingProject.project_image_url ? 'Replace Project Logo/Image' : 'Project Logo/Image'} (optional)
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setNewProjectLogo(e.target.files[0])}
-                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {newProjectLogo && (
-                    <p className="text-sm text-green-600 mt-1">✓ New logo selected: {newProjectLogo.name}</p>
+                  ) : (
+                    <p className="text-gray-500 text-center py-8">
+                      No tasks published in this category yet
+                    </p>
                   )}
-                  <p className="text-sm text-gray-500 mt-1">
-                    Upload a logo or main image for this project (max 5MB)
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Status</label>
-                  <select
-                    value={editingProject.status}
-                    onChange={(e) => setEditingProject({...editingProject, status: e.target.value})}
-                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="planning">Planning</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="on_hold">On Hold</option>
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Start Date</label>
-                    <input
-                      type="date"
-                      value={editingProject.start_date || ''}
-                      onChange={(e) => setEditingProject({...editingProject, start_date: e.target.value})}
-                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">End Date</label>
-                    <input
-                      type="date"
-                      value={editingProject.end_date || ''}
-                      onChange={(e) => setEditingProject({...editingProject, end_date: e.target.value})}
-                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Current Gantt Chart */}
-                {editingProject.gantt_image_url && (
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Current Gantt Chart</label>
-                    <div className="relative inline-block">
-                      <img 
-                        src={editingProject.gantt_image_url} 
-                        alt="Current Gantt" 
-                        className="w-full max-w-md rounded border"
-                      />
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (confirm('Delete current Gantt chart?')) {
-                            const oldFileName = editingProject.gantt_image_url.split('/').pop()
-                            await supabase.storage
-                              .from('project-files')
-                              .remove([`gantt/${oldFileName}`])
-                            
-                            await supabase
-                              .from('projects')
-                              .update({ gantt_image_url: null })
-                              .eq('id', params.id)
-                            
-                            loadProject()
-                            setShowEditModal(false)
-                          }
-                        }}
-                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Upload New Gantt Chart */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    {editingProject.gantt_image_url ? 'Replace Gantt Chart Image' : 'Gantt Chart Image'} (optional)
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setNewGanttImage(e.target.files[0])}
-                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {newGanttImage && (
-                    <p className="text-sm text-green-600 mt-1">✓ New Gantt chart selected: {newGanttImage.name}</p>
-                  )}
-                  <p className="text-sm text-gray-500 mt-1">
-                    Upload a Gantt chart showing project timeline
-                  </p>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+      </section>
 
-              <div className="flex gap-2 mt-6">
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Save Changes
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditModal(false)
-                    setEditingProject(null)
-                    setNewProjectLogo(null)
-                    setNewGanttImage(null)
-                  }}
-                  className="flex-1 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+      {/* Footer CTA */}
+      {!user && (
+        <section className="bg-blue-600 text-white py-12">
+          <div className="max-w-7xl mx-auto px-4 text-center">
+            <h2 className="text-2xl font-bold mb-4">Ready to submit your proposal?</h2>
+            <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
+              Register as a subcontractor to bid on tasks and grow your business with Skylon Build Network.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => router.push('/register')}
+                className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition"
+              >
+                Create Account
+              </button>
+              <button
+                onClick={() => router.push('/login')}
+                className="px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+              >
+                Login
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Gantt Modal */}
+      {showGanttModal && project?.gantt_image_url && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4"
+          onClick={() => setShowGanttModal(false)}
+        >
+          <div className="relative w-[95vw] max-w-[1800px] max-h-[95vh] overflow-auto bg-white rounded-lg shadow-2xl">
+            <button
+              onClick={() => setShowGanttModal(false)}
+              className="sticky top-4 right-4 float-right bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-red-600 transition z-10 text-xl font-bold shadow-lg"
+            >
+              ✕
+            </button>
+            <img
+              src={project.gantt_image_url}
+              alt="Gantt Chart"
+              className="w-full h-auto"
+              onClick={(e) => e.stopPropagation()}
+            />
           </div>
         </div>
       )}
