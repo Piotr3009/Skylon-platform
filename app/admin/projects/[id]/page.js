@@ -18,6 +18,8 @@ export default function ProjectDetailPage() {
   const [editingProject, setEditingProject] = useState(null)
   const [showArchiveModal, setShowArchiveModal] = useState(false)
   const [archiving, setArchiving] = useState(false)
+  const [newProjectLogo, setNewProjectLogo] = useState(null)
+  const [newGanttImage, setNewGanttImage] = useState(null)
   const router = useRouter()
   const params = useParams()
 
@@ -174,6 +176,75 @@ export default function ProjectDetailPage() {
   const handleSaveEdit = async (e) => {
     e.preventDefault()
 
+    let projectLogoUrl = editingProject.project_image_url
+    let ganttImageUrl = editingProject.gantt_image_url
+
+    // Upload new project logo if provided
+    if (newProjectLogo) {
+      // Validate file size (5MB max)
+      if (newProjectLogo.size > 5 * 1024 * 1024) {
+        alert('Project logo must be less than 5MB')
+        return
+      }
+
+      // Delete old logo if exists
+      if (editingProject.project_image_url) {
+        const oldFileName = editingProject.project_image_url.split('/').pop()
+        await supabase.storage
+          .from('project-files')
+          .remove([`project-logos/${oldFileName}`])
+      }
+
+      const fileExt = newProjectLogo.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
+      const filePath = `project-logos/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('project-files')
+        .upload(filePath, newProjectLogo)
+
+      if (uploadError) {
+        alert('Failed to upload project logo: ' + uploadError.message)
+        return
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-files')
+        .getPublicUrl(filePath)
+
+      projectLogoUrl = publicUrl
+    }
+
+    // Upload new Gantt image if provided
+    if (newGanttImage) {
+      // Delete old Gantt if exists
+      if (editingProject.gantt_image_url) {
+        const oldFileName = editingProject.gantt_image_url.split('/').pop()
+        await supabase.storage
+          .from('project-files')
+          .remove([`gantt/${oldFileName}`])
+      }
+
+      const fileExt = newGanttImage.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`
+      const filePath = `gantt/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('project-files')
+        .upload(filePath, newGanttImage)
+
+      if (uploadError) {
+        alert('Failed to upload Gantt image: ' + uploadError.message)
+        return
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-files')
+        .getPublicUrl(filePath)
+
+      ganttImageUrl = publicUrl
+    }
+
     const { error } = await supabase
       .from('projects')
       .update({
@@ -181,13 +252,17 @@ export default function ProjectDetailPage() {
         description: editingProject.description,
         status: editingProject.status,
         start_date: editingProject.start_date,
-        end_date: editingProject.end_date
+        end_date: editingProject.end_date,
+        project_image_url: projectLogoUrl,
+        gantt_image_url: ganttImageUrl
       })
       .eq('id', params.id)
 
     if (!error) {
       setShowEditModal(false)
       setEditingProject(null)
+      setNewProjectLogo(null)
+      setNewGanttImage(null)
       loadProject()
     } else {
       alert('Error updating project')
@@ -489,6 +564,63 @@ export default function ProjectDetailPage() {
                   />
                 </div>
 
+                {/* Current Project Logo */}
+                {editingProject.project_image_url && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Current Project Logo</label>
+                    <div className="relative inline-block">
+                      <img 
+                        src={editingProject.project_image_url} 
+                        alt="Current logo" 
+                        className="w-32 h-32 object-cover rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (confirm('Delete current project logo?')) {
+                            const oldFileName = editingProject.project_image_url.split('/').pop()
+                            await supabase.storage
+                              .from('project-files')
+                              .remove([`project-logos/${oldFileName}`])
+                            
+                            await supabase
+                              .from('projects')
+                              .update({ project_image_url: null })
+                              .eq('id', params.id)
+                            
+                            loadProject()
+                            setShowEditModal(false)
+                          }
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload New Project Logo */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    {editingProject.project_image_url ? 'Replace Project Logo/Image' : 'Project Logo/Image'} (optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setNewProjectLogo(e.target.files[0])}
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {newProjectLogo && (
+                    <p className="text-sm text-green-600 mt-1">✓ New logo selected: {newProjectLogo.name}</p>
+                  )}
+                  <p className="text-sm text-gray-500 mt-1">
+                    Upload a logo or main image for this project (max 5MB)
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Status</label>
                   <select
@@ -524,6 +656,63 @@ export default function ProjectDetailPage() {
                     />
                   </div>
                 </div>
+
+                {/* Current Gantt Chart */}
+                {editingProject.gantt_image_url && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Current Gantt Chart</label>
+                    <div className="relative inline-block">
+                      <img 
+                        src={editingProject.gantt_image_url} 
+                        alt="Current Gantt" 
+                        className="w-full max-w-md rounded border"
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (confirm('Delete current Gantt chart?')) {
+                            const oldFileName = editingProject.gantt_image_url.split('/').pop()
+                            await supabase.storage
+                              .from('project-files')
+                              .remove([`gantt/${oldFileName}`])
+                            
+                            await supabase
+                              .from('projects')
+                              .update({ gantt_image_url: null })
+                              .eq('id', params.id)
+                            
+                            loadProject()
+                            setShowEditModal(false)
+                          }
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload New Gantt Chart */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    {editingProject.gantt_image_url ? 'Replace Gantt Chart Image' : 'Gantt Chart Image'} (optional)
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setNewGanttImage(e.target.files[0])}
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {newGanttImage && (
+                    <p className="text-sm text-green-600 mt-1">✓ New Gantt chart selected: {newGanttImage.name}</p>
+                  )}
+                  <p className="text-sm text-gray-500 mt-1">
+                    Upload a Gantt chart showing project timeline
+                  </p>
+                </div>
               </div>
 
               <div className="flex gap-2 mt-6">
@@ -538,6 +727,8 @@ export default function ProjectDetailPage() {
                   onClick={() => {
                     setShowEditModal(false)
                     setEditingProject(null)
+                    setNewProjectLogo(null)
+                    setNewGanttImage(null)
                   }}
                   className="flex-1 px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
                 >
