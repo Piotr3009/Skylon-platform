@@ -281,10 +281,25 @@ export default function AdminTaskDetailPage() {
   }
 
   const handleDeleteTask = async () => {
-    if (!confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to delete this task? This will also delete all associated files. This action cannot be undone.')) {
       return
     }
 
+    // Import deleteTaskFiles
+    const { deleteTaskFiles } = await import('@/lib/deleteTaskFiles')
+
+    // Usuń pliki z storage przed usunięciem taska
+    const fileResult = await deleteTaskFiles(params.taskId)
+    
+    if (fileResult.filesDeleted > 0) {
+      console.log(`Deleted ${fileResult.filesDeleted} files from storage`)
+    }
+    
+    if (fileResult.errors.length > 0) {
+      console.warn('Some files could not be deleted:', fileResult.errors)
+    }
+
+    // Usuń task (CASCADE usunie task_documents, bids, ratings, photos, questions)
     const { error } = await supabase
       .from('tasks')
       .delete()
@@ -295,6 +310,7 @@ export default function AdminTaskDetailPage() {
       return
     }
 
+    alert(`Task deleted successfully. ${fileResult.filesDeleted} file(s) removed from storage.`)
     router.push(`/admin/projects/${params.id}`)
   }
 
