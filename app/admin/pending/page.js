@@ -199,6 +199,8 @@ export default function PendingPage() {
         .navy-header {
           background: linear-gradient(to right, #0a2540, #0c3b5c, #0a2540);
           border-bottom: 1px solid #082035;
+          position: relative;
+          z-index: 10;
         }
       `}</style>
 
