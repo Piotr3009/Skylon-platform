@@ -45,16 +45,30 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
 
   // Available specializations
   const availableSpecializations = [
-    'Demolition & Site Clearance',
-    'Groundworks & Foundations',
-    'Structural Frame',
-    'Joinery Installation',
-    'Mechanical Installation AC/VRF',
-    'Finishing',
     'General Construction',
-    'Electrical Installation',
-    'Plumbing & Heating',
-    'Other'
+    'Steel Frame Specialist',
+    'Plumber',
+    'HVAC Installer',
+    'Electrician',
+    'Fire Protection Specialist',
+    'Lift Engineer',
+    'Scaffolder',
+    'Decorator/Painter',
+    'Bricklayer',
+    'Joinery Installer',
+    'Carpenter',
+    'Dry Liner',
+    'Plasterer',
+    'Basement Specialist',
+    'Loft Specialist',
+    'Tiler',
+    'Floor Specialist',
+    'Staircase Specialist',
+    'Roofer',
+    'Glazier',
+    'Groundworks',
+    'Drainage Specialist',
+    'Renderer'
   ]
 
   useEffect(() => {
