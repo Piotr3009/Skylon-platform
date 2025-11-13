@@ -158,21 +158,6 @@ export default function ProjectDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this project? All categories and tasks will be deleted.')) return
-
-    const { error } = await supabase
-      .from('projects')
-      .delete()
-      .eq('id', params.id)
-
-    if (!error) {
-      router.push('/admin/projects')
-    } else {
-      alert('Error deleting project')
-    }
-  }
-
   const handleSaveEdit = async (e) => {
     e.preventDefault()
 
@@ -305,13 +290,7 @@ export default function ProjectDetailPage() {
           onClick={handleArchiveClick}
           className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition"
         >
-          Archive
-        </button>
-        <button
-          onClick={handleDelete}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-        >
-          Delete
+          Archive Project
         </button>
       </Header>
 
