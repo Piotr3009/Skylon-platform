@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
-export default function NotifySubcontractorsModal({ isOpen, taskId, projectName, taskName, onClose }) {
+export default function NotifySubcontractorsModal({ isOpen, categoryName, categoryTasks, projectId, projectName, onClose }) {
   const [selectedSpecializations, setSelectedSpecializations] = useState(['General Construction'])
   const [subcontractorCounts, setSubcontractorCounts] = useState({})
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
 
-  // Lista wszystkich specializations - MUSI być taka sama jak w rejestracji i profilu
+  // Lista wszystkich specializations
   const allSpecializations = [
     'General Construction',
     'Steel Frame Specialist',
@@ -47,7 +47,6 @@ export default function NotifySubcontractorsModal({ isOpen, taskId, projectName,
     setLoading(true)
     const counts = {}
 
-    // Dla każdej specjalizacji policz ile jest subcontractorów
     for (const spec of allSpecializations) {
       const { count, error } = await supabase
         .from('profiles')
@@ -73,7 +72,6 @@ export default function NotifySubcontractorsModal({ isOpen, taskId, projectName,
   }
 
   const getTotalSubcontractors = () => {
-    // Policz unikalnych subcontractorów (bo jeden może mieć wiele spec)
     return selectedSpecializations.reduce((sum, spec) => sum + (subcontractorCounts[spec] || 0), 0)
   }
 
@@ -86,7 +84,6 @@ export default function NotifySubcontractorsModal({ isOpen, taskId, projectName,
     setSending(true)
 
     try {
-      // Pobierz wszystkich subcontractorów z wybranymi specjalizacjami
       let allSubcontractors = []
 
       for (const spec of selectedSpecializations) {
@@ -101,19 +98,19 @@ export default function NotifySubcontractorsModal({ isOpen, taskId, projectName,
         }
       }
 
-      // Usuń duplikaty (subcontractorzy z wieloma spec)
       const uniqueSubcontractors = Array.from(
         new Map(allSubcontractors.map(s => [s.id, s])).values()
       )
 
       console.log(`Sending to ${uniqueSubcontractors.length} unique subcontractors`)
 
-      // Wywołaj Supabase Edge Function
+      // Wywołaj Edge Function
       const { data, error } = await supabase.functions.invoke('notify-subcontractors', {
         body: {
-          taskId,
+          projectId,
           projectName,
-          taskName,
+          categoryName,
+          tasks: categoryTasks,
           subcontractors: uniqueSubcontractors,
           specializations: selectedSpecializations
         }
@@ -142,7 +139,7 @@ export default function NotifySubcontractorsModal({ isOpen, taskId, projectName,
             <div>
               <h2 className="text-2xl font-bold text-gray-900">📧 Notify Subcontractors</h2>
               <p className="text-sm text-gray-600 mt-1">
-                Select which specializations should receive email notifications about this task
+                Category: <span className="font-semibold">{categoryName}</span> ({categoryTasks.length} tasks)
               </p>
             </div>
             <button
@@ -165,6 +162,21 @@ export default function NotifySubcontractorsModal({ isOpen, taskId, projectName,
             </div>
           ) : (
             <>
+              {/* Tasks Preview */}
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-2">Tasks to be included in email:</h3>
+                <ul className="space-y-1">
+                  {categoryTasks.map((task) => (
+                    <li key={task.id} className="text-sm text-gray-700">
+                      • {task.name} 
+                      {task.budget_min && task.budget_max && (
+                        <span className="text-gray-500"> (£{task.budget_min}-£{task.budget_max})</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               <p className="text-sm text-gray-700 mb-4">
                 Select specializations to notify (General Construction is always included):
               </p>

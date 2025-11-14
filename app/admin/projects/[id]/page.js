@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 import Header from '@/app/components/Header'
 import Breadcrumbs from '@/app/components/Breadcrumbs'
+import NotifySubcontractorsModal from '@/app/components/NotifySubcontractorsModal'
 
 export default function ProjectDetailPage() {
   const [profile, setProfile] = useState(null)
@@ -20,6 +21,8 @@ export default function ProjectDetailPage() {
   const [archiving, setArchiving] = useState(false)
   const [newProjectLogo, setNewProjectLogo] = useState(null)
   const [newGanttImage, setNewGanttImage] = useState(null)
+  const [showNotifyModal, setShowNotifyModal] = useState(false)
+  const [selectedTask, setSelectedTask] = useState(null)
   const router = useRouter()
   const params = useParams()
 
@@ -428,6 +431,21 @@ export default function ProjectDetailPage() {
                       >
                         + Add Task
                       </button>
+                      {category.tasks && category.tasks.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setSelectedTask(category)
+                            setShowNotifyModal(true)
+                          }}
+                          className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center gap-1"
+                          title="Send email notification about all tasks in this category"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          Notify All
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDeleteCategory(category.id)}
                         className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
@@ -718,6 +736,19 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Notify Subcontractors Modal */}
+      <NotifySubcontractorsModal
+        isOpen={showNotifyModal}
+        categoryName={selectedTask?.name}
+        categoryTasks={selectedTask?.tasks || []}
+        projectId={params.id}
+        projectName={project?.name}
+        onClose={() => {
+          setShowNotifyModal(false)
+          setSelectedTask(null)
+        }}
+      />
     </div>
   )
 }
