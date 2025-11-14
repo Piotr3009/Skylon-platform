@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
 export default function NotifySubcontractorsModal({ isOpen, categoryName, categoryTasks, projectId, projectName, onClose }) {
-  const [selectedSpecializations, setSelectedSpecializations] = useState(['General Construction'])
+  const [selectedSpecializations, setSelectedSpecializations] = useState([])
   const [subcontractorCounts, setSubcontractorCounts] = useState({})
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
@@ -178,7 +178,7 @@ export default function NotifySubcontractorsModal({ isOpen, categoryName, catego
               </div>
 
               <p className="text-sm text-gray-700 mb-4">
-                Select specializations to notify (General Construction is always included):
+                Select which specializations should receive this notification:
               </p>
 
               {/* Specializations Grid */}
@@ -186,7 +186,6 @@ export default function NotifySubcontractorsModal({ isOpen, categoryName, catego
                 {allSpecializations.map((spec) => {
                   const count = subcontractorCounts[spec] || 0
                   const isSelected = selectedSpecializations.includes(spec)
-                  const isGeneralConstruction = spec === 'General Construction'
 
                   return (
                     <label
@@ -195,14 +194,13 @@ export default function NotifySubcontractorsModal({ isOpen, categoryName, catego
                         isSelected
                           ? 'border-blue-500 bg-blue-50'
                           : 'border-gray-200 hover:border-gray-300'
-                      } ${isGeneralConstruction ? 'opacity-75' : ''}`}
+                      }`}
                     >
                       <div className="flex items-center gap-3 flex-1">
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => !isGeneralConstruction && handleToggleSpecialization(spec)}
-                          disabled={isGeneralConstruction}
+                          onChange={() => handleToggleSpecialization(spec)}
                           className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
                         />
                         <span className="font-medium text-gray-900 text-sm">{spec}</span>
@@ -252,7 +250,7 @@ export default function NotifySubcontractorsModal({ isOpen, categoryName, catego
               disabled={sending}
               className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition disabled:opacity-50"
             >
-              Skip
+              Cancel
             </button>
             <button
               onClick={handleSendNotifications}
