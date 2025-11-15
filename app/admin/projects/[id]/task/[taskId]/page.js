@@ -3,77 +3,67 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
-import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 
 const formatCurrency = (value) => {
   if (!value || Number.isNaN(value)) return '—'
   return `£${Number(value).toLocaleString('en-GB')}`
 }
 
-const formatMonthYear = (dateString) => {
-  if (!dateString) return '—'
-  const date = new Date(dateString)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-  return `${month}/${year}`
-}
-
-export default function PublicTaskPage() {
+export default function AdminTaskDetailPage() {
   const [task, setTask] = useState(null)
   const [category, setCategory] = useState(null)
   const [project, setProject] = useState(null)
   const [documents, setDocuments] = useState([])
+  const [bids, setBids] = useState([])
   const [questions, setQuestions] = useState([])
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [myBid, setMyBid] = useState(null)
-  const [taskPhotos, setTaskPhotos] = useState([])
+  const [profile, setProfile] = useState(null)
 
-  // Proposal form state
-  const [showProposalForm, setShowProposalForm] = useState(false)
-  const [proposalPrice, setProposalPrice] = useState('')
-  const [proposalDuration, setProposalDuration] = useState('')
-  const [proposalComment, setProposalComment] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
+  // Answer question state
+  const [answeringQuestionId, setAnsweringQuestionId] = useState(null)
+  const [answerText, setAnswerText] = useState('')
+  const [submittingAnswer, setSubmittingAnswer] = useState(false)
 
-  // Question form state
-  const [showQuestionForm, setShowQuestionForm] = useState(false)
-  const [questionText, setQuestionText] = useState('')
-  const [askingQuestion, setAskingQuestion] = useState(false)
-  const [questionError, setQuestionError] = useState(null)
-  const [questionSuccess, setQuestionSuccess] = useState(false)
+  // Edit task state
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingTask, setEditingTask] = useState(null)
+  const [savingTask, setSavingTask] = useState(false)
+  const [newDocuments, setNewDocuments] = useState([]) // For uploading new documents during edit
 
-  // Photo upload state
-  const [showPhotoUpload, setShowPhotoUpload] = useState(false)
-  const [photoFile, setPhotoFile] = useState(null)
-  const [photoDescription, setPhotoDescription] = useState('')
-  const [uploadingPhoto, setUploadingPhoto] = useState(false)
-  const [photoError, setPhotoError] = useState(null)
-  const [photoSuccess, setPhotoSuccess] = useState(false)
+  // Rating state
+  const [ratingBidId, setRatingBidId] = useState(null)
+  const [ratingValue, setRatingValue] = useState('')
+  const [ratingComment, setRatingComment] = useState('')
+  const [submittingRating, setSubmittingRating] = useState(false)
 
   const router = useRouter()
   const params = useParams()
 
   useEffect(() => {
-    checkUser()
+    checkAuth()
     loadTaskDetails()
   }, [])
 
-  const checkUser = async () => {
+  const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (user) {
-      setUser(user)
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-      setProfile(profileData)
+    if (!user) {
+      router.push('/login')
+      return
     }
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    if (profileData?.role !== 'owner' && profileData?.role !== 'coordinator') {
+      router.push('/dashboard')
+      return
+    }
+
+    setProfile(profileData)
   }
 
   const loadTaskDetails = async () => {
@@ -92,6 +82,7 @@ export default function PublicTaskPage() {
     }
 
     setTask(taskData)
+    setEditingTask(taskData)
 
     // Load category
     const { data: categoryData } = await supabase
@@ -119,251 +110,276 @@ export default function PublicTaskPage() {
 
     if (docsData) setDocuments(docsData)
 
+    // Load bids with subcontractor profiles
+    const { data: bidsData } = await supabase
+      .from('bids')
+      .select('*, profiles(full_name, company_name, email, phone, average_rating, total_projects)')
+      .eq('task_id', params.taskId)
+      .order('created_at', { ascending: false })
+
+    if (bidsData) setBids(bidsData)
+
     // Load questions
     const { data: questionsData } = await supabase
       .from('task_questions')
-      .select('*, profiles(full_name, company_name)')
+      .select('*, profiles(full_name, company_name, email)')
       .eq('task_id', params.taskId)
       .order('created_at', { ascending: false })
 
     if (questionsData) setQuestions(questionsData)
 
-    // Load my bid if logged in
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: bidData, error: bidError } = await supabase
-        .from('bids')
-        .select('*')
-        .eq('task_id', params.taskId)
-        .eq('subcontractor_id', user.id)
-        .maybeSingle()
-
-      if (bidData && !bidError) setMyBid(bidData)
-    }
-
-    // Load task photos
-    const { data: photosData } = await supabase
-      .from('task_photos')
-      .select('*, profiles(full_name, company_name)')
-      .eq('task_id', params.taskId)
-      .order('created_at', { ascending: false })
-
-    if (photosData) setTaskPhotos(photosData)
-
     setLoading(false)
   }
 
-  const handleSubmitProposal = async (e) => {
-    e.preventDefault()
-
-    if (!user) {
-      router.push('/login')
+  const handleAcceptBid = async (bidId) => {
+    if (!confirm('Accept this proposal? This will set the task status to "assigned" and reject other bids.')) {
       return
     }
 
-    if (profile?.role !== 'subcontractor') {
-      setError('Only subcontractors can submit proposals')
-      return
-    }
-
-    setSubmitting(true)
-    setError(null)
-
-    // Use upsert to allow updating existing bids
-    const { data, error: bidError } = await supabase
+    // Update bid to accepted
+    const { error: bidError } = await supabase
       .from('bids')
-      .upsert(
-        {
-          task_id: params.taskId,
-          subcontractor_id: user.id,
-          price: parseFloat(proposalPrice),
-          duration: parseInt(proposalDuration),
-          comment: proposalComment,
-          status: 'pending'
-        },
-        {
-          onConflict: 'task_id,subcontractor_id'
-        }
-      )
+      .update({ status: 'accepted' })
+      .eq('id', bidId)
 
     if (bidError) {
-      setError('Failed to submit proposal: ' + bidError.message)
-      setSubmitting(false)
+      alert('Error accepting bid: ' + bidError.message)
       return
     }
 
-    setSuccess(true)
-    setSubmitting(false)
+    // Update task status to assigned
+    const { error: taskError } = await supabase
+      .from('tasks')
+      .update({ status: 'assigned' })
+      .eq('id', params.taskId)
 
-    setTimeout(() => {
-      setShowProposalForm(false)
-      setSuccess(false)
-      setProposalPrice('')
-      setProposalDuration('')
-      setProposalComment('')
-      loadTaskDetails() // Reload to show updated bid
-    }, 2000)
+    if (taskError) {
+      alert('Error updating task: ' + taskError.message)
+      return
+    }
+
+    // Reject other bids
+    const otherBidIds = bids.filter(b => b.id !== bidId).map(b => b.id)
+    if (otherBidIds.length > 0) {
+      await supabase
+        .from('bids')
+        .update({ status: 'rejected' })
+        .in('id', otherBidIds)
+    }
+
+    loadTaskDetails()
   }
 
-  const handleAskQuestion = async (e) => {
-    e.preventDefault()
-
-    if (!user) {
-      router.push('/login')
+  const handleRejectBid = async (bidId) => {
+    if (!confirm('Reject this proposal?')) {
       return
     }
 
-    setAskingQuestion(true)
-    setQuestionError(null)
+    const { error } = await supabase
+      .from('bids')
+      .update({ status: 'rejected' })
+      .eq('id', bidId)
 
-    const { error: questionError } = await supabase
+    if (error) {
+      alert('Error rejecting bid: ' + error.message)
+      return
+    }
+
+    loadTaskDetails()
+  }
+
+  const handleSubmitAnswer = async (questionId) => {
+    if (!answerText.trim()) {
+      alert('Please enter an answer')
+      return
+    }
+
+    setSubmittingAnswer(true)
+
+    const { error } = await supabase
       .from('task_questions')
+      .update({ answer: answerText })
+      .eq('id', questionId)
+
+    if (error) {
+      alert('Error submitting answer: ' + error.message)
+      setSubmittingAnswer(false)
+      return
+    }
+
+    setAnswerText('')
+    setAnsweringQuestionId(null)
+    setSubmittingAnswer(false)
+    loadTaskDetails()
+  }
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault()
+    setSavingTask(true)
+
+    const { error } = await supabase
+      .from('tasks')
+      .update({
+        name: editingTask.name,
+        description: editingTask.description,
+        short_description: editingTask.short_description,
+        budget_min: editingTask.budget_min,
+        budget_max: editingTask.budget_max,
+        suggested_price: editingTask.suggested_price,
+        estimated_duration: editingTask.estimated_duration,
+        status: editingTask.status
+      })
+      .eq('id', params.taskId)
+
+    if (error) {
+      alert('Error updating task: ' + error.message)
+      setSavingTask(false)
+      return
+    }
+
+    // Upload new documents if any
+    if (newDocuments.length > 0) {
+      let uploadedCount = 0
+      for (const doc of newDocuments) {
+        const fileExt = doc.name.split('.').pop()
+        const fileName = `${Math.random()}.${fileExt}`
+        const filePath = `documents/${fileName}`
+
+        const { error: uploadError } = await supabase.storage
+          .from('project-files')
+          .upload(filePath, doc)
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError)
+          continue
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('project-files')
+          .getPublicUrl(filePath)
+
+        await supabase
+          .from('task_documents')
+          .insert([
+            {
+              task_id: params.taskId,
+              file_name: doc.name,
+              file_url: publicUrl,
+              file_type: doc.type,
+              uploaded_by: profile.id
+            }
+          ])
+
+        uploadedCount++
+      }
+    }
+
+    setSavingTask(false)
+    setShowEditModal(false)
+    setNewDocuments([])
+    loadTaskDetails()
+  }
+
+  const handleDeleteTask = async () => {
+    if (!confirm('Are you sure you want to delete this task? This will also delete all associated files. This action cannot be undone.')) {
+      return
+    }
+
+    // Import deleteTaskFiles
+    const { deleteTaskFiles } = await import('@/lib/deleteTaskFiles')
+
+    // Usuń pliki z storage przed usunięciem taska
+    const fileResult = await deleteTaskFiles(params.taskId)
+    
+    if (fileResult.filesDeleted > 0) {
+      console.log(`Deleted ${fileResult.filesDeleted} files from storage`)
+    }
+    
+    if (fileResult.errors.length > 0) {
+      console.warn('Some files could not be deleted:', fileResult.errors)
+    }
+
+    // Usuń task (CASCADE usunie task_documents, bids, ratings, photos, questions)
+    const { error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', params.taskId)
+
+    if (error) {
+      alert('Error deleting task: ' + error.message)
+      return
+    }
+
+    alert(`Task deleted successfully. ${fileResult.filesDeleted} file(s) removed from storage.`)
+    router.push(`/admin/projects/${params.id}`)
+  }
+
+  const handleSubmitRating = async (bidId, subcontractorId) => {
+    if (!ratingValue || ratingValue < 1 || ratingValue > 10) {
+      alert('Please enter a rating between 1 and 10')
+      return
+    }
+
+    setSubmittingRating(true)
+
+    const { error } = await supabase
+      .from('task_ratings')
       .insert([
         {
           task_id: params.taskId,
-          subcontractor_id: user.id,
-          question: questionText
+          subcontractor_id: subcontractorId,
+          rating: parseInt(ratingValue),
+          comment: ratingComment,
+          rated_by: profile.id
         }
       ])
 
-    if (questionError) {
-      setQuestionError('Failed to submit question: ' + questionError.message)
-      setAskingQuestion(false)
+    if (error) {
+      alert('Error submitting rating: ' + error.message)
+      setSubmittingRating(false)
       return
     }
 
-    setQuestionSuccess(true)
-    setQuestionText('')
-    setAskingQuestion(false)
-    
-    setTimeout(() => {
-      setShowQuestionForm(false)
-      setQuestionSuccess(false)
-      loadTaskDetails()
-    }, 1500)
-  }
+    // Update average rating for subcontractor
+    const { data: ratings } = await supabase
+      .from('task_ratings')
+      .select('rating')
+      .eq('subcontractor_id', subcontractorId)
 
-  const handlePhotoUpload = async (e) => {
-    e.preventDefault()
+    if (ratings && ratings.length > 0) {
+      const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+      const totalProjects = ratings.length
 
-    if (!photoFile) {
-      setPhotoError('Please select a photo')
-      return
+      await supabase
+        .from('profiles')
+        .update({
+          average_rating: avgRating.toFixed(2),
+          total_projects: totalProjects
+        })
+        .eq('id', subcontractorId)
     }
 
-    // Validate file size (5MB max)
-    if (photoFile.size > 5 * 1024 * 1024) {
-      setPhotoError('Photo must be less than 5MB')
-      return
-    }
-
-    // Validate file type
-    if (!photoFile.type.startsWith('image/')) {
-      setPhotoError('File must be an image')
-      return
-    }
-
-    setUploadingPhoto(true)
-    setPhotoError(null)
-
-    try {
-      // Upload to Supabase storage
-      const fileExt = photoFile.name.split('.').pop()
-      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
-      const filePath = `task-photos/${fileName}`
-
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('project-files')
-        .upload(filePath, photoFile)
-
-      if (uploadError) {
-        setPhotoError('Upload failed: ' + uploadError.message)
-        setUploadingPhoto(false)
-        return
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('project-files')
-        .getPublicUrl(filePath)
-
-      // Save to database
-      const { error: dbError } = await supabase
-        .from('task_photos')
-        .insert([
-          {
-            task_id: params.taskId,
-            uploaded_by: user.id,
-            photo_url: publicUrl,
-            description: photoDescription
-          }
-        ])
-
-      if (dbError) {
-        setPhotoError('Database error: ' + dbError.message)
-        setUploadingPhoto(false)
-        return
-      }
-
-      setPhotoSuccess(true)
-      setUploadingPhoto(false)
-
-      setTimeout(() => {
-        setShowPhotoUpload(false)
-        setPhotoSuccess(false)
-        setPhotoFile(null)
-        setPhotoDescription('')
-        loadTaskDetails()
-      }, 1500)
-
-    } catch (err) {
-      setPhotoError('Upload failed: ' + err.message)
-      setUploadingPhoto(false)
-    }
-  }
-
-  const handlePhotoFileChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setPhotoFile(file)
-      setPhotoError(null)
-    }
+    setRatingBidId(null)
+    setRatingValue('')
+    setRatingComment('')
+    setSubmittingRating(false)
+    loadTaskDetails()
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-xl">Loading task details...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
       </div>
     )
   }
 
   if (!task) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Task not found</h1>
-          <button
-            onClick={() => router.push(`/projects/${params.id}`)}
-            className="text-blue-600 hover:underline"
-          >
-            Return to project
-          </button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Task not found</div>
       </div>
     )
-  }
-
-  const canSubmitProposal = user && profile?.role === 'subcontractor' && task.status === 'open'
-
-  // Pre-fill form with existing bid data when opening the form
-  const handleOpenProposalForm = () => {
-    if (myBid) {
-      setProposalPrice(myBid.price.toString())
-      setProposalDuration(myBid.duration.toString())
-      setProposalComment(myBid.comment || '')
-    }
-    setShowProposalForm(true)
   }
 
   return (
@@ -372,26 +388,18 @@ export default function PublicTaskPage() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-sm text-gray-500 flex items-center gap-2">
+            <div className="text-sm text-gray-500">
               <button
-                onClick={() => router.push(`/projects/${params.id}`)}
+                onClick={() => router.push(`/admin/projects/${params.id}`)}
                 className="hover:text-blue-600 transition"
               >
                 {project?.name}
               </button>
-              <span>→</span>
-              {category && (
-                <div className="flex items-center gap-2">
-                  {(() => {
-                    const Icon = getCategoryIcon(category.name)
-                    return <Icon className="w-5 h-5" />
-                  })()}
-                  <span>{category.name}</span>
-                </div>
-              )}
+              {' → '}
+              <span>{category?.name}</span>
             </div>
             <button
-              onClick={() => router.push(`/projects/${params.id}`)}
+              onClick={() => router.push(`/admin/projects/${params.id}`)}
               className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
             >
               Back to Project
@@ -404,16 +412,29 @@ export default function PublicTaskPage() {
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${
                   task.status === 'open' ? 'bg-green-100 text-green-800' :
                   task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
+                  task.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                  'bg-yellow-100 text-yellow-800'
                 }`}>
                   {task.status}
                 </span>
-                {task.bid_deadline && (
-                  <span className="text-sm text-gray-600">
-                    Bid deadline: {new Date(task.bid_deadline).toLocaleDateString('en-GB')}
-                  </span>
-                )}
+                <span className="text-sm text-gray-600">
+                  {bids.length} proposal{bids.length !== 1 ? 's' : ''} received
+                </span>
               </div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2a5179] transition"
+              >
+                Edit Task
+              </button>
+              <button
+                onClick={handleDeleteTask}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+              >
+                Delete
+              </button>
             </div>
           </div>
         </div>
@@ -433,42 +454,18 @@ export default function PublicTaskPage() {
                     <div className="text-sm text-gray-500 mb-1">Suggested Budget</div>
                     <div className="text-2xl font-bold text-gray-900">
                       {task.budget_min && task.budget_max ? (
-                        // Show range if both min and max exist
                         `${formatCurrency(task.budget_min)} - ${formatCurrency(task.budget_max)}`
                       ) : task.budget_min ? (
-                        // Show only min if max doesn't exist
                         `From ${formatCurrency(task.budget_min)}`
                       ) : task.budget_max ? (
-                        // Show only max if min doesn't exist
                         `Up to ${formatCurrency(task.budget_max)}`
                       ) : (
-                        // Fallback to suggested_price
                         formatCurrency(task.suggested_price)
                       )}
                     </div>
                   </div>
                 )}
-                {(task.start_date || task.end_date) && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {task.start_date && (
-                      <div>
-                        <div className="text-sm text-gray-500 mb-1">Start Date</div>
-                        <div className="text-xl font-bold text-gray-900">
-                          {formatMonthYear(task.start_date)}
-                        </div>
-                      </div>
-                    )}
-                    {task.end_date && (
-                      <div>
-                        <div className="text-sm text-gray-500 mb-1">End Date</div>
-                        <div className="text-xl font-bold text-gray-900">
-                          {formatMonthYear(task.end_date)}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {!task.start_date && !task.end_date && task.estimated_duration && (
+                {task.estimated_duration && (
                   <div>
                     <div className="text-sm text-gray-500 mb-1">Estimated Duration</div>
                     <div className="text-2xl font-bold text-gray-900">
@@ -495,217 +492,213 @@ export default function PublicTaskPage() {
               )}
             </div>
 
-            {/* Photo Gallery */}
-            {taskPhotos.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Project Photos ({taskPhotos.length})
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {taskPhotos.map((photo) => (
-                    <div key={photo.id} className="group relative">
-                      <img
-                        src={photo.photo_url}
-                        alt={photo.description || 'Task photo'}
-                        className="w-full h-48 object-cover rounded-lg border border-gray-200 group-hover:shadow-lg transition cursor-pointer"
-                        onClick={() => window.open(photo.photo_url, '_blank')}
-                      />
-                      <div className="mt-2">
-                        {photo.description && (
-                          <p className="text-sm text-gray-700 mb-1">{photo.description}</p>
-                        )}
-                        <p className="text-xs text-gray-500">
-                          {photo.profiles?.company_name || photo.profiles?.full_name} • {new Date(photo.created_at).toLocaleDateString('en-GB')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Upload Photo Section - only for accepted subcontractors */}
-            {myBid && myBid.status === 'accepted' && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">Upload Progress Photos</h2>
-                  {!showPhotoUpload && (
-                    <button
-                      onClick={() => setShowPhotoUpload(true)}
-                      className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                    >
-                      Add Photo
-                    </button>
-                  )}
-                </div>
-
-                {showPhotoUpload && (
-                  <form onSubmit={handlePhotoUpload} className="p-4 bg-green-50 rounded-lg border border-green-200">
-                    {photoError && (
-                      <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-                        {photoError}
-                      </div>
-                    )}
-
-                    {photoSuccess && (
-                      <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded text-sm">
-                        Photo uploaded successfully!
-                      </div>
-                    )}
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Photo (max 5MB) *
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoFileChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        required
-                      />
-                      {photoFile && (
-                        <p className="mt-2 text-sm text-gray-600">
-                          Selected: {photoFile.name} ({(photoFile.size / 1024 / 1024).toFixed(2)} MB)
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Description (optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={photoDescription}
-                        onChange={(e) => setPhotoDescription(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="e.g., Foundation completed, Electrical work in progress..."
-                      />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        disabled={uploadingPhoto}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition"
-                      >
-                        {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowPhotoUpload(false)
-                          setPhotoFile(null)
-                          setPhotoDescription('')
-                          setPhotoError(null)
-                        }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {!showPhotoUpload && (
-                  <p className="text-sm text-gray-600">
-                    Upload photos to show project progress and keep the coordinator updated.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Questions section */}
+            {/* Bids section */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Questions & Answers ({questions.length})
-                </h2>
-                {user && (
-                  <button
-                    onClick={() => setShowQuestionForm(!showQuestionForm)}
-                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  >
-                    Ask Question
-                  </button>
-                )}
-              </div>
-
-              {showQuestionForm && (
-                <form onSubmit={handleAskQuestion} className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Question
-                  </label>
-                  
-                  {questionError && (
-                    <div className="mb-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                      {questionError}
-                    </div>
-                  )}
-                  
-                  {questionSuccess && (
-                    <div className="mb-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
-                      Question submitted successfully!
-                    </div>
-                  )}
-                  
-                  <textarea
-                    value={questionText}
-                    onChange={(e) => {
-                      setQuestionText(e.target.value)
-                      setQuestionError(null)
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows="3"
-                    placeholder="Ask about scope, requirements, materials..."
-                    required
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      type="submit"
-                      disabled={askingQuestion}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                    >
-                      {askingQuestion ? 'Submitting...' : 'Submit Question'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowQuestionForm(false)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {questions.length === 0 ? (
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Proposals ({bids.length})
+              </h2>
+              {bids.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">
-                  No questions yet. Be the first to ask!
+                  No proposals submitted yet
                 </p>
               ) : (
                 <div className="space-y-4">
+                  {bids.map((bid) => (
+                    <div key={bid.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <div className="font-bold text-lg text-gray-900">
+                            {bid.profiles?.company_name || bid.profiles?.full_name || 'Subcontractor'}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {bid.profiles?.email}
+                            {bid.profiles?.phone && ` • ${bid.profiles.phone}`}
+                          </div>
+                          <div className="text-sm text-gray-500 mt-1">
+                            Rating: {bid.profiles?.average_rating || 0} ⭐ |
+                            Completed: {bid.profiles?.total_projects || 0} projects
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-blue-600">
+                            {formatCurrency(bid.price)}
+                          </div>
+                          <div className="text-sm text-gray-600">{bid.duration} days</div>
+                          <div className="mt-2">
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                              bid.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              bid.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {bid.status}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {bid.comment && (
+                        <div className="mb-3 p-3 bg-gray-50 rounded border border-gray-200">
+                          <div className="text-sm font-medium text-gray-700 mb-1">Approach & Comments:</div>
+                          <div className="text-sm text-gray-700">{bid.comment}</div>
+                        </div>
+                      )}
+
+                      <div className="text-xs text-gray-500 mb-3">
+                        Submitted: {new Date(bid.created_at).toLocaleString('en-GB')}
+                      </div>
+
+                      {bid.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleAcceptBid(bid.id)}
+                            className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium"
+                          >
+                            Accept Proposal
+                          </button>
+                          <button
+                            onClick={() => handleRejectBid(bid.id)}
+                            className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      )}
+
+                      {bid.status === 'accepted' && ratingBidId !== bid.id && (
+                        <div className="mt-3">
+                          <button
+                            onClick={() => setRatingBidId(bid.id)}
+                            className="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition font-medium"
+                          >
+                            ⭐ Rate Subcontractor
+                          </button>
+                        </div>
+                      )}
+
+                      {bid.status === 'accepted' && ratingBidId === bid.id && (
+                        <div className="mt-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                          <div className="text-sm font-semibold text-gray-700 mb-3">Rate this subcontractor&apos;s performance</div>
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Rating (1-10) *
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              max="10"
+                              value={ratingValue}
+                              onChange={(e) => setRatingValue(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                              placeholder="Enter 1-10"
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Comment (optional)
+                            </label>
+                            <textarea
+                              value={ratingComment}
+                              onChange={(e) => setRatingComment(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                              rows="2"
+                              placeholder="Quality of work, professionalism, timeliness..."
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleSubmitRating(bid.id, bid.subcontractor_id)}
+                              disabled={submittingRating}
+                              className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:bg-gray-400 transition font-medium"
+                            >
+                              {submittingRating ? 'Submitting...' : 'Submit Rating'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setRatingBidId(null)
+                                setRatingValue('')
+                                setRatingComment('')
+                              }}
+                              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Questions section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">
+                Questions & Answers ({questions.length})
+              </h2>
+              {questions.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No questions yet</p>
+              ) : (
+                <div className="space-y-4">
                   {questions.map((q) => (
-                    <div key={q.id} className="border-l-4 border-[#1e3a5f] pl-4 py-3">
-                      <div className="flex justify-between text-sm text-gray-500 mb-2">
-                        <span className="font-medium">
-                          Anonymous Subcontractor
-                        </span>
-                        <span>{new Date(q.created_at).toLocaleDateString('en-GB')}</span>
+                    <div key={q.id} className="border-l-4 border-[#1e3a5f] pl-4 py-3 bg-[#1e3a5f]/5">
+                      <div className="flex justify-between items-start text-sm mb-2">
+                        <div>
+                          <span className="font-semibold text-[#1e3a5f]">
+                            {q.profiles?.company_name || q.profiles?.full_name || 'Anonymous'}
+                          </span>
+                          {q.profiles?.email && (
+                            <span className="text-gray-500 text-xs ml-2">
+                              ({q.profiles.email})
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-gray-500">{new Date(q.created_at).toLocaleDateString('en-GB')}</span>
                       </div>
                       <div className="font-semibold text-gray-900 mb-2">
                         Q: {q.question}
                       </div>
+
                       {q.answer ? (
-                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                          <span className="text-sm font-medium text-gray-700">A: </span>
+                        <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                          <span className="text-sm font-medium text-green-800">A: </span>
                           <span className="text-gray-700">{q.answer}</span>
                         </div>
-                      ) : (
-                        <div className="text-gray-400 italic text-sm">
-                          Awaiting response from coordinator
+                      ) : answeringQuestionId === q.id ? (
+                        <div className="mt-3">
+                          <textarea
+                            value={answerText}
+                            onChange={(e) => setAnswerText(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
+                            rows="3"
+                            placeholder="Type your answer..."
+                          />
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => handleSubmitAnswer(q.id)}
+                              disabled={submittingAnswer}
+                              className="px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2a5179] disabled:bg-gray-400 transition"
+                            >
+                              {submittingAnswer ? 'Submitting...' : 'Submit Answer'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                setAnsweringQuestionId(null)
+                                setAnswerText('')
+                              }}
+                              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         </div>
+                      ) : (
+                        <button
+                          onClick={() => setAnsweringQuestionId(q.id)}
+                          className="mt-2 px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2a5179] transition text-sm"
+                        >
+                          Answer Question
+                        </button>
                       )}
                     </div>
                   ))}
@@ -716,252 +709,41 @@ export default function PublicTaskPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Submit proposal */}
-            {canSubmitProposal && !showProposalForm && !myBid && (
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white">
-                <h3 className="text-xl font-bold mb-2">Ready to bid?</h3>
-                <p className="text-blue-100 mb-4 text-sm">
-                  Submit your proposal with pricing and timeline
-                </p>
-                <button
-                  onClick={handleOpenProposalForm}
-                  className="w-full px-4 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition shadow"
-                >
-                  Submit Proposal
-                </button>
-              </div>
-            )}
-
-            {/* Update existing bid */}
-            {canSubmitProposal && !showProposalForm && myBid && (
-              <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-lg shadow-lg p-6 text-white">
-                <h3 className="text-xl font-bold mb-2">Your Current Bid</h3>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-green-100">Price:</span>
-                    <span className="font-semibold">£{myBid.price.toLocaleString('en-GB')}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-green-100">Duration:</span>
-                    <span className="font-semibold">{myBid.duration} days</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-green-100">Status:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      myBid.status === 'pending' ? 'bg-yellow-500 text-white' :
-                      myBid.status === 'accepted' ? 'bg-white text-green-600' :
-                      'bg-red-500 text-white'
-                    }`}>
-                      {myBid.status}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleOpenProposalForm}
-                  className="w-full px-4 py-3 bg-white text-green-600 font-semibold rounded-lg hover:bg-gray-100 transition shadow"
-                >
-                  Update Proposal
-                </button>
-              </div>
-            )}
-
-            {!user && task.status === 'open' && (
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white">
-                <h3 className="text-xl font-bold mb-2">Want to bid?</h3>
-                <p className="text-blue-100 mb-4 text-sm">
-                  Login or register to submit your proposal
-                </p>
-                <button
-                  onClick={() => router.push('/login')}
-                  className="w-full px-4 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition shadow mb-2"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => router.push('/register')}
-                  className="w-full px-4 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-blue-800 transition"
-                >
-                  Register
-                </button>
-              </div>
-            )}
-
-            {/* Proposal form */}
-            {showProposalForm && (
-              <div className="bg-white rounded-lg shadow-lg border-2 border-blue-500 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  {myBid ? 'Update Your Proposal' : 'Submit Your Proposal'}
-                </h3>
-
-                {error && (
-                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                    {error}
-                  </div>
-                )}
-
-                {success && (
-                  <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                    {myBid ? 'Proposal updated successfully!' : 'Proposal submitted successfully!'}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmitProposal}>
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Your Price (£) *
-                    </label>
-                    <input
-                      type="number"
-                      value={proposalPrice}
-                      onChange={(e) => setProposalPrice(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="25000"
-                      step="0.01"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Duration (days) *
-                    </label>
-                    <input
-                      type="number"
-                      value={proposalDuration}
-                      onChange={(e) => setProposalDuration(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="20"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Comments & Approach
-                    </label>
-                    <textarea
-                      value={proposalComment}
-                      onChange={(e) => setProposalComment(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows="4"
-                      placeholder="Describe your approach, experience, team size..."
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="flex-1 px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition"
-                    >
-                      {submitting ? (myBid ? 'Updating...' : 'Submitting...') : (myBid ? 'Update Proposal' : 'Submit Proposal')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowProposalForm(false)}
-                      className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
             {/* Documents */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="font-bold text-gray-900 mb-4">
                 Documents ({documents.length})
               </h3>
-
-              {!user && documents.length > 0 && (
-                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-                  <p className="font-medium mb-1">🔒 Login required to download documents</p>
-                  <p className="text-xs text-blue-600">Register or login to access project files</p>
-                </div>
-              )}
-
-              {user && profile && !profile.email_verified && documents.length > 0 && (
-                <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-                  <p className="font-medium mb-1">⚠️ Email verification required</p>
-                  <p className="text-xs text-yellow-600">Check your inbox to verify your email before downloading</p>
-                </div>
-              )}
-
               {documents.length === 0 ? (
                 <p className="text-gray-500 text-sm">No documents available</p>
               ) : (
                 <div className="space-y-2">
-                  {documents.map((doc) => {
-                    const canDownload = user && profile?.email_verified
-
-                    if (canDownload) {
-                      return (
-                        <a
-                          key={doc.id}
-                          href={doc.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition group"
-                        >
-                          <svg
-                            className="w-5 h-5 text-gray-400 group-hover:text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          <span className="text-sm text-gray-700 group-hover:text-blue-600 flex-1">
-                            {doc.file_name}
-                          </span>
-                          <svg
-                            className="w-4 h-4 text-gray-400 group-hover:text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                            />
-                          </svg>
-                        </a>
-                      )
-                    } else {
-                      return (
-                        <div
-                          key={doc.id}
-                          className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg opacity-60 cursor-not-allowed"
-                        >
-                          <svg
-                            className="w-5 h-5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                            />
-                          </svg>
-                          <span className="text-sm text-gray-600 flex-1">
-                            {doc.file_name}
-                          </span>
-                          <span className="text-xs text-gray-500">🔒 Locked</span>
-                        </div>
-                      )
-                    }
-                  })}
+                  {documents.map((doc) => (
+                    <a
+                      key={doc.id}
+                      href={doc.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition group"
+                    >
+                      <svg
+                        className="w-5 h-5 text-gray-400 group-hover:text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                      <span className="text-sm text-gray-700 group-hover:text-blue-600 flex-1">
+                        {doc.file_name}
+                      </span>
+                    </a>
+                  ))}
                 </div>
               )}
             </div>
@@ -971,16 +753,8 @@ export default function PublicTaskPage() {
               <h3 className="font-bold text-gray-900 mb-4">Task Information</h3>
               <div className="space-y-3 text-sm">
                 <div>
-                  <div className="text-gray-500 mb-2">Category</div>
-                  {category && (
-                    <div className={`flex items-center gap-3 p-3 rounded-lg border ${getCategoryColor(category.name)}`}>
-                      {(() => {
-                        const Icon = getCategoryIcon(category.name)
-                        return <Icon className="w-6 h-6 flex-shrink-0" />
-                      })()}
-                      <div className="font-semibold">{category.name}</div>
-                    </div>
-                  )}
+                  <div className="text-gray-500">Category</div>
+                  <div className="font-medium text-gray-900">{category?.name}</div>
                 </div>
                 <div>
                   <div className="text-gray-500">Project</div>
@@ -995,6 +769,264 @@ export default function PublicTaskPage() {
           </div>
         </div>
       </main>
+
+      {/* Edit Modal */}
+      {showEditModal && editingTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-4">Edit Task</h2>
+            <form onSubmit={handleSaveEdit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Task Name</label>
+                  <input
+                    type="text"
+                    value={editingTask.name}
+                    onChange={(e) => setEditingTask({...editingTask, name: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Short Description</label>
+                  <input
+                    type="text"
+                    value={editingTask.short_description || ''}
+                    onChange={(e) => setEditingTask({...editingTask, short_description: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Full Description</label>
+                  <textarea
+                    value={editingTask.description || ''}
+                    onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
+                    rows="6"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold mb-2">
+                    Budget Range (£) *
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Minimum</label>
+                      <input
+                        type="number"
+                        value={editingTask.budget_min || ''}
+                        onChange={(e) => setEditingTask({...editingTask, budget_min: e.target.value})}
+                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                        placeholder="10000"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-600 mb-1">Maximum</label>
+                      <input
+                        type="number"
+                        value={editingTask.budget_max || ''}
+                        onChange={(e) => setEditingTask({...editingTask, budget_max: e.target.value})}
+                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                        placeholder="15000"
+                        step="0.01"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Set the expected budget range for this task</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block font-bold mb-2">
+                      Suggested Price (£)
+                      <span className="text-sm font-normal text-gray-500 ml-2">(optional - for reference)</span>
+                    </label>
+                    <input
+                      type="number"
+                      value={editingTask.suggested_price || ''}
+                      onChange={(e) => setEditingTask({...editingTask, suggested_price: e.target.value})}
+                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                      placeholder="12500"
+                      step="0.01"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold mb-2">
+                      Estimated Duration (days)
+                    </label>
+                    <input
+                      type="number"
+                      value={editingTask.estimated_duration || ''}
+                      onChange={(e) => setEditingTask({...editingTask, estimated_duration: e.target.value})}
+                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
+                      placeholder="20"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Status</label>
+                  <select
+                    value={editingTask.status}
+                    onChange={(e) => setEditingTask({...editingTask, status: e.target.value})}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
+                  >
+                    <option value="open">Open</option>
+                    <option value="assigned">Assigned</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+
+                {/* Existing Documents */}
+                {documents.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Current Documents ({documents.length})</label>
+                    <div className="space-y-2 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-40 overflow-y-auto">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-2 bg-white rounded border">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span className="text-sm text-gray-700 truncate">{doc.file_name}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (confirm('Delete this document?')) {
+                                // Extract file path from URL
+                                const urlParts = doc.file_url.split('/')
+                                const filePath = `documents/${urlParts[urlParts.length - 1]}`
+                                
+                                // Delete from storage
+                                await supabase.storage
+                                  .from('project-files')
+                                  .remove([filePath])
+                                
+                                // Delete from database
+                                await supabase
+                                  .from('task_documents')
+                                  .delete()
+                                  .eq('id', doc.id)
+                                
+                                loadTaskDetails()
+                              }
+                            }}
+                            className="ml-2 p-1 text-red-600 hover:bg-red-100 rounded flex-shrink-0"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Add New Documents */}
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Add New Documents (PDF, DWG, Images, etc.)
+                  </label>
+                  <div className="border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50/30 hover:bg-blue-50 transition">
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png,.gif,.doc,.docx,.xls,.xlsx"
+                      onChange={(e) => {
+                        const newFiles = Array.from(e.target.files)
+                        setNewDocuments([...newDocuments, ...newFiles])
+                        e.target.value = ''
+                      }}
+                      className="w-full px-3 py-2 border border-blue-300 bg-white rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
+                    />
+                    <p className="text-xs text-blue-600 mt-2 font-medium">
+                      📎 Click &quot;Choose Files&quot; multiple times to add more documents
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      You can select multiple files at once (Ctrl/Cmd + Click) or add them one by one
+                    </p>
+                  </div>
+
+                  {newDocuments.length > 0 && (
+                    <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="font-semibold text-green-800 mb-2 flex items-center gap-2 text-sm">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {newDocuments.length} new file{newDocuments.length > 1 ? 's' : ''} to upload
+                      </div>
+                      <div className="space-y-2">
+                        {newDocuments.map((doc, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-white rounded border border-green-200">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium text-gray-900 truncate">{doc.name}</div>
+                                <div className="text-xs text-gray-500">{(doc.size / 1024).toFixed(1)} KB</div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newDocs = newDocuments.filter((_, i) => i !== index)
+                                setNewDocuments(newDocs)
+                              }}
+                              className="ml-2 p-1 text-red-600 hover:bg-red-100 rounded flex-shrink-0"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setNewDocuments([])}
+                        className="mt-2 text-xs text-red-600 hover:text-red-800 font-medium"
+                      >
+                        Clear all new files
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-6">
+                <button
+                  type="submit"
+                  disabled={savingTask}
+                  className="flex-1 px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2a5179] disabled:bg-gray-400"
+                >
+                  {savingTask ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false)
+                    setEditingTask(task)
+                    setNewDocuments([])
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
