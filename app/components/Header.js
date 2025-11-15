@@ -16,14 +16,21 @@ export default function AdminProjectsPage() {
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
+<<<<<<< HEAD
   useEffect(() => {
     checkAuth()
     loadProjects()
   }, [])
+=======
+  const headerClasses = gradient
+    ? "bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 shadow-lg border-b border-indigo-800"
+    : "bg-white shadow-sm border-b border-gray-200"
+>>>>>>> parent of ce14f96 (redesign)
 
   const checkAuth = async () => {
     const { data: { user } } = await supabase.auth.getUser()
 
+<<<<<<< HEAD
     if (!user) {
       router.push('/login')
       return
@@ -127,6 +134,11 @@ export default function AdminProjectsPage() {
       </div>
     )
   }
+=======
+  const subtitleClasses = gradient
+    ? "text-sm text-indigo-100 mt-1"
+    : "text-sm text-gray-600 mt-1"
+>>>>>>> parent of ce14f96 (redesign)
 
   return (
     <div className="min-h-screen bg-gray-50">
