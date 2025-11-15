@@ -425,7 +425,7 @@ export default function AdminTaskDetailPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowEditModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                className="px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2a5179] transition"
               >
                 Edit Task
               </button>
@@ -641,12 +641,19 @@ export default function AdminTaskDetailPage() {
               ) : (
                 <div className="space-y-4">
                   {questions.map((q) => (
-                    <div key={q.id} className="border-l-4 border-blue-500 pl-4 py-3">
-                      <div className="flex justify-between text-sm text-gray-500 mb-2">
-                        <span className="font-medium">
-                          {q.profiles?.company_name || q.profiles?.full_name || 'Anonymous'}
-                        </span>
-                        <span>{new Date(q.created_at).toLocaleDateString('en-GB')}</span>
+                    <div key={q.id} className="border-l-4 border-[#1e3a5f] pl-4 py-3 bg-[#1e3a5f]/5">
+                      <div className="flex justify-between items-start text-sm mb-2">
+                        <div>
+                          <span className="font-semibold text-[#1e3a5f]">
+                            {q.profiles?.company_name || q.profiles?.full_name || 'Anonymous'}
+                          </span>
+                          {q.profiles?.email && (
+                            <span className="text-gray-500 text-xs ml-2">
+                              ({q.profiles.email})
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-gray-500">{new Date(q.created_at).toLocaleDateString('en-GB')}</span>
                       </div>
                       <div className="font-semibold text-gray-900 mb-2">
                         Q: {q.question}
@@ -662,7 +669,7 @@ export default function AdminTaskDetailPage() {
                           <textarea
                             value={answerText}
                             onChange={(e) => setAnswerText(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
                             rows="3"
                             placeholder="Type your answer..."
                           />
@@ -670,7 +677,7 @@ export default function AdminTaskDetailPage() {
                             <button
                               onClick={() => handleSubmitAnswer(q.id)}
                               disabled={submittingAnswer}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition"
+                              className="px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2a5179] disabled:bg-gray-400 transition"
                             >
                               {submittingAnswer ? 'Submitting...' : 'Submit Answer'}
                             </button>
@@ -688,7 +695,7 @@ export default function AdminTaskDetailPage() {
                       ) : (
                         <button
                           onClick={() => setAnsweringQuestionId(q.id)}
-                          className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+                          className="mt-2 px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2a5179] transition text-sm"
                         >
                           Answer Question
                         </button>
@@ -776,7 +783,7 @@ export default function AdminTaskDetailPage() {
                     type="text"
                     value={editingTask.name}
                     onChange={(e) => setEditingTask({...editingTask, name: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
                     required
                   />
                 </div>
@@ -787,7 +794,7 @@ export default function AdminTaskDetailPage() {
                     type="text"
                     value={editingTask.short_description || ''}
                     onChange={(e) => setEditingTask({...editingTask, short_description: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
                   />
                 </div>
 
@@ -796,7 +803,7 @@ export default function AdminTaskDetailPage() {
                   <textarea
                     value={editingTask.description || ''}
                     onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
                     rows="6"
                   />
                 </div>
@@ -812,7 +819,7 @@ export default function AdminTaskDetailPage() {
                         type="number"
                         value={editingTask.budget_min || ''}
                         onChange={(e) => setEditingTask({...editingTask, budget_min: e.target.value})}
-                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                         placeholder="10000"
                         step="0.01"
                         required
@@ -824,7 +831,7 @@ export default function AdminTaskDetailPage() {
                         type="number"
                         value={editingTask.budget_max || ''}
                         onChange={(e) => setEditingTask({...editingTask, budget_max: e.target.value})}
-                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                         placeholder="15000"
                         step="0.01"
                         required
@@ -844,7 +851,7 @@ export default function AdminTaskDetailPage() {
                       type="number"
                       value={editingTask.suggested_price || ''}
                       onChange={(e) => setEditingTask({...editingTask, suggested_price: e.target.value})}
-                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                       placeholder="12500"
                       step="0.01"
                     />
@@ -857,7 +864,7 @@ export default function AdminTaskDetailPage() {
                       type="number"
                       value={editingTask.estimated_duration || ''}
                       onChange={(e) => setEditingTask({...editingTask, estimated_duration: e.target.value})}
-                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                       placeholder="20"
                     />
                   </div>
@@ -868,7 +875,7 @@ export default function AdminTaskDetailPage() {
                   <select
                     value={editingTask.status}
                     onChange={(e) => setEditingTask({...editingTask, status: e.target.value})}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
                   >
                     <option value="open">Open</option>
                     <option value="assigned">Assigned</option>
@@ -939,7 +946,7 @@ export default function AdminTaskDetailPage() {
                         setNewDocuments([...newDocuments, ...newFiles])
                         e.target.value = ''
                       }}
-                      className="w-full px-3 py-2 border border-blue-300 bg-white rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-full px-3 py-2 border border-blue-300 bg-white rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f] text-sm"
                     />
                     <p className="text-xs text-blue-600 mt-2 font-medium">
                       📎 Click &quot;Choose Files&quot; multiple times to add more documents
@@ -1000,7 +1007,7 @@ export default function AdminTaskDetailPage() {
                 <button
                   type="submit"
                   disabled={savingTask}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+                  className="flex-1 px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2a5179] disabled:bg-gray-400"
                 >
                   {savingTask ? 'Saving...' : 'Save Changes'}
                 </button>

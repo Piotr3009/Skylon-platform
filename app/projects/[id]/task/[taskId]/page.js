@@ -659,10 +659,10 @@ export default function PublicTaskPage() {
               ) : (
                 <div className="space-y-4">
                   {questions.map((q) => (
-                    <div key={q.id} className="border-l-4 border-blue-500 pl-4 py-3">
+                    <div key={q.id} className="border-l-4 border-[#1e3a5f] pl-4 py-3">
                       <div className="flex justify-between text-sm text-gray-500 mb-2">
                         <span className="font-medium">
-                          {q.profiles?.company_name || q.profiles?.full_name || 'Anonymous'}
+                          Anonymous Subcontractor
                         </span>
                         <span>{new Date(q.created_at).toLocaleDateString('en-GB')}</span>
                       </div>
