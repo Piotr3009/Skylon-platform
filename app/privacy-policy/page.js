@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Privacy Policy</h2>
             <p>
-              This privacy policy governs the manner in which Skylon Construction Ltd ("we," "us," or "our") collects, uses, maintains, and discloses information collected from users (each, a "User") of the https://www.skylonbuild.co.uk/ website ("Site"). This privacy policy applies to the Site and all products and services offered by Skylon Build Ltd.
+              This privacy policy governs the manner in which Skylon Construction Ltd (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) collects, uses, maintains, and discloses information collected from users (each, a &quot;User&quot;) of the https://www.skylonbuild.co.uk/ website (&quot;Site&quot;). This privacy policy applies to the Site and all products and services offered by Skylon Build Ltd.
             </p>
           </section>
 
@@ -19,14 +19,14 @@ export default function PrivacyPolicy() {
               We may collect personal identification information from Users in a variety of ways, including, but not limited to, when Users visit our Site, fill out a form, and in connection with other activities, services, features or resources we make available on our Site. Users may be asked for their first name, surname, email address, and phone number. We will collect personal identification information from Users only if they voluntarily submit such information to us. Users can always refuse to supply personally identification information, except that it may prevent them from engaging in certain Site-related activities.
             </p>
             <p className="mt-3">
-              We may also collect non-personal identification information about Users whenever they interact with our Site. Non-personal identification information may include the browser name, the type of computer and technical information about Users' means of connection to our Site, such as the operating system and the Internet service providers utilized, and other similar information.
+              We may also collect non-personal identification information about Users whenever they interact with our Site. Non-personal identification information may include the browser name, the type of computer and technical information about Users&apos; means of connection to our Site, such as the operating system and the Internet service providers utilized, and other similar information.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-3">Web Browser Cookies</h2>
             <p>
-              Our Site may use "cookies" to enhance User experience. User's web browser places cookies on their hard drive for record-keeping purposes and sometimes to track information about them. Users may choose to set their web browser to refuse cookies or to alert them when cookies are being sent. If they do so, note that some parts of the Site may not function properly.
+              Our Site may use &quot;cookies&quot; to enhance User experience. User&apos;s web browser places cookies on their hard drive for record-keeping purposes and sometimes to track information about them. Users may choose to set their web browser to refuse cookies or to alert them when cookies are being sent. If they do so, note that some parts of the Site may not function properly.
             </p>
           </section>
 
@@ -39,7 +39,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-3">How We Use Collected Information</h2>
-            <p>Skylon Build Ltd may collect and use Users' personal information for the following purposes:</p>
+            <p>Skylon Build Ltd may collect and use Users&apos; personal information for the following purposes:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>To respond to inquiries and provide customer support</li>
               <li>To send Users information they agreed to receive about topics we think will be of interest to them</li>
@@ -62,7 +62,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-3">Sharing Your Personal Information</h2>
             <p>
-              We do not sell, trade, or rent Users' personal identification information to others. We may share generic aggregated demographic information not linked to any personal identification information regarding visitors and users with our business partners, trusted affiliates, and advertisers for the purposes outlined above.
+              We do not sell, trade, or rent Users&apos; personal identification information to others. We may share generic aggregated demographic information not linked to any personal identification information regarding visitors and users with our business partners, trusted affiliates, and advertisers for the purposes outlined above.
             </p>
           </section>
 

@@ -141,7 +141,7 @@ export default function DeleteAccountModal({ isOpen, onClose, user }) {
 
               <div className="bg-gray-50 border border-gray-200 rounded p-4 mb-6">
                 <p className="text-sm text-gray-700">
-                  <strong>Note:</strong> This action complies with GDPR "Right to be Forgotten" regulations. 
+                  <strong>Note:</strong> This action complies with GDPR &quot;Right to be Forgotten&quot; regulations. 
                   All your personal data will be permanently removed from our systems within 30 days.
                 </p>
               </div>
@@ -165,7 +165,7 @@ export default function DeleteAccountModal({ isOpen, onClose, user }) {
 
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-300 rounded">
                 <p className="text-sm text-yellow-800">
-                  <strong>Final Warning:</strong> Once you click "Delete My Account Forever", 
+                  <strong>Final Warning:</strong> Once you click &quot;Delete My Account Forever&quot;, 
                   this action cannot be undone and all your data will be permanently deleted.
                 </p>
               </div>

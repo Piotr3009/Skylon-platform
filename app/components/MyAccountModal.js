@@ -104,7 +104,9 @@ export default function MyAccountModal({ isOpen, onClose, user, profile, onUpdat
       if (error) throw error
 
       setMessage({ type: 'success', text: 'Personal information updated successfully!' })
-      onUpdate && onUpdate()
+      if (onUpdate) {
+        onUpdate()
+      }
     } catch (error) {
       setMessage({ type: 'error', text: error.message })
     }
