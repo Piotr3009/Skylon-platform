@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState('')
   const [specialization, setSpecialization] = useState([])
   const [showDropdown, setShowDropdown] = useState(false)
+  const [gdprConsent, setGdprConsent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
@@ -52,10 +53,27 @@ export default function RegisterPage() {
     }
   }
 
+  const getClientIp = async () => {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json')
+      const data = await response.json()
+      return data.ip
+    } catch {
+      return 'unknown'
+    }
+  }
+
   const handleRegister = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+
+    // Walidacja - checkbox GDPR
+    if (!gdprConsent) {
+      setError('You must accept the Privacy Policy and Terms & Conditions')
+      setLoading(false)
+      return
+    }
 
     // Walidacja - minimum 1 specjalizacja
     if (specialization.length === 0) {
@@ -64,7 +82,7 @@ export default function RegisterPage() {
       return
     }
 
-    // Sign up with Supabase Auth - przekazujemy dane w metadata
+    // Sign up with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -84,8 +102,25 @@ export default function RegisterPage() {
       return
     }
 
-    // Profil zostanie utworzony automatycznie przez trigger z metadanych
+    // Log GDPR consent
     if (authData.user) {
+      try {
+        const clientIp = await getClientIp()
+        const userAgent = navigator.userAgent
+
+        await fetch('/api/gdpr/log-consent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            ipAddress: clientIp,
+            userAgent: userAgent
+          })
+        })
+      } catch (err) {
+        console.error('Failed to log GDPR consent:', err)
+      }
+
       setSuccess(true)
       setTimeout(() => {
         router.push('/login')
@@ -157,7 +192,6 @@ export default function RegisterPage() {
               Specialization * <span className="text-sm text-gray-500">(Select 1-3 specializations)</span>
             </label>
             
-            {/* Selected tags */}
             {specialization.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">
                 {specialization.map((spec) => (
@@ -178,7 +212,6 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Dropdown button */}
             <button
               type="button"
               onClick={() => setShowDropdown(!showDropdown)}
@@ -190,7 +223,6 @@ export default function RegisterPage() {
               <span className="text-gray-500">▼</span>
             </button>
 
-            {/* Dropdown list */}
             {showDropdown && (
               <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
                 {specializations.map((spec) => (
@@ -241,6 +273,29 @@ export default function RegisterPage() {
               minLength={6}
               suppressHydrationWarning
             />
+          </div>
+
+          <div className="mb-6 flex items-start" suppressHydrationWarning>
+            <input
+              type="checkbox"
+              id="gdprConsent"
+              name="gdprConsent"
+              checked={gdprConsent}
+              onChange={(e) => setGdprConsent(e.target.checked)}
+              className="mt-1 mr-3"
+              suppressHydrationWarning
+            />
+            <label htmlFor="gdprConsent" className="text-sm text-gray-700">
+              I accept the{' '}
+              <a href="/privacy-policy" target="_blank" className="text-blue-600 hover:underline">
+                Privacy Policy
+              </a>
+              {' '}and{' '}
+              <a href="/terms-conditions" target="_blank" className="text-blue-600 hover:underline">
+                Terms & Conditions
+              </a>
+              {' '}*
+            </label>
           </div>
 
           <button
