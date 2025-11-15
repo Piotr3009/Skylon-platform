@@ -16,7 +16,7 @@ export default function Header({
   const router = useRouter()
 
   const headerClasses = gradient
-    ? "bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 shadow-lg border-b border-indigo-800"
+    ? "bg-gradient-to-r from-[#1e3a5f] via-[#2a5179] to-[#1e3a5f] shadow-lg border-b border-[#163050]"
     : "bg-white shadow-sm border-b border-gray-200"
 
   const titleClasses = gradient
@@ -24,7 +24,7 @@ export default function Header({
     : "text-2xl font-bold text-gray-900"
 
   const subtitleClasses = gradient
-    ? "text-sm text-indigo-100 mt-1"
+    ? "text-sm text-white/80 mt-1"
     : "text-sm text-gray-600 mt-1"
 
   return (

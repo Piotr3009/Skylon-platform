@@ -202,7 +202,7 @@ export default function CreateProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <Header
         title="Create New Project"
@@ -239,7 +239,7 @@ export default function CreateProjectPage() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                 placeholder="e.g. Office Building London"
                 required
               />
@@ -252,7 +252,7 @@ export default function CreateProjectPage() {
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                 rows="4"
                 placeholder="Project details and requirements..."
               />
@@ -265,7 +265,7 @@ export default function CreateProjectPage() {
               <select
                 value={projectType}
                 onChange={(e) => setProjectType(e.target.value)}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                 required
               >
                 <option value="commercial">Commercial</option>
@@ -286,7 +286,7 @@ export default function CreateProjectPage() {
                 type="file"
                 accept="image/*"
                 onChange={(e) => setProjectLogo(e.target.files[0])}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
               />
               <p className="text-sm text-gray-500 mt-1">
                 Upload a logo or main image for this project (max 5MB). This will appear next to the project name.
@@ -302,7 +302,7 @@ export default function CreateProjectPage() {
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                 />
               </div>
               <div>
@@ -313,7 +313,7 @@ export default function CreateProjectPage() {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
                 />
               </div>
             </div>
@@ -326,7 +326,7 @@ export default function CreateProjectPage() {
                 type="file"
                 accept="image/*"
                 onChange={(e) => setGanttImage(e.target.files[0])}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-[#1e3a5f]"
               />
               <p className="text-sm text-gray-500 mt-1">
                 Upload a Gantt chart showing project timeline
@@ -362,7 +362,7 @@ export default function CreateProjectPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 disabled:bg-gray-400 font-bold"
+              className="w-full bg-[#1e3a5f] text-white py-3 rounded-lg hover:bg-[#2a5179] disabled:bg-gray-400 font-bold transition-colors shadow-lg"
             >
               {loading ? 'Creating Project...' : 'Create Project'}
             </button>
