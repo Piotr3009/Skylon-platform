@@ -129,7 +129,7 @@ export default function AdminProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-indigo-50">
       <Header
         title="Manage Projects"
         subtitle="View and manage all construction projects"
@@ -148,7 +148,7 @@ export default function AdminProjectsPage() {
           </h1>
           <button
             onClick={() => router.push('/admin/create-project')}
-            className="px-6 py-3 bg-[#1e3a5f] text-white font-semibold rounded-lg hover:bg-[#2a5179] transition"
+            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
           >
             + Create New Project
           </button>
@@ -159,7 +159,7 @@ export default function AdminProjectsPage() {
             <p className="text-gray-500 text-lg mb-4">No projects yet</p>
             <button
               onClick={() => router.push('/admin/create-project')}
-              className="px-6 py-3 bg-[#1e3a5f] text-white font-semibold rounded-lg hover:bg-[#2a5179] transition"
+              className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition"
             >
               Create Your First Project
             </button>
@@ -189,7 +189,7 @@ export default function AdminProjectsPage() {
                         project.status === 'active'
                           ? 'bg-green-100 text-green-800'
                           : project.status === 'completed'
-                          ? 'bg-[#1e3a5f]/10 text-[#1e3a5f]'
+                          ? 'bg-blue-100 text-blue-800'
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
@@ -212,7 +212,7 @@ export default function AdminProjectsPage() {
                     </div>
                   </div>
 
-                  <div className="bg-[#1e3a5f]/5 rounded-lg p-3 mb-4">
+                  <div className="bg-blue-50 rounded-lg p-3 mb-4">
                     <div className="text-xs text-blue-600 mb-1">Total Budget</div>
                     <div className="text-xl font-bold text-blue-900">
                       {formatCurrency(project.stats.budget)}
@@ -225,7 +225,7 @@ export default function AdminProjectsPage() {
                       <span className="text-gray-600">{project.stats.openTasks} Open</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-[#1e3a5f]/50"></div>
+                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                       <span className="text-gray-600">{project.stats.assignedTasks} Assigned</span>
                     </div>
                     <div className="flex items-center gap-1">

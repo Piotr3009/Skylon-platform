@@ -107,7 +107,7 @@ export default function ArchivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       <Header
         title="📦 Project Archive"
         subtitle="View archived projects and their history"
@@ -191,7 +191,7 @@ export default function ArchivePage() {
                   <div className="px-4 pb-4">
                     <button
                       onClick={() => handleViewDetails(project)}
-                      className="w-full px-3 py-2 bg-[#1e3a5f] text-white text-sm rounded hover:bg-[#2a5179]"
+                      className="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                     >
                       View Details
                     </button>
