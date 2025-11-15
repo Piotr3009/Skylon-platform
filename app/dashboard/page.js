@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import Header from '@/app/components/Header'
+import MyAccountModal from '@/app/components/MyAccountModal'
 
 const formatCurrency = (value) => {
   if (!value || Number.isNaN(value)) return '—'
@@ -17,6 +18,7 @@ export default function DashboardPage() {
   const [myBids, setMyBids] = useState([])
   const [stats, setStats] = useState({ activeProjects: 0, totalTasks: 0, myBids: 0 })
   const [loading, setLoading] = useState(true)
+  const [showAccountModal, setShowAccountModal] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -407,6 +409,19 @@ export default function DashboardPage() {
             <h3 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <button
+                onClick={() => setShowAccountModal(true)}
+                className="p-6 border-2 border-indigo-300 bg-indigo-50 rounded-lg hover:border-indigo-500 hover:bg-indigo-100 transition text-left group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div className="font-bold text-indigo-900 text-lg mb-1">My Account</div>
+                <div className="text-sm text-indigo-700">Manage settings & privacy</div>
+              </button>
+
+              <button
                 onClick={() => router.push('/dashboard/profile')}
                 className="p-6 border-2 border-green-300 bg-green-50 rounded-lg hover:border-green-500 hover:bg-green-100 transition text-left group"
               >
@@ -620,6 +635,15 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
+
+      {/* My Account Modal */}
+      <MyAccountModal
+        isOpen={showAccountModal}
+        onClose={() => setShowAccountModal(false)}
+        user={user}
+        profile={profile}
+        onUpdate={checkUser}
+      />
     </div>
   )
 }
