@@ -271,7 +271,7 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <Header
         title={project?.name || 'Project Details'}
@@ -323,7 +323,7 @@ export default function ProjectDetailPage() {
                 {project.status}
               </span>
               {project.project_type && (
-                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+                <span className="px-3 py-1 bg-[#1e3a5f]/10 text-[#1e3a5f] rounded-full text-xs font-semibold">
                   {project.project_type === 'commercial' ? 'Commercial & Domestic' :
                    project.project_type === 'domestic' ? 'Domestic' :
                    project.project_type === 'restaurant' ? 'Restaurant' :
@@ -346,7 +346,7 @@ export default function ProjectDetailPage() {
               </svg>
               Project Description
             </h2>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-[#1e3a5f]/5 border border-[#1e3a5f]/20 rounded-lg p-4">
               <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {project.description}
               </p>
@@ -372,7 +372,7 @@ export default function ProjectDetailPage() {
             <h2 className="text-xl font-bold">Categories & Tasks</h2>
             <button
               onClick={() => setShowCategoryForm(!showCategoryForm)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-[#1e3a5f] text-white rounded hover:bg-[#2a5179]"
             >
               + Add Category
             </button>
@@ -380,7 +380,7 @@ export default function ProjectDetailPage() {
 
           {/* Add Category Form */}
           {showCategoryForm && (
-            <form onSubmit={handleAddCategory} className="mb-6 p-4 bg-blue-50 rounded">
+            <form onSubmit={handleAddCategory} className="mb-6 p-4 bg-[#1e3a5f]/5 rounded">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -392,7 +392,7 @@ export default function ProjectDetailPage() {
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="px-4 py-2 bg-[#1e3a5f] text-white rounded hover:bg-[#2a5179]"
                 >
                   Add
                 </button>
@@ -437,7 +437,7 @@ export default function ProjectDetailPage() {
                             setSelectedTask(category)
                             setShowNotifyModal(true)
                           }}
-                          className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 flex items-center gap-1"
+                          className="px-3 py-1 bg-[#1e3a5f] text-white text-sm rounded hover:bg-[#2a5179] flex items-center gap-1"
                           title="Send email notification about all tasks in this category"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -480,7 +480,7 @@ export default function ProjectDetailPage() {
                           </div>
                           <span className={`px-2 py-1 text-xs rounded ${
                             task.status === 'open' ? 'bg-green-100 text-green-800' :
-                            task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
+                            task.status === 'assigned' ? 'bg-[#1e3a5f]/10 text-[#1e3a5f]' :
                             'bg-gray-100 text-gray-800'
                           }`}>
                             {task.status}
@@ -715,7 +715,7 @@ export default function ProjectDetailPage() {
               <div className="flex gap-2 mt-6">
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="flex-1 px-4 py-2 bg-[#1e3a5f] text-white rounded hover:bg-[#2a5179]"
                 >
                   Save Changes
                 </button>
