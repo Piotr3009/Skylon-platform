@@ -45,11 +45,11 @@ export default function DeleteAccountModal({ isOpen, onClose, user }) {
         throw new Error(data.error || 'Failed to delete account')
       }
 
-      // Sign out
+      // Sign out (do this after successful deletion)
       await supabase.auth.signOut()
       
       // Redirect to homepage
-      router.push('/')
+      window.location.href = '/'
     } catch (err) {
       setError(err.message)
       setLoading(false)
