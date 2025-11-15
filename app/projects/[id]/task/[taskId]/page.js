@@ -10,6 +10,14 @@ const formatCurrency = (value) => {
   return `£${Number(value).toLocaleString('en-GB')}`
 }
 
+const formatMonthYear = (dateString) => {
+  if (!dateString) return '—'
+  const date = new Date(dateString)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${month}/${year}`
+}
+
 export default function PublicTaskPage() {
   const [task, setTask] = useState(null)
   const [category, setCategory] = useState(null)
@@ -440,7 +448,27 @@ export default function PublicTaskPage() {
                     </div>
                   </div>
                 )}
-                {task.estimated_duration && (
+                {(task.start_date || task.end_date) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {task.start_date && (
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">Start Date</div>
+                        <div className="text-xl font-bold text-gray-900">
+                          {formatMonthYear(task.start_date)}
+                        </div>
+                      </div>
+                    )}
+                    {task.end_date && (
+                      <div>
+                        <div className="text-sm text-gray-500 mb-1">End Date</div>
+                        <div className="text-xl font-bold text-gray-900">
+                          {formatMonthYear(task.end_date)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {!task.start_date && !task.end_date && task.estimated_duration && (
                   <div>
                     <div className="text-sm text-gray-500 mb-1">Estimated Duration</div>
                     <div className="text-2xl font-bold text-gray-900">
