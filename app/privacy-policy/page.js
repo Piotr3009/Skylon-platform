@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Privacy Policy</h2>
             <p>
-              This privacy policy governs the manner in which Skylon Construction Ltd (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) collects, uses, maintains, and discloses information collected from users (each, a &quot;User&quot;) of the https://www.skylonbuild.co.uk/ website (&quot;Site&quot;). This privacy policy applies to the Site and all products and services offered by Skylon Build Ltd.
+              This privacy policy governs the manner in which Skylon Development Ltd (&quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) collects, uses, maintains, and discloses information collected from users (each, a &quot;User&quot;) of the https://www.skylonbuild.co.uk/ website (&quot;Site&quot;). This privacy policy applies to the Site and all products and services offered by Skylon Development Ltd.
             </p>
           </section>
 
@@ -39,7 +39,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-3">How We Use Collected Information</h2>
-            <p>Skylon Build Ltd may collect and use Users&apos; personal information for the following purposes:</p>
+            <p>Skylon Development Ltd may collect and use Users&apos; personal information for the following purposes:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>To respond to inquiries and provide customer support</li>
               <li>To send Users information they agreed to receive about topics we think will be of interest to them</li>
@@ -69,7 +69,7 @@ export default function PrivacyPolicy() {
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-3">Changes to This Privacy Policy</h2>
             <p>
-              Skylon Build Ltd has the discretion to update this privacy policy at any time. When we do, we will revise the updated date at the bottom of this page. We encourage Users to frequently check this page for any changes to stay informed about how we are helping to protect the personal information we collect.
+              Skylon Development Ltd has the discretion to update this privacy policy at any time. When we do, we will revise the updated date at the bottom of this page. We encourage Users to frequently check this page for any changes to stay informed about how we are helping to protect the personal information we collect.
             </p>
             <p className="mt-3">
               You acknowledge and agree that it is your responsibility to review this privacy policy periodically and become aware of modifications.
