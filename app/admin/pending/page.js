@@ -197,8 +197,8 @@ export default function PendingPage() {
     <div className="min-h-screen bg-gray-50">
       <style jsx>{`
         .navy-header {
-          background: linear-gradient(to right, #0a2540, #0c3b5c, #0a2540);
-          border-bottom: 1px solid #082035;
+          background: linear-gradient(to right, #1e3a5f, #2a5179, #1e3a5f) !important;
+          border-bottom: 1px solid #163050;
           position: relative;
           z-index: 10;
         }
