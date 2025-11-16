@@ -15,7 +15,7 @@
     "loginButton": "Zaloguj się"
   },
   "sections": {
-    "activeProjects": "Aktywne drzewa projektów",
+    "activeProjects": "Aktywne projekty",
     "activeProjectsDesc": "Kliknij w projekt, aby przejrzeć każdy pakiet, dokumenty i złożyć swoją cenę za pracę, którą możesz wykonać.",
     "howItWorks": "Jak pakiety projektów przepływają przez Skylon",
     "selectSubcontractors": "Jak Wybieramy Podwykonawców",
@@ -111,14 +111,6 @@
     "activeProjectsDesc": "Click into a project to review every package, documents and submit your price for the workstream you can deliver.",
     "activeProjects": "ACTIVE PROJECTS",
     "packagesToBid": "PACKAGES TO BID",
-    "totalBudgetLive": "TOTAL BUDGET LIVE",
-    "day": "dzień",
-    "days": "dni",
-    "week": "tydz.",
-    "weeks": "tydz.",
-    "contact": "Kontakt",
-    "headOffice": "Siedziba główna",
-    "email": "E:",
-    "phone": "T:"
+    "totalBudgetLive": "TOTAL BUDGET LIVE"
   }
 }
