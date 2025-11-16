@@ -407,19 +407,20 @@ export default function PublicProjectPage() {
                 <div className="p-4">
                   {/* Tasks in this category */}
                   {category.tasks && category.tasks.length > 0 ? (
-                    <div className="space-y-2">
-                      {category.tasks.map((task) => {
-                        const Icon = getCategoryIcon(category.name)
+                    <div className="space-y-3">
+                      {category.tasks.map((task, index) => {
                         return (
                           <div
                             key={task.id}
-                            className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition cursor-pointer group"
+                            className="flex items-start justify-between p-4 bg-gray-50 hover:bg-blue-50 border-l-4 border-gray-300 hover:border-blue-500 transition cursor-pointer group"
                             onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
                           >
-                            <div className="flex items-start gap-3 flex-1">
-                              <div className={`flex-shrink-0 p-2 rounded-lg ${getCategoryColor(category.name)}`}>
-                                <Icon className="w-5 h-5" />
+                            <div className="flex items-start gap-4 flex-1">
+                              {/* Number instead of icon */}
+                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white border-2 border-gray-300 group-hover:border-blue-500 flex items-center justify-center font-bold text-gray-700 group-hover:text-blue-600 transition">
+                                {index + 1}
                               </div>
+                              
                               <div className="flex-1">
                                 <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
                                   {task.name}
@@ -438,7 +439,7 @@ export default function PublicProjectPage() {
                                   )}
                                 </div>
                                 
-                                {/* Offers and Deadline - Minimalist */}
+                                {/* Offers and Deadline */}
                                 {(task.proposalCount !== undefined || task.bid_deadline) && (
                                   <div className="flex gap-3 mt-2 text-sm">
                                     {task.proposalCount !== undefined && task.status === 'open' && (
