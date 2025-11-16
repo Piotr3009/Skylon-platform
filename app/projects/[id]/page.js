@@ -108,7 +108,7 @@ export default function PublicProjectPage() {
     if (categoryIds.length > 0) {
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
-        .select('id, name, status, suggested_price, estimated_duration, short_description, category_id, bid_deadline')
+        .select('id, name, status, suggested_price, budget_min, budget_max, estimated_duration, short_description, category_id, bid_deadline')
         .in('category_id', categoryIds)
         .order('created_at', { ascending: true })
 
@@ -412,24 +412,27 @@ export default function PublicProjectPage() {
                         return (
                           <div
                             key={task.id}
-                            className="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer group transition"
+                            className="flex items-center justify-between p-3 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer group transition"
                             onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
                           >
                             <div className="flex-1">
                               <div className="font-medium text-gray-900">{task.name}</div>
-                              <div className="text-sm text-gray-600 mt-1">
-                                {task.budget_min && task.budget_max ? (
-                                  `£${task.budget_min.toLocaleString()} - £${task.budget_max.toLocaleString()}`
-                                ) : task.suggested_price ? (
-                                  `£${task.suggested_price.toLocaleString()}`
-                                ) : ''}
+                              
+                              {/* Budget and Duration */}
+                              <div className="text-sm text-gray-600 mt-1 flex gap-4">
+                                {task.budget_min && task.budget_max && (
+                                  <span>£{task.budget_min.toLocaleString()} - £{task.budget_max.toLocaleString()}</span>
+                                )}
+                                {task.estimated_duration && (
+                                  <span>{task.estimated_duration} days</span>
+                                )}
                               </div>
                               
                               {/* Offers and Deadline in boxes */}
                               {task.status === 'open' && (task.proposalCount !== undefined || task.bid_deadline) && (
                                 <div className="flex gap-2 mt-2">
                                   {task.proposalCount !== undefined && (
-                                    <span className="px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded">
+                                    <span className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-300 rounded">
                                       {task.proposalCount === 0 ? 'Be first!' : 
                                        task.proposalCount <= 2 ? `${task.proposalCount} offer${task.proposalCount > 1 ? 's' : ''}` : 
                                        '3+ offers'}
@@ -438,10 +441,10 @@ export default function PublicProjectPage() {
                                   {task.bid_deadline && (() => {
                                     const deadline = formatDeadline(task.bid_deadline)
                                     return deadline && deadline.text !== 'Closed' ? (
-                                      <span className={`px-2 py-1 text-xs rounded border ${
-                                        deadline.urgent ? 'bg-red-50 text-red-700 border-red-200' :
-                                        deadline.className.includes('yellow') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                        'bg-gray-50 text-gray-700 border-gray-200'
+                                      <span className={`px-2.5 py-1 text-xs font-medium rounded border ${
+                                        deadline.urgent ? 'bg-red-50 text-red-700 border-red-300' :
+                                        deadline.className.includes('yellow') ? 'bg-yellow-50 text-yellow-700 border-yellow-300' :
+                                        'bg-gray-50 text-gray-700 border-gray-300'
                                       }`}>
                                         {deadline.text}
                                       </span>
@@ -452,14 +455,14 @@ export default function PublicProjectPage() {
                               
                               {task.status === 'closed' && task.proposalCount > 0 && (
                                 <div className="mt-2">
-                                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 border border-gray-300 rounded">
+                                  <span className="px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300 rounded">
                                     {task.proposalCount} offer{task.proposalCount > 1 ? 's' : ''} received
                                   </span>
                                 </div>
                               )}
                             </div>
 
-                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                            <span className={`px-3 py-1 text-xs font-medium rounded ${
                               task.status === 'open' ? 'bg-green-100 text-green-800' :
                               task.status === 'closing_soon' ? 'bg-orange-100 text-orange-800' :
                               task.status === 'closed' ? 'bg-gray-100 text-gray-800' :
@@ -468,9 +471,7 @@ export default function PublicProjectPage() {
                               task.status === 'completed' ? 'bg-purple-100 text-purple-800' :
                               'bg-yellow-100 text-yellow-800'
                             }`}>
-                              {task.status === 'closing_soon' ? 'Closing Soon' : 
-                               task.status === 'awarded' ? 'Awarded' :
-                               task.status}
+                              {task.status}
                             </span>
                           </div>
                         )
