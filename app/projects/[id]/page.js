@@ -407,92 +407,71 @@ export default function PublicProjectPage() {
                 <div className="p-4">
                   {/* Tasks in this category */}
                   {category.tasks && category.tasks.length > 0 ? (
-                    <div className="space-y-3">
-                      {category.tasks.map((task, index) => {
+                    <div className="space-y-2">
+                      {category.tasks.map((task) => {
                         return (
                           <div
                             key={task.id}
-                            className="flex items-start justify-between p-4 bg-gray-50 hover:bg-blue-50 border-l-4 border-gray-300 hover:border-blue-500 transition cursor-pointer group"
+                            className="flex items-center justify-between p-3 hover:bg-gray-50 cursor-pointer group transition"
                             onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
                           >
-                            <div className="flex items-start gap-4 flex-1">
-                              {/* Number instead of icon */}
-                              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white border-2 border-gray-300 group-hover:border-blue-500 flex items-center justify-center font-bold text-gray-700 group-hover:text-blue-600 transition">
-                                {index + 1}
+                            <div className="flex-1">
+                              <div className="font-medium text-gray-900">{task.name}</div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                {task.budget_min && task.budget_max ? (
+                                  `£${task.budget_min.toLocaleString()} - £${task.budget_max.toLocaleString()}`
+                                ) : task.suggested_price ? (
+                                  `£${task.suggested_price.toLocaleString()}`
+                                ) : ''}
                               </div>
                               
-                              <div className="flex-1">
-                                <div className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
-                                  {task.name}
-                                </div>
-                                {task.short_description && (
-                                  <div className="text-sm text-gray-600 mt-1">
-                                    {task.short_description}
-                                  </div>
-                                )}
-                                <div className="flex gap-4 mt-2 text-sm text-gray-500">
-                                  {task.suggested_price && (
-                                    <span>Budget: {formatCurrency(task.suggested_price)}</span>
+                              {/* Offers and Deadline in boxes */}
+                              {task.status === 'open' && (task.proposalCount !== undefined || task.bid_deadline) && (
+                                <div className="flex gap-2 mt-2">
+                                  {task.proposalCount !== undefined && (
+                                    <span className="px-2 py-1 text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded">
+                                      {task.proposalCount === 0 ? 'Be first!' : 
+                                       task.proposalCount <= 2 ? `${task.proposalCount} offer${task.proposalCount > 1 ? 's' : ''}` : 
+                                       '3+ offers'}
+                                    </span>
                                   )}
-                                  {task.estimated_duration && (
-                                    <span>Duration: {task.estimated_duration} days</span>
-                                  )}
+                                  {task.bid_deadline && (() => {
+                                    const deadline = formatDeadline(task.bid_deadline)
+                                    return deadline && deadline.text !== 'Closed' ? (
+                                      <span className={`px-2 py-1 text-xs rounded border ${
+                                        deadline.urgent ? 'bg-red-50 text-red-700 border-red-200' :
+                                        deadline.className.includes('yellow') ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                                        'bg-gray-50 text-gray-700 border-gray-200'
+                                      }`}>
+                                        {deadline.text}
+                                      </span>
+                                    ) : null
+                                  })()}
                                 </div>
-                                
-                                {/* Offers and Deadline */}
-                                {(task.proposalCount !== undefined || task.bid_deadline) && (
-                                  <div className="flex gap-3 mt-2 text-sm">
-                                    {task.proposalCount !== undefined && task.status === 'open' && (
-                                      <span className="text-blue-600 font-medium">
-                                        💰 {getOfferDisplay(task.proposalCount)}
-                                      </span>
-                                    )}
-                                    {task.status === 'closed' && task.proposalCount > 0 && (
-                                      <span className="text-gray-600">
-                                        🔒 {task.proposalCount} offer{task.proposalCount > 1 ? 's' : ''} received
-                                      </span>
-                                    )}
-                                    {task.bid_deadline && task.status === 'open' && (() => {
-                                      const deadline = formatDeadline(task.bid_deadline)
-                                      return deadline ? (
-                                        <span className={deadline.className}>
-                                          {deadline.urgent ? '⚠️' : '⏰'} {deadline.text}
-                                        </span>
-                                      ) : null
-                                    })()}
-                                  </div>
-                                )}
-                              </div>
+                              )}
+                              
+                              {task.status === 'closed' && task.proposalCount > 0 && (
+                                <div className="mt-2">
+                                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 border border-gray-300 rounded">
+                                    {task.proposalCount} offer{task.proposalCount > 1 ? 's' : ''} received
+                                  </span>
+                                </div>
+                              )}
                             </div>
 
-                            <div className="flex items-center gap-3">
-                              <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                                task.status === 'open' ? 'bg-green-100 text-green-800' :
-                                task.status === 'closing_soon' ? 'bg-orange-100 text-orange-800' :
-                                task.status === 'closed' ? 'bg-gray-100 text-gray-800' :
-                                task.status === 'awarded' ? 'bg-blue-100 text-blue-800' :
-                                task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                                task.status === 'completed' ? 'bg-purple-100 text-purple-800' :
-                                'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {task.status === 'closing_soon' ? 'Closing Soon' : 
-                                 task.status === 'awarded' ? 'Awarded' :
-                                 task.status}
-                              </span>
-                              <svg
-                                className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 5l7 7-7 7"
-                                />
-                              </svg>
-                            </div>
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                              task.status === 'open' ? 'bg-green-100 text-green-800' :
+                              task.status === 'closing_soon' ? 'bg-orange-100 text-orange-800' :
+                              task.status === 'closed' ? 'bg-gray-100 text-gray-800' :
+                              task.status === 'awarded' ? 'bg-blue-100 text-blue-800' :
+                              task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
+                              task.status === 'completed' ? 'bg-purple-100 text-purple-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {task.status === 'closing_soon' ? 'Closing Soon' : 
+                               task.status === 'awarded' ? 'Awarded' :
+                               task.status}
+                            </span>
                           </div>
                         )
                       })}
