@@ -227,7 +227,8 @@ export default function AdminTaskDetailPage() {
         budget_max: editingTask.budget_max,
         suggested_price: editingTask.suggested_price,
         estimated_duration: editingTask.estimated_duration,
-        status: editingTask.status
+        status: editingTask.status,
+        bid_deadline: editingTask.bid_deadline || null
       })
       .eq('id', params.taskId)
 
@@ -878,10 +879,29 @@ export default function AdminTaskDetailPage() {
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
                   >
                     <option value="open">Open</option>
+                    <option value="closing_soon">Closing Soon</option>
+                    <option value="closed">Closed</option>
+                    <option value="awarded">Awarded</option>
                     <option value="assigned">Assigned</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
                   </select>
+                </div>
+
+                {/* Bid Deadline */}
+                <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+                  <label className="block font-bold mb-2 text-yellow-900">
+                    💰 Bid Deadline (Proposal Submission Closes)
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={editingTask.bid_deadline ? new Date(editingTask.bid_deadline).toISOString().slice(0, 16) : ''}
+                    onChange={(e) => setEditingTask({...editingTask, bid_deadline: e.target.value})}
+                    className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  />
+                  <p className="text-sm text-yellow-700 mt-2">
+                    ⏰ Subcontractors can only submit proposals before this deadline.
+                  </p>
                 </div>
 
                 {/* Existing Documents */}
