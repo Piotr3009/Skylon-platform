@@ -521,7 +521,7 @@ const ProjectTree = ({ project, router }) => {
           <div className="relative">
             <BuildingIcon type={buildingType} projectType={projectType} />
             <div className="mt-3 text-center text-sm font-semibold uppercase tracking-wide text-slate-500">
-              {projectType === 'commercial' ? 'Commercial & Domestic' :
+              {projectType === 'commercial' ? 'Commercial ' :
                projectType === 'domestic' ? 'Domestic' :
                projectType === 'restaurant' ? 'Restaurant' :
                projectType === 'other' ? 'Other' : buildingType}
@@ -787,7 +787,7 @@ export default function HomePage() {
     if (!projects.length) {
       return [
         { value: '0', label: 'Active Projects' },
-        { value: '0', label: 'Packages to Bid' },
+        { value: '0', label: 'Packages to Offer' },
         { value: '—', label: 'Total Budget Live' }
       ]
     }
@@ -797,7 +797,7 @@ export default function HomePage() {
 
     return [
       { value: projects.length, label: 'Active Projects' },
-      { value: totalCategories, label: 'Packages to Bid' },
+      { value: totalCategories, label: 'Packages to Offer' },
       { value: formatCurrency(totalBudget), label: 'Total Budget Live' }
     ]
   }, [projects])
@@ -1146,7 +1146,7 @@ export default function HomePage() {
                 />
               </a>
               <p className="text-sm text-slate-600">
-                Domestic Refurbishment specialists in Central London
+                Commercial & Domestic Refurbishment specialists in Central London
               </p>
             </div>
 
