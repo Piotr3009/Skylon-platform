@@ -86,18 +86,38 @@ export default function ProjectDetailPage() {
     
     const { data: tasksData, error: tasksError } = await supabase
       .from('tasks')
-      .select('id, name, status, suggested_price, budget_min, budget_max, category_id')
+      .select('id, name, status, suggested_price, budget_min, budget_max, category_id, bid_deadline')
       .in('category_id', categoryIds)
 
     if (tasksError) {
       return
     }
 
+    // Load bid counts for all tasks
+    const taskIds = tasksData.map(t => t.id)
+    const { data: bidsData } = await supabase
+      .from('bids')
+      .select('task_id')
+      .in('task_id', taskIds)
+    
+    // Count bids per task
+    const bidCounts = {}
+    if (bidsData) {
+      bidsData.forEach(bid => {
+        bidCounts[bid.task_id] = (bidCounts[bid.task_id] || 0) + 1
+      })
+    }
+
+    // Add bid count to each task
+    const tasksWithCounts = tasksData.map(task => ({
+      ...task,
+      bidCount: bidCounts[task.id] || 0
+    }))
 
     // Połącz tasks z kategoriami
     const categoriesWithTasks = categoriesData.map(category => ({
       ...category,
-      tasks: tasksData.filter(task => task.category_id === category.id)
+      tasks: tasksWithCounts.filter(task => task.category_id === category.id)
     }))
 
     setCategories(categoriesWithTasks)
@@ -477,6 +497,36 @@ export default function ProjectDetailPage() {
                                 `£${task.suggested_price}`
                               ) : ''}
                             </div>
+                            
+                            {/* Offers and Deadline */}
+                            {task.status === 'open' && (task.bidCount !== undefined || task.bid_deadline) && (
+                              <div className="flex gap-3 mt-1 text-xs">
+                                {task.bidCount !== undefined && (
+                                  <span className="text-blue-600 font-medium">
+                                    💰 {task.bidCount} offer{task.bidCount !== 1 ? 's' : ''}
+                                  </span>
+                                )}
+                                {task.bid_deadline && (() => {
+                                  const deadline = new Date(task.bid_deadline)
+                                  const now = new Date()
+                                  const diffMs = deadline - now
+                                  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+                                  const diffDays = Math.floor(diffHours / 24)
+                                  
+                                  if (diffMs < 0) {
+                                    return <span className="text-gray-500">⏰ Closed</span>
+                                  } else if (diffHours < 6) {
+                                    return <span className="text-red-600 font-medium">⚠️ {diffHours}h left</span>
+                                  } else if (diffHours < 24) {
+                                    return <span className="text-orange-600 font-medium">⚠️ {diffHours}h left</span>
+                                  } else if (diffDays < 3) {
+                                    return <span className="text-yellow-600">⏰ {diffDays}d left</span>
+                                  } else {
+                                    return <span className="text-gray-600">⏰ {diffDays}d left</span>
+                                  }
+                                })()}
+                              </div>
+                            )}
                           </div>
                           <span className={`px-2 py-1 text-xs rounded ${
                             task.status === 'open' ? 'bg-green-100 text-green-800' :
