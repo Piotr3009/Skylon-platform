@@ -355,16 +355,18 @@ const formatCurrency = (value) => {
   return `£${Math.round(value)}`
 }
 
-const formatDuration = (days) => {
-  if (!days) return '—'
-  if (days < 7) {
-    return `${days} day${days === 1 ? '' : 's'}`
+export default function HomePage() {
+  const { t, locale } = useLocale()
+  
+  const formatDuration = (days) => {
+    if (!days) return '—'
+    if (days < 7) {
+      return `${days} ${days === 1 ? t('homepage.day') : t('homepage.days')}`
+    }
+    const weeks = Math.round(days / 7)
+    return `${weeks} ${t('homepage.week')}`
   }
-  const weeks = Math.round(days / 7)
-  return `${weeks} wk`
-}
 
-const getCategoryStyle = (name = '') => {
   const normalized = name.toLowerCase()
   return (
     CATEGORY_PRESETS.find((preset) =>
@@ -521,7 +523,7 @@ const ProjectTree = ({ project, router }) => {
           <div className="relative">
             <BuildingIcon type={buildingType} projectType={projectType} />
             <div className="mt-3 text-center text-sm font-semibold uppercase tracking-wide text-slate-500">
-              {projectType === 'commercial' ? 'Commercial' :
+              {projectType === 'commercial' ? 'Commercial & Domestic' :
                projectType === 'domestic' ? 'Domestic' :
                projectType === 'restaurant' ? 'Restaurant' :
                projectType === 'other' ? 'Other' : buildingType}
@@ -787,7 +789,7 @@ export default function HomePage() {
     if (!projects.length) {
       return [
         { value: '0', label: 'Active Projects' },
-        { value: '0', label: 'Packages to Offer' },
+        { value: '0', label: 'Packages to Bid' },
         { value: '—', label: 'Total Budget Live' }
       ]
     }
@@ -797,7 +799,7 @@ export default function HomePage() {
 
     return [
       { value: projects.length, label: 'Active Projects' },
-      { value: totalCategories, label: 'Packages to Offer' },
+      { value: totalCategories, label: 'Packages to Bid' },
       { value: formatCurrency(totalBudget), label: 'Total Budget Live' }
     ]
   }, [projects])
@@ -892,13 +894,13 @@ export default function HomePage() {
       <section className="bg-gradient-to-b from-slate-50 to-white py-8">
         <div className="mx-auto max-w-5xl px-4">
           <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm">
-            <h3 className="text-2xl font-bold text-slate-900 mb-4">More Than Just a Platform</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mb-4">{t('homepage.moreThanPlatform')}</h3>
             <div className="space-y-3 text-slate-700 leading-relaxed">
               <p>
-                <strong>Skylon Build Network</strong> is more than just a platform — it&apos;s an opportunity for smaller construction companies to enter the world of commercial projects in London. We help subcontractors gain hands-on experience working with major clients, learning industry standards, planning, and coordination within a main contractor environment.
+                {t('homepage.moreThanPlatformDesc1')}
               </p>
               <p>
-                Skylon is always open to share knowledge, expertise, and technical support — from bid preparation to on-site delivery. It&apos;s a great chance to grow your business, build reputation, and secure long-term contracts in the commercial and refurbishment sector.
+                {t('homepage.moreThanPlatformDesc2')}
               </p>
             </div>
           </div>
@@ -909,28 +911,25 @@ export default function HomePage() {
       <section className="bg-white py-10">
         <div className="mx-auto max-w-6xl px-4">
           <h3 className="text-center text-3xl font-bold text-slate-900">
-            How project packages flow through Skylon
+            {t('homepage.howItWorksTitle')}
           </h3>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {[
               {
-                title: 'Scope & programme published',
-                body:
-                  'Our project coordinators split the master schedule into focused trade packages with drawings, technical notes and target dates.'
+                title: t('homepage.step1Title'),
+                body: t('homepage.step1Desc')
               },
               {
-                title: 'Subcontractors submit proposals',
-                body:
-                  'Prequalified partners review the package board, ask clarification questions and drop in their pricing with resource availability.'
+                title: t('homepage.step2Title'),
+                body: t('homepage.step2Desc')
               },
               {
-                title: 'Award & deliver with clarity',
-                body:
-                  'Winning teams get access to shared files, real-time programme updates and milestone tracking tied to the main commercial fit-out.'
+                title: t('homepage.step3Title'),
+                body: t('homepage.step3Desc')
               }
             ].map((step, index) => (
               <div
-                key={step.title}
+                key={index}
                 className="rounded-2xl border border-slate-100 bg-slate-50/70 p-6 shadow-sm"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-sm font-bold text-indigo-600">
@@ -948,9 +947,9 @@ export default function HomePage() {
       <section className="bg-slate-50 py-20">
         <div className="mx-auto max-w-7xl px-4">
           <div className="flex flex-col gap-4 text-center">
-            <h3 className="text-3xl font-bold text-slate-900">Active project trees</h3>
+            <h3 className="text-3xl font-bold text-slate-900">{t('homepage.activeProjectsTitle')}</h3>
             <p className="text-base text-slate-600">
-              Click into a project to review every package, documents and submit your price for the workstream you can deliver.
+              {t('homepage.activeProjectsDesc')}
             </p>
           </div>
 
