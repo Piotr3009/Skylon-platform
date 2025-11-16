@@ -364,6 +364,15 @@ const getCategoryStyle = (name = '') => {
   )
 }
 
+const formatDuration = (days) => {
+  if (!days) return '—'
+  if (days < 7) {
+    return `${days} day${days === 1 ? '' : 's'}`
+  }
+  const weeks = Math.round(days / 7)
+  return `${weeks} wk`
+}
+
 const determineBuildingType = (project) => {
   const source = `${project?.name ?? ''} ${project?.description ?? ''}`.toLowerCase()
   if (source.match(/restaurant|hospitality|retail|fit[- ]?out/)) return 'hospitality'
@@ -624,15 +633,6 @@ export default function HomePage() {
   const [showGanttModal, setShowGanttModal] = useState(false)
   const [selectedGantt, setSelectedGantt] = useState(null)
   const router = useRouter()
-
-  const formatDuration = (days) => {
-    if (!days) return '—'
-    if (days < 7) {
-      return `${days} ${days === 1 ? t('homepage.day') : t('homepage.days')}`
-    }
-    const weeks = Math.round(days / 7)
-    return `${weeks} ${t('homepage.week')}`
-  }
 
   useEffect(() => {
     // Check if URL has password recovery hash and redirect
@@ -1039,7 +1039,15 @@ export default function HomePage() {
                                 Combined Duration
                               </div>
                               <div className="mt-2 text-xl font-bold text-slate-900">
-                                {formatDuration(project.meta?.duration)}
+                                {(() => {
+                                  const days = project.meta?.duration
+                                  if (!days) return '—'
+                                  if (days < 7) {
+                                    return `${days} ${days === 1 ? t('homepage.day') : t('homepage.days')}`
+                                  }
+                                  const weeks = Math.round(days / 7)
+                                  return `${weeks} ${t('homepage.week')}`
+                                })()}
                               </div>
                             </div>
                           </div>
