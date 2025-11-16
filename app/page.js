@@ -364,26 +364,6 @@ const getCategoryStyle = (name = '') => {
   )
 }
 
-export default function HomePage() {
-  const { t } = useLocale()
-  const [projects, setProjects] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [showGanttModal, setShowGanttModal] = useState(false)
-  const [selectedGantt, setSelectedGantt] = useState(null)
-  const router = useRouter()
-
-  const formatDuration = (days) => {
-    if (!days) return '—'
-    if (days < 7) {
-      return `${days} ${days === 1 ? t('homepage.day') : t('homepage.days')}`
-    }
-    const weeks = Math.round(days / 7)
-    return `${weeks} ${t('homepage.week')}`
-  }
-
 const determineBuildingType = (project) => {
   const source = `${project?.name ?? ''} ${project?.description ?? ''}`.toLowerCase()
   if (source.match(/restaurant|hospitality|retail|fit[- ]?out/)) return 'hospitality'
@@ -644,6 +624,15 @@ export default function HomePage() {
   const [showGanttModal, setShowGanttModal] = useState(false)
   const [selectedGantt, setSelectedGantt] = useState(null)
   const router = useRouter()
+
+  const formatDuration = (days) => {
+    if (!days) return '—'
+    if (days < 7) {
+      return `${days} ${days === 1 ? t('homepage.day') : t('homepage.days')}`
+    }
+    const weeks = Math.round(days / 7)
+    return `${weeks} ${t('homepage.week')}`
+  }
 
   useEffect(() => {
     // Check if URL has password recovery hash and redirect
