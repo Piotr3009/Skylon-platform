@@ -1086,13 +1086,7 @@ export default function HomePage() {
                               onClick={() => router.push(`/projects/${project.id}`)}
                               className="rounded-2xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:-translate-y-0.5 hover:bg-indigo-400"
                             >
-                              View package board
-                            </button>
-                            <button
-                              onClick={() => router.push('/register')}
-                              className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100"
-                            >
-                              I want to price this scope
+                              View Project Details
                             </button>
                           </div>
                         </div>
