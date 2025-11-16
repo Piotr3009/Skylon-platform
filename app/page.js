@@ -355,9 +355,26 @@ const formatCurrency = (value) => {
   return `£${Math.round(value)}`
 }
 
+const getCategoryStyle = (name = '') => {
+  const normalized = name.toLowerCase()
+  return (
+    CATEGORY_PRESETS.find((preset) =>
+      preset.keywords.some((keyword) => normalized.includes(keyword))
+    ) || DEFAULT_CATEGORY_STYLE
+  )
+}
+
 export default function HomePage() {
-  const { t, locale } = useLocale()
-  
+  const { t } = useLocale()
+  const [projects, setProjects] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [user, setUser] = useState(null)
+  const [profile, setProfile] = useState(null)
+  const [showGanttModal, setShowGanttModal] = useState(false)
+  const [selectedGantt, setSelectedGantt] = useState(null)
+  const router = useRouter()
+
   const formatDuration = (days) => {
     if (!days) return '—'
     if (days < 7) {
@@ -366,14 +383,6 @@ export default function HomePage() {
     const weeks = Math.round(days / 7)
     return `${weeks} ${t('homepage.week')}`
   }
-
-  const normalized = name.toLowerCase()
-  return (
-    CATEGORY_PRESETS.find((preset) =>
-      preset.keywords.some((keyword) => normalized.includes(keyword))
-    ) || DEFAULT_CATEGORY_STYLE
-  )
-}
 
 const determineBuildingType = (project) => {
   const source = `${project?.name ?? ''} ${project?.description ?? ''}`.toLowerCase()
@@ -523,7 +532,7 @@ const ProjectTree = ({ project, router }) => {
           <div className="relative">
             <BuildingIcon type={buildingType} projectType={projectType} />
             <div className="mt-3 text-center text-sm font-semibold uppercase tracking-wide text-slate-500">
-              {projectType === 'commercial' ? 'Commercial' :
+              {projectType === 'commercial' ? 'Commercial & Domestic' :
                projectType === 'domestic' ? 'Domestic' :
                projectType === 'restaurant' ? 'Restaurant' :
                projectType === 'other' ? 'Other' : buildingType}
@@ -1140,7 +1149,7 @@ export default function HomePage() {
                 />
               </a>
               <p className="text-sm text-slate-600">
-                Commercial & Domestic Refurbishment specialists in Central London
+                Domestic Refurbishment specialists in Central London
               </p>
             </div>
 
