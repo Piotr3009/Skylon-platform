@@ -12,6 +12,28 @@ const formatCurrency = (value) => {
   return `£${Math.round(value)}`
 }
 
+const formatDeadline = (deadline) => {
+  if (!deadline) return null
+  
+  const now = new Date()
+  const deadlineDate = new Date(deadline)
+  const diffMs = deadlineDate - now
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffHours / 24)
+  
+  if (diffMs < 0) return { text: 'Closed', className: 'text-gray-500', urgent: false }
+  if (diffHours < 6) return { text: `${diffHours}h left`, className: 'text-red-600', urgent: true }
+  if (diffHours < 24) return { text: `${diffHours}h left`, className: 'text-orange-600', urgent: true }
+  if (diffDays < 3) return { text: `${diffDays}d left`, className: 'text-yellow-600', urgent: false }
+  return { text: `${diffDays}d left`, className: 'text-gray-600', urgent: false }
+}
+
+const getOfferDisplay = (count) => {
+  if (count === 0) return 'Be first!'
+  if (count <= 2) return `${count} offer${count > 1 ? 's' : ''}`
+  return '3+ offers'
+}
+
 export default function PublicProjectPage() {
   const [project, setProject] = useState(null)
   const [categories, setCategories] = useState([])
@@ -86,14 +108,35 @@ export default function PublicProjectPage() {
     if (categoryIds.length > 0) {
       const { data: tasksData, error: tasksError } = await supabase
         .from('tasks')
-        .select('id, name, status, suggested_price, estimated_duration, short_description, category_id')
+        .select('id, name, status, suggested_price, estimated_duration, short_description, category_id, bid_deadline')
         .in('category_id', categoryIds)
         .order('created_at', { ascending: true })
 
-      if (!tasksError) {
+      if (!tasksError && tasksData) {
+        // Load proposal counts for all tasks
+        const taskIds = tasksData.map(t => t.id)
+        const { data: proposalsData } = await supabase
+          .from('proposals')
+          .select('task_id')
+          .in('task_id', taskIds)
+        
+        // Count proposals per task
+        const proposalCounts = {}
+        if (proposalsData) {
+          proposalsData.forEach(p => {
+            proposalCounts[p.task_id] = (proposalCounts[p.task_id] || 0) + 1
+          })
+        }
+
+        // Add proposal count to each task
+        const tasksWithCounts = tasksData.map(task => ({
+          ...task,
+          proposalCount: proposalCounts[task.id] || 0
+        }))
+
         const categoriesWithTasks = categoriesData.map(category => ({
           ...category,
-          tasks: tasksData.filter(task => task.category_id === category.id)
+          tasks: tasksWithCounts.filter(task => task.category_id === category.id)
         }))
         setCategories(categoriesWithTasks)
       }
@@ -394,17 +437,46 @@ export default function PublicProjectPage() {
                                     <span>Duration: {task.estimated_duration} days</span>
                                   )}
                                 </div>
+                                
+                                {/* Offers and Deadline - Minimalist */}
+                                {(task.proposalCount !== undefined || task.bid_deadline) && (
+                                  <div className="flex gap-3 mt-2 text-sm">
+                                    {task.proposalCount !== undefined && task.status === 'open' && (
+                                      <span className="text-blue-600 font-medium">
+                                        💰 {getOfferDisplay(task.proposalCount)}
+                                      </span>
+                                    )}
+                                    {task.status === 'closed' && task.proposalCount > 0 && (
+                                      <span className="text-gray-600">
+                                        🔒 {task.proposalCount} offer{task.proposalCount > 1 ? 's' : ''} received
+                                      </span>
+                                    )}
+                                    {task.bid_deadline && task.status === 'open' && (() => {
+                                      const deadline = formatDeadline(task.bid_deadline)
+                                      return deadline ? (
+                                        <span className={deadline.className}>
+                                          {deadline.urgent ? '⚠️' : '⏰'} {deadline.text}
+                                        </span>
+                                      ) : null
+                                    })()}
+                                  </div>
+                                )}
                               </div>
                             </div>
 
                             <div className="flex items-center gap-3">
                               <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                                 task.status === 'open' ? 'bg-green-100 text-green-800' :
+                                task.status === 'closing_soon' ? 'bg-orange-100 text-orange-800' :
+                                task.status === 'closed' ? 'bg-gray-100 text-gray-800' :
+                                task.status === 'awarded' ? 'bg-blue-100 text-blue-800' :
                                 task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                                task.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                                task.status === 'completed' ? 'bg-purple-100 text-purple-800' :
                                 'bg-yellow-100 text-yellow-800'
                               }`}>
-                                {task.status}
+                                {task.status === 'closing_soon' ? 'Closing Soon' : 
+                                 task.status === 'awarded' ? 'Awarded' :
+                                 task.status}
                               </span>
                               <svg
                                 className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition"

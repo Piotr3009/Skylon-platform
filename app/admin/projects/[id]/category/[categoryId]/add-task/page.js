@@ -21,6 +21,7 @@ export default function AddTaskPage() {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [expectedCompletionDate, setExpectedCompletionDate] = useState('')
+  const [bidDeadline, setBidDeadline] = useState('')
   const [documents, setDocuments] = useState([])
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
@@ -104,6 +105,7 @@ export default function AddTaskPage() {
           start_date: startDate || null,
           end_date: endDate || null,
           expected_completion_date: expectedCompletionDate || null,
+          bid_deadline: bidDeadline || null,
           status: 'open'
         }
       ])
@@ -349,6 +351,26 @@ export default function AddTaskPage() {
               />
               <p className="text-sm text-gray-500 mt-1">
                 Set the target deadline for this task completion
+              </p>
+            </div>
+
+            <div className="mb-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+              <label className="block font-bold mb-2 text-yellow-900">
+                💰 Bid Deadline (Proposal Submission Closes) *
+              </label>
+              <input
+                type="datetime-local"
+                value={bidDeadline}
+                onChange={(e) => setBidDeadline(e.target.value)}
+                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                required
+              />
+              <p className="text-sm text-yellow-700 mt-2">
+                ⏰ <strong>Important:</strong> Subcontractors can only submit proposals before this deadline. 
+                After this time, bidding closes automatically.
+              </p>
+              <p className="text-xs text-yellow-600 mt-1">
+                Example: Set 7-14 days from now to give contractors enough time to prepare quality proposals.
               </p>
             </div>
 
