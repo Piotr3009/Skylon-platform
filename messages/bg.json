@@ -111,6 +111,14 @@
     "activeProjectsDesc": "Click into a project to review every package, documents and submit your price for the workstream you can deliver.",
     "activeProjects": "ACTIVE PROJECTS",
     "packagesToBid": "PACKAGES TO BID",
-    "totalBudgetLive": "TOTAL BUDGET LIVE"
+    "totalBudgetLive": "TOTAL BUDGET LIVE",
+    "day": "ден",
+    "days": "дни",
+    "week": "седм.",
+    "weeks": "седм.",
+    "contact": "Контакт",
+    "headOffice": "Главен офис",
+    "email": "E:",
+    "phone": "T:"
   }
 }
