@@ -787,7 +787,7 @@ export default function HomePage() {
     if (!projects.length) {
       return [
         { value: '0', label: 'Active Projects' },
-        { value: '0', label: 'Packages to Bid' },
+        { value: '0', label: 'Packages to Offer' },
         { value: '—', label: 'Total Budget Live' }
       ]
     }
@@ -797,7 +797,7 @@ export default function HomePage() {
 
     return [
       { value: projects.length, label: 'Active Projects' },
-      { value: totalCategories, label: 'Packages to Bid' },
+      { value: totalCategories, label: 'Packages to Offer' },
       { value: formatCurrency(totalBudget), label: 'Total Budget Live' }
     ]
   }, [projects])
