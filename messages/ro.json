@@ -15,7 +15,7 @@
     "loginButton": "Autentificare"
   },
   "sections": {
-    "activeProjects": "Arbori de proiecte active",
+    "activeProjects": "Proiecte Active",
     "activeProjectsDesc": "Faceți clic pe un proiect pentru a examina fiecare pachet, documente și pentru a trimite prețul dvs. pentru fluxul de lucru pe care îl puteți livra.",
     "howItWorks": "Cum circulă pachetele de proiecte prin Skylon",
     "selectSubcontractors": "Cum Selectăm Subcontractorii",
@@ -107,7 +107,7 @@
     "step2Desc": "Partenerii precalificați revizuiesc panoul de pachete, pun întrebări de clarificare și își depun prețurile cu disponibilitatea resurselor.",
     "step3Title": "Atribuire și livrare cu claritate",
     "step3Desc": "Echipele câștigătoare obțin acces la fișiere partajate, actualizări ale programului în timp real și urmărirea etapelor legate de instalarea comercială principală.",
-    "activeProjectsTitle": "Arbori de proiecte active",
+    "activeProjectsTitle": "Proiecte Active",
     "activeProjectsDesc": "Faceți clic pe un proiect pentru a revizui fiecare pachet, documente și a trimite prețul pentru fluxul de lucru pe care îl puteți livra.",
     "activeProjects": "PROIECTE ACTIVE",
     "packagesToBid": "PACHETE PENTRU LICITARE",

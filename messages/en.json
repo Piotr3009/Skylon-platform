@@ -15,7 +15,7 @@
     "loginButton": "Sign in"
   },
   "sections": {
-    "activeProjects": "Active project trees",
+    "activeProjects": "Active Projectss",
     "activeProjectsDesc": "Click into a project to review every package, documents and submit your price for the workstream you can deliver.",
     "howItWorks": "How project packages flow through Skylon",
     "selectSubcontractors": "How We Select Subcontractors",
@@ -107,7 +107,7 @@
     "step2Desc": "Prequalified partners review the package board, ask clarification questions and drop in their pricing with resource availability.",
     "step3Title": "Award & deliver with clarity",
     "step3Desc": "Winning teams get access to shared files, real-time programme updates and milestone tracking tied to the main commercial fit-out.",
-    "activeProjectsTitle": "Active project trees",
+    "activeProjectsTitle": "Active Projectss",
     "activeProjectsDesc": "Click into a project to review every package, documents and submit your price for the workstream you can deliver.",
     "activeProjects": "ACTIVE PROJECTS",
     "packagesToBid": "PACKAGES TO BID",
