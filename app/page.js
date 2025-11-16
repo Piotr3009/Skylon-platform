@@ -521,7 +521,7 @@ const ProjectTree = ({ project, router }) => {
           <div className="relative">
             <BuildingIcon type={buildingType} projectType={projectType} />
             <div className="mt-3 text-center text-sm font-semibold uppercase tracking-wide text-slate-500">
-              {projectType === 'commercial' ? 'Commercial & Domestic' :
+              {projectType === 'commercial' ? 'Commercial' :
                projectType === 'domestic' ? 'Domestic' :
                projectType === 'restaurant' ? 'Restaurant' :
                projectType === 'other' ? 'Other' : buildingType}
