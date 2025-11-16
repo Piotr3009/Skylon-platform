@@ -1141,7 +1141,7 @@ export default function HomePage() {
                 />
               </a>
               <p className="text-sm text-slate-600">
-                Domestic Refurbishment specialists in Central London
+                Commercial & Domestic Refurbishment specialists in Central London
               </p>
             </div>
 
