@@ -116,7 +116,7 @@ export default function PublicProjectPage() {
         // Load proposal counts for all tasks
         const taskIds = tasksData.map(t => t.id)
         const { data: proposalsData } = await supabase
-          .from('proposals')
+          .from('bids')
           .select('task_id')
           .in('task_id', taskIds)
         
