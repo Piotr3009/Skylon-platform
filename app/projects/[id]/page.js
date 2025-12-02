@@ -404,15 +404,15 @@ export default function PublicProjectPage() {
                   </div>
                 </div>
 
-                <div className="p-4">
+                <div className="p-5">
                   {/* Tasks in this category */}
                   {category.tasks && category.tasks.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {category.tasks.map((task) => {
                         return (
                           <div
                             key={task.id}
-                            className="flex items-center justify-between p-3 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer group transition"
+                            className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-gray-300 cursor-pointer group transition"
                             onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
                           >
                             <div className="flex-1">
