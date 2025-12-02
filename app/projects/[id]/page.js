@@ -392,7 +392,7 @@ export default function PublicProjectPage() {
               <div
                 key={category.id}
                 ref={(el) => categoryRefs.current[category.id] = el}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-300"
+                className="bg-white rounded-xl shadow-md border border-gray-300 overflow-hidden transition-all duration-300"
               >
                 <div className={`px-6 py-4 border-b border-gray-200 ${getCategoryColor(category.name)}`}>
                   <div className="flex items-center gap-3">
