@@ -18,6 +18,17 @@ const formatMonthYear = (dateString) => {
   return `${month}/${year}`
 }
 
+// Helper functions for file type detection
+const getFileType = (fileName) => {
+  if (!fileName) return 'other'
+  const ext = fileName.toLowerCase().split('.').pop()
+  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
+  const pdfExts = ['pdf']
+  if (imageExts.includes(ext)) return 'image'
+  if (pdfExts.includes(ext)) return 'pdf'
+  return 'other'
+}
+
 export default function PublicTaskPage() {
   const [task, setTask] = useState(null)
   const [category, setCategory] = useState(null)
@@ -53,6 +64,10 @@ export default function PublicTaskPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [photoError, setPhotoError] = useState(null)
   const [photoSuccess, setPhotoSuccess] = useState(false)
+
+  // Document preview state
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [selectedPdf, setSelectedPdf] = useState(null)
 
   const router = useRouter()
   const params = useParams()
@@ -876,7 +891,7 @@ export default function PublicTaskPage() {
 
               {!user && documents.length > 0 && (
                 <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-                  <p className="font-medium mb-1">🔒 Login required to download documents</p>
+                  <p className="font-medium mb-1">🔒 Login required to view documents</p>
                   <p className="text-xs text-blue-600">Register or login to access project files</p>
                 </div>
               )}
@@ -884,83 +899,99 @@ export default function PublicTaskPage() {
               {user && profile && !profile.email_verified && documents.length > 0 && (
                 <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
                   <p className="font-medium mb-1">⚠️ Email verification required</p>
-                  <p className="text-xs text-yellow-600">Check your inbox to verify your email before downloading</p>
+                  <p className="text-xs text-yellow-600">Check your inbox to verify your email before viewing</p>
                 </div>
               )}
 
               {documents.length === 0 ? (
                 <p className="text-gray-500 text-sm">No documents available</p>
               ) : (
-                <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-3">
                   {documents.map((doc) => {
-                    const canDownload = user && profile?.email_verified
+                    const canView = user && profile?.email_verified
+                    const fileType = getFileType(doc.file_name)
 
-                    if (canDownload) {
-                      return (
-                        <a
-                          key={doc.id}
-                          href={doc.file_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition group"
-                        >
-                          <svg
-                            className="w-5 h-5 text-gray-400 group-hover:text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                          </svg>
-                          <span className="text-sm text-gray-700 group-hover:text-blue-600 flex-1">
-                            {doc.file_name}
-                          </span>
-                          <svg
-                            className="w-4 h-4 text-gray-400 group-hover:text-blue-600"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                            />
-                          </svg>
-                        </a>
-                      )
-                    } else {
+                    if (!canView) {
                       return (
                         <div
                           key={doc.id}
-                          className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg opacity-60 cursor-not-allowed"
+                          className="relative aspect-square bg-gray-100 rounded-lg border border-gray-200 flex flex-col items-center justify-center opacity-60 cursor-not-allowed"
                         >
-                          <svg
-                            className="w-5 h-5 text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                            />
+                          <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                           </svg>
-                          <span className="text-sm text-gray-600 flex-1">
+                          <span className="text-xs text-gray-500 text-center px-2 truncate w-full">
                             {doc.file_name}
                           </span>
-                          <span className="text-xs text-gray-500">🔒 Locked</span>
+                          <span className="text-xs text-gray-400 mt-1">🔒 Locked</span>
                         </div>
                       )
                     }
+
+                    // Image preview
+                    if (fileType === 'image') {
+                      return (
+                        <div
+                          key={doc.id}
+                          onClick={() => setSelectedImage(doc)}
+                          className="relative aspect-square bg-gray-100 rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 hover:shadow-md transition group"
+                        >
+                          <img
+                            src={doc.file_url}
+                            alt={doc.file_name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
+                            <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                            </svg>
+                          </div>
+                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                            <span className="text-xs text-white truncate block">
+                              {doc.file_name}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    // PDF preview
+                    if (fileType === 'pdf') {
+                      return (
+                        <div
+                          key={doc.id}
+                          onClick={() => setSelectedPdf(doc)}
+                          className="relative aspect-square bg-red-50 rounded-lg border border-red-200 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:shadow-md transition group"
+                        >
+                          <svg className="w-12 h-12 text-red-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM8.5 13.5c0 .8-.7 1.5-1.5 1.5H6v2H5v-6h2c.8 0 1.5.7 1.5 1.5v1zm4.5 2.5h-2v-6h2c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2zm5.5-4.5c0-.3-.2-.5-.5-.5h-1v1.5h1v1h-1V16h-1v-6h2c.8 0 1.5.7 1.5 1.5v1zM7 12h-.5v1.5H7c.3 0 .5-.2.5-.5v-1c0-.3-.2-.5-.5-.5zm4 0h-.5v3.5H11c.6 0 1-.4 1-1v-2c0-.6-.4-1-1-1z"/>
+                          </svg>
+                          <span className="text-xs text-gray-700 text-center px-2 truncate w-full font-medium">
+                            {doc.file_name}
+                          </span>
+                          <span className="text-xs text-red-500 mt-1">Click to preview</span>
+                        </div>
+                      )
+                    }
+
+                    // Other files (download)
+                    return (
+                      <a
+                        key={doc.id}
+                        href={doc.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative aspect-square bg-gray-50 rounded-lg border border-gray-200 flex flex-col items-center justify-center hover:border-blue-400 hover:shadow-md transition"
+                      >
+                        <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span className="text-xs text-gray-700 text-center px-2 truncate w-full">
+                          {doc.file_name}
+                        </span>
+                        <span className="text-xs text-blue-500 mt-1">Click to download</span>
+                      </a>
+                    )
                   })}
                 </div>
               )}
@@ -995,6 +1026,89 @@ export default function PublicTaskPage() {
           </div>
         </div>
       </main>
+
+      {/* Image Lightbox Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            onClick={() => setSelectedImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition"
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="max-w-4xl max-h-[90vh] relative" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={selectedImage.file_url}
+              alt={selectedImage.file_name}
+              className="max-w-full max-h-[85vh] object-contain rounded-lg"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-3 rounded-b-lg">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">{selectedImage.file_name}</span>
+                <a
+                  href={selectedImage.file_url}
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm transition"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Preview Modal */}
+      {selectedPdf && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedPdf(null)}
+        >
+          <button
+            onClick={() => setSelectedPdf(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition z-10"
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div 
+            className="w-full max-w-5xl h-[90vh] bg-white rounded-lg overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gray-100 p-3 flex items-center justify-between border-b">
+              <span className="font-medium text-gray-800 truncate">{selectedPdf.file_name}</span>
+              <a
+                href={selectedPdf.file_url}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download PDF
+              </a>
+            </div>
+            <iframe
+              src={selectedPdf.file_url}
+              className="flex-1 w-full"
+              title={selectedPdf.file_name}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
