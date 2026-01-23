@@ -12,6 +12,156 @@ const formatCurrency = (value) => {
   return `£${Math.round(value)}`
 }
 
+// Modern Grid Color Configuration (from Gemini design)
+const colorConfigs = {
+  slate: { 
+    border: 'border-slate-400', 
+    bg: 'bg-slate-500', 
+    text: 'text-slate-600', 
+    light: 'bg-slate-50',
+    accent: 'border-slate-100',
+  },
+  indigo: { 
+    border: 'border-indigo-500', 
+    bg: 'bg-indigo-600', 
+    text: 'text-indigo-600', 
+    light: 'bg-indigo-50',
+    accent: 'border-indigo-100',
+  },
+  amber: { 
+    border: 'border-amber-500', 
+    bg: 'bg-amber-500', 
+    text: 'text-amber-600', 
+    light: 'bg-amber-50',
+    accent: 'border-amber-100',
+  },
+  yellow: { 
+    border: 'border-yellow-400', 
+    bg: 'bg-yellow-500', 
+    text: 'text-yellow-600', 
+    light: 'bg-yellow-50',
+    accent: 'border-yellow-100',
+  },
+  sky: { 
+    border: 'border-sky-500', 
+    bg: 'bg-sky-600', 
+    text: 'text-sky-600', 
+    light: 'bg-sky-50',
+    accent: 'border-sky-100',
+  },
+  rose: { 
+    border: 'border-rose-400', 
+    bg: 'bg-rose-500', 
+    text: 'text-rose-600', 
+    light: 'bg-rose-50',
+    accent: 'border-rose-100',
+  },
+  emerald: { 
+    border: 'border-emerald-500', 
+    bg: 'bg-emerald-500', 
+    text: 'text-emerald-600', 
+    light: 'bg-emerald-50',
+    accent: 'border-emerald-100',
+  },
+  purple: { 
+    border: 'border-purple-500', 
+    bg: 'bg-purple-500', 
+    text: 'text-purple-600', 
+    light: 'bg-purple-50',
+    accent: 'border-purple-100',
+  },
+  cyan: { 
+    border: 'border-cyan-500', 
+    bg: 'bg-cyan-500', 
+    text: 'text-cyan-600', 
+    light: 'bg-cyan-50',
+    accent: 'border-cyan-100',
+  },
+  red: { 
+    border: 'border-red-500', 
+    bg: 'bg-red-500', 
+    text: 'text-red-600', 
+    light: 'bg-red-50',
+    accent: 'border-red-100',
+  },
+  teal: { 
+    border: 'border-teal-500', 
+    bg: 'bg-teal-500', 
+    text: 'text-teal-600', 
+    light: 'bg-teal-50',
+    accent: 'border-teal-100',
+  },
+  orange: { 
+    border: 'border-orange-500', 
+    bg: 'bg-orange-500', 
+    text: 'text-orange-600', 
+    light: 'bg-orange-50',
+    accent: 'border-orange-100',
+  },
+  blue: { 
+    border: 'border-blue-500', 
+    bg: 'bg-blue-600', 
+    text: 'text-blue-600', 
+    light: 'bg-blue-50',
+    accent: 'border-blue-100',
+  },
+  pink: { 
+    border: 'border-pink-500', 
+    bg: 'bg-pink-500', 
+    text: 'text-pink-600', 
+    light: 'bg-pink-50',
+    accent: 'border-pink-100',
+  },
+}
+
+const getCategoryGridColor = (categoryName = '') => {
+  const normalized = categoryName.toLowerCase()
+  
+  const categoryColors = {
+    demolition: 'red',
+    groundworks: 'amber',
+    structural: 'slate',
+    external: 'orange',
+    roofing: 'teal',
+    joinery: 'amber',
+    internal: 'indigo',
+    carpentry: 'yellow',
+    plumbing: 'blue',
+    electrical: 'yellow',
+    mechanical: 'sky',
+    plastering: 'amber',
+    flooring: 'slate',
+    finishing: 'rose',
+    specialist: 'pink',
+  }
+  
+  const keywords = {
+    demolition: ['demolition', 'clearance'],
+    groundworks: ['groundworks', 'foundations'],
+    structural: ['structural', 'steel'],
+    external: ['external', 'cladding'],
+    roofing: ['roofing', 'roof', 'loft'],
+    joinery: ['joinery', 'doors'],
+    internal: ['internal', 'partitions'],
+    carpentry: ['carpentry', 'timber'],
+    plumbing: ['plumbing', 'drainage'],
+    electrical: ['electrical', 'lighting'],
+    mechanical: ['mechanical', 'hvac', 'ac', 'vrf'],
+    plastering: ['plastering', 'drylining'],
+    flooring: ['flooring', 'floor'],
+    finishing: ['finishing', 'paint', 'decor'],
+    specialist: ['specialist', 'fire']
+  }
+
+  for (const [key, terms] of Object.entries(keywords)) {
+    if (terms.some(term => normalized.includes(term))) {
+      return colorConfigs[categoryColors[key]] || colorConfigs.slate
+    }
+  }
+  
+  return colorConfigs.slate
+}
+
 const formatDeadline = (deadline) => {
   if (!deadline) return null
   
@@ -378,113 +528,143 @@ export default function PublicProjectPage() {
         </section>
       )}
 
-      {/* Categories & Tasks */}
+      {/* Categories & Tasks - Modern Grid Design */}
       <section className="max-w-7xl mx-auto px-4 py-6 pb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Trade Packages & Tasks</h2>
+        <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-6">Trade Packages & Tasks</h2>
 
         {categories.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
             <p className="text-gray-500">No trade packages have been published yet.</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {categories.map((category) => (
-              <div
-                key={category.id}
-                ref={(el) => categoryRefs.current[category.id] = el}
-                className="bg-white rounded-xl shadow-md border border-gray-300 overflow-hidden transition-all duration-300"
-              >
-                <div className={`px-6 py-4 border-b border-gray-200 ${getCategoryColor(category.name)}`}>
-                  <div className="flex items-center gap-3">
-                    {(() => {
-                      const Icon = getCategoryIcon(category.name)
-                      return <Icon className="w-6 h-6" />
-                    })()}
-                    <h3 className="text-lg font-bold">{category.name}</h3>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.map((category) => {
+              const config = getCategoryGridColor(category.name)
+              const Icon = getCategoryIcon(category.name)
+              const hasTasks = category.tasks && category.tasks.length > 0
+              
+              return (
+                <div 
+                  key={category.id}
+                  ref={(el) => categoryRefs.current[category.id] = el}
+                  className={`group relative flex flex-col bg-white rounded-3xl border-2 transition-all duration-500 hover:-translate-y-2
+                    ${config.border} ${hasTasks ? 'border-opacity-100 shadow-2xl' : 'border-opacity-20 hover:border-opacity-100'}
+                  `}
+                >
+                  {/* Top Indicator Accent */}
+                  <div className={`absolute top-0 left-0 w-full h-2 rounded-t-3xl ${config.bg} opacity-20`} />
 
-                <div className="p-5">
-                  {/* Tasks in this category */}
-                  {category.tasks && category.tasks.length > 0 ? (
-                    <div className="space-y-3">
-                      {category.tasks.map((task) => {
-                        return (
-                          <div
-                            key={task.id}
-                            className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md hover:border-gray-300 cursor-pointer group transition"
-                            onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
-                          >
-                            <div className="flex-1">
-                              <div className="font-medium text-gray-900">{task.name}</div>
-                              
-                              {/* Budget and Duration */}
-                              <div className="text-sm text-gray-600 mt-1 flex gap-4">
-                                {task.budget_min && task.budget_max && (
-                                  <span>£{task.budget_min.toLocaleString()} - £{task.budget_max.toLocaleString()}</span>
+                  <div className="p-7 flex flex-col h-full">
+                    {/* Header with Icon and Status */}
+                    <div className="flex justify-between items-start mb-8">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 transform group-hover:rotate-6
+                        ${hasTasks ? `${config.bg} text-white shadow-lg` : `${config.light} ${config.text} opacity-60`}
+                      `}>
+                        <Icon className="w-8 h-8" strokeWidth={2.2} />
+                      </div>
+                      
+                      {hasTasks ? (
+                        <div className="flex flex-col items-end">
+                          <span className={`text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${config.bg} text-white`}>
+                            {category.tasks.length} Task{category.tasks.length > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-slate-100 text-slate-400">
+                          Coming Soon
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Category Title */}
+                    <h3 className={`text-2xl font-black mb-4 leading-tight tracking-tighter ${hasTasks ? 'text-slate-900' : 'text-slate-400'}`}>
+                      {category.name}
+                    </h3>
+
+                    {/* Tasks */}
+                    <div className="flex-grow">
+                      {hasTasks ? (
+                        <div className="space-y-4">
+                          {category.tasks.map(task => (
+                            <div 
+                              key={task.id} 
+                              onClick={() => router.push(`/projects/${params.id}/task/${task.id}`)}
+                              className={`p-5 rounded-2xl border-2 ${config.accent} bg-gradient-to-br from-white to-slate-50 cursor-pointer hover:shadow-md transition-all`}
+                            >
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="text-sm font-black text-slate-800">{task.name}</div>
+                                <svg className={`w-4 h-4 ${config.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                {(task.budget_min || task.budget_max) && (
+                                  <div className={`flex items-center gap-2 text-[11px] font-bold text-slate-600 bg-white shadow-sm px-3 py-2 rounded-xl border border-slate-100 flex-1`}>
+                                    <svg className={`w-3.5 h-3.5 ${config.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {task.budget_min && task.budget_max 
+                                      ? `£${task.budget_min.toLocaleString()}`
+                                      : formatCurrency(task.budget_min || task.budget_max)}
+                                  </div>
                                 )}
                                 {task.estimated_duration && (
-                                  <span>{task.estimated_duration} days</span>
+                                  <div className={`flex items-center gap-2 text-[11px] font-bold text-slate-600 bg-white shadow-sm px-3 py-2 rounded-xl border border-slate-100 flex-1`}>
+                                    <svg className={`w-3.5 h-3.5 ${config.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {task.estimated_duration} days
+                                  </div>
                                 )}
                               </div>
                               
-                              {/* Offers and Deadline in boxes */}
-                              {task.status === 'open' && (task.proposalCount !== undefined || task.bid_deadline) && (
-                                <div className="flex gap-2 mt-2">
-                                  {task.proposalCount !== undefined && (
-                                    <span className="px-2.5 py-1 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-300 rounded">
-                                      {task.proposalCount === 0 ? 'Be first!' : 
-                                       task.proposalCount <= 2 ? `${task.proposalCount} offer${task.proposalCount > 1 ? 's' : ''}` : 
-                                       '3+ offers'}
-                                    </span>
-                                  )}
-                                  {task.bid_deadline && (() => {
-                                    const deadline = formatDeadline(task.bid_deadline)
-                                    return deadline && deadline.text !== 'Closed' ? (
-                                      <span className={`px-2.5 py-1 text-xs font-medium rounded border ${
-                                        deadline.urgent ? 'bg-red-50 text-red-700 border-red-300' :
-                                        deadline.className.includes('yellow') ? 'bg-yellow-50 text-yellow-700 border-yellow-300' :
-                                        'bg-gray-50 text-gray-700 border-gray-300'
-                                      }`}>
-                                        {deadline.text}
-                                      </span>
-                                    ) : null
-                                  })()}
-                                </div>
-                              )}
-                              
-                              {task.status === 'closed' && task.proposalCount > 0 && (
-                                <div className="mt-2">
-                                  <span className="px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300 rounded">
-                                    {task.proposalCount} offer{task.proposalCount > 1 ? 's' : ''} received
+                              {/* Status badge */}
+                              <div className="mt-3 flex justify-between items-center">
+                                <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${
+                                  task.status === 'open' ? 'bg-green-100 text-green-700' :
+                                  task.status === 'assigned' ? 'bg-blue-100 text-blue-700' :
+                                  task.status === 'completed' ? 'bg-purple-100 text-purple-700' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {task.status}
+                                </span>
+                                
+                                {task.status === 'open' && task.proposalCount !== undefined && (
+                                  <span className="text-[10px] font-bold text-slate-400">
+                                    {task.proposalCount === 0 ? 'Be first!' : `${task.proposalCount} offer${task.proposalCount > 1 ? 's' : ''}`}
                                   </span>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
-
-                            <span className={`px-3 py-1 text-xs font-medium rounded ${
-                              task.status === 'open' ? 'bg-green-100 text-green-800' :
-                              task.status === 'closing_soon' ? 'bg-orange-100 text-orange-800' :
-                              task.status === 'closed' ? 'bg-gray-100 text-gray-800' :
-                              task.status === 'awarded' ? 'bg-blue-100 text-blue-800' :
-                              task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                              task.status === 'completed' ? 'bg-purple-100 text-purple-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {task.status}
-                            </span>
-                          </div>
-                        )
-                      })}
+                          ))}
+                        </div>
+                      ) : (
+                        <div className={`mt-2 p-4 rounded-2xl border border-dashed ${config.border} border-opacity-30 bg-slate-50/50`}>
+                          <p className="text-[13px] text-slate-500 font-medium leading-relaxed">
+                            Specifications are being prepared for this trade package.
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-gray-500 text-center py-8">
-                      No tasks published in this category yet
-                    </p>
-                  )}
+
+                    {/* Footer */}
+                    <div className="mt-10 pt-6 border-t border-slate-100 flex items-center justify-between">
+                      <button 
+                        onClick={() => hasTasks && router.push(`/projects/${params.id}/task/${category.tasks[0]?.id}`)}
+                        className={`flex items-center gap-2 text-[11px] font-black uppercase tracking-tighter transition-all
+                          ${hasTasks ? 'text-slate-900 hover:tracking-widest' : 'text-slate-300 pointer-events-none'}
+                        `}
+                      >
+                        View Details 
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
