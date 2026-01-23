@@ -29,6 +29,8 @@ export default function AdminTaskDetailPage() {
   const [editingTask, setEditingTask] = useState(null)
   const [savingTask, setSavingTask] = useState(false)
   const [newDocuments, setNewDocuments] = useState([]) // For uploading new documents during edit
+  const [selectedDocs, setSelectedDocs] = useState([]) // For multi-select delete
+  const [deletingDocs, setDeletingDocs] = useState(false)
 
   // Rating state
   const [ratingBidId, setRatingBidId] = useState(null)
@@ -278,7 +280,63 @@ export default function AdminTaskDetailPage() {
     setSavingTask(false)
     setShowEditModal(false)
     setNewDocuments([])
+    setSelectedDocs([])
     loadTaskDetails()
+  }
+
+  const handleDeleteSelectedDocs = async () => {
+    if (selectedDocs.length === 0) return
+    
+    if (!confirm(`Are you sure you want to delete ${selectedDocs.length} selected document${selectedDocs.length > 1 ? 's' : ''}? This action cannot be undone.`)) {
+      return
+    }
+
+    setDeletingDocs(true)
+
+    try {
+      // Get full doc objects for selected IDs
+      const docsToDelete = documents.filter(doc => selectedDocs.includes(doc.id))
+      
+      // Delete from storage
+      const filePaths = docsToDelete.map(doc => {
+        const urlParts = doc.file_url.split('/')
+        return `documents/${urlParts[urlParts.length - 1]}`
+      })
+      
+      await supabase.storage
+        .from('project-files')
+        .remove(filePaths)
+      
+      // Delete from database
+      await supabase
+        .from('task_documents')
+        .delete()
+        .in('id', selectedDocs)
+      
+      setSelectedDocs([])
+      loadTaskDetails()
+    } catch (error) {
+      console.error('Error deleting documents:', error)
+      alert('Error deleting documents: ' + error.message)
+    } finally {
+      setDeletingDocs(false)
+    }
+  }
+
+  const toggleDocSelect = (docId) => {
+    setSelectedDocs(prev => 
+      prev.includes(docId) 
+        ? prev.filter(id => id !== docId)
+        : [...prev, docId]
+    )
+  }
+
+  const toggleSelectAllDocs = () => {
+    if (selectedDocs.length === documents.length) {
+      setSelectedDocs([])
+    } else {
+      setSelectedDocs(documents.map(doc => doc.id))
+    }
   }
 
   const handleDeleteTask = async () => {
@@ -907,44 +965,64 @@ export default function AdminTaskDetailPage() {
                 {/* Existing Documents */}
                 {documents.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium mb-2">Current Documents ({documents.length})</label>
-                    <div className="space-y-2 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-40 overflow-y-auto">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium">Current Documents ({documents.length})</label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={toggleSelectAllDocs}
+                          className="text-xs text-blue-600 hover:text-blue-800"
+                        >
+                          {selectedDocs.length === documents.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                        {selectedDocs.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={handleDeleteSelectedDocs}
+                            disabled={deletingDocs}
+                            className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400"
+                          >
+                            {deletingDocs ? 'Deleting...' : `Delete Selected (${selectedDocs.length})`}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-2 p-4 bg-gray-50 rounded-lg border border-gray-200 max-h-60 overflow-y-auto">
                       {documents.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between p-2 bg-white rounded border">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div 
+                          key={doc.id} 
+                          className={`flex items-center justify-between p-2 rounded border cursor-pointer transition ${
+                            selectedDocs.includes(doc.id) 
+                              ? 'bg-blue-50 border-blue-300' 
+                              : 'bg-white border-gray-200 hover:bg-gray-50'
+                          }`}
+                          onClick={() => toggleDocSelect(doc.id)}
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={selectedDocs.includes(doc.id)}
+                              onChange={() => toggleDocSelect(doc.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                            />
                             <svg className="w-4 h-4 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             <span className="text-sm text-gray-700 truncate">{doc.file_name}</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              if (confirm('Delete this document?')) {
-                                // Extract file path from URL
-                                const urlParts = doc.file_url.split('/')
-                                const filePath = `documents/${urlParts[urlParts.length - 1]}`
-                                
-                                // Delete from storage
-                                await supabase.storage
-                                  .from('project-files')
-                                  .remove([filePath])
-                                
-                                // Delete from database
-                                await supabase
-                                  .from('task_documents')
-                                  .delete()
-                                  .eq('id', doc.id)
-                                
-                                loadTaskDetails()
-                              }
-                            }}
-                            className="ml-2 p-1 text-red-600 hover:bg-red-100 rounded flex-shrink-0"
+                          <a
+                            href={doc.file_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="ml-2 p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded flex-shrink-0"
+                            title="Open file"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                             </svg>
-                          </button>
+                          </a>
                         </div>
                       ))}
                     </div>
@@ -1037,6 +1115,7 @@ export default function AdminTaskDetailPage() {
                     setShowEditModal(false)
                     setEditingTask(task)
                     setNewDocuments([])
+                    setSelectedDocs([])
                   }}
                   className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
                 >
