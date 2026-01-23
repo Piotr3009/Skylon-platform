@@ -8,6 +8,16 @@ import Header from '@/app/components/Header'
 import Breadcrumbs from '@/app/components/Breadcrumbs'
 import NotifySubcontractorsModal from '@/app/components/NotifySubcontractorsModal'
 
+// Safe date formatting to avoid hydration mismatch
+const formatDate = (dateString) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
 export default function ProjectDetailPage() {
   const [profile, setProfile] = useState(null)
   const [project, setProject] = useState(null)
@@ -331,12 +341,12 @@ export default function ProjectDetailPage() {
             <div className="flex gap-4 text-sm flex-wrap">
               {project.start_date && (
                 <span className="text-gray-700">
-                  <span className="font-semibold">Start:</span> {new Date(project.start_date).toLocaleDateString()}
+                  <span className="font-semibold">Start:</span> {formatDate(project.start_date)}
                 </span>
               )}
               {project.end_date && (
                 <span className="text-gray-700">
-                  <span className="font-semibold">End:</span> {new Date(project.end_date).toLocaleDateString()}
+                  <span className="font-semibold">End:</span> {formatDate(project.end_date)}
                 </span>
               )}
               <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
