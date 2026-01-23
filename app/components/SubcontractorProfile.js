@@ -17,6 +17,9 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
   const [tradingName, setTradingName] = useState('')
   const [businessType, setBusinessType] = useState('')
   const [yearsInBusiness, setYearsInBusiness] = useState('')
+  const [nin, setNin] = useState('')
+  const [utr, setUtr] = useState('')
+  const [cisStatus, setCisStatus] = useState('')
   
   // Specialization
   const [specialization, setSpecialization] = useState([])
@@ -80,6 +83,9 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
       setTradingName(profile.trading_name || '')
       setBusinessType(profile.business_type || '')
       setYearsInBusiness(profile.years_in_business || '')
+      setNin(profile.nin || '')
+      setUtr(profile.utr || '')
+      setCisStatus(profile.cis_status || '')
       
       // Specialization
       setSpecialization(profile.specialization || [])
@@ -182,6 +188,9 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
         trading_name: tradingName,
         business_type: businessType,
         years_in_business: yearsInBusiness ? parseInt(yearsInBusiness) : null,
+        nin: nin || null,
+        utr: utr || null,
+        cis_status: cisStatus || null,
         updated_at: new Date().toISOString()
       })
       .eq('id', profile.id)
@@ -536,6 +545,29 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
                     <label className="block text-sm font-medium text-gray-700 mb-1">Years in Business</label>
                     <input type="number" value={yearsInBusiness} onChange={(e) => setYearsInBusiness(e.target.value)} placeholder="5" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
                   </div>
+                  
+                  {/* Tax / CIS Section */}
+                  <div className="col-span-2 pt-4 border-t mt-4">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-3">Tax & CIS Details</h4>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">National Insurance Number (NIN)</label>
+                    <input type="text" value={nin} onChange={(e) => setNin(e.target.value.toUpperCase())} placeholder="QQ 12 34 56 C" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Unique Taxpayer Reference (UTR)</label>
+                    <input type="text" value={utr} onChange={(e) => setUtr(e.target.value)} placeholder="1234567890" maxLength="10" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CIS Status</label>
+                    <select value={cisStatus} onChange={(e) => setCisStatus(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                      <option value="">Select status...</option>
+                      <option value="not_registered">Not Registered</option>
+                      <option value="gross">Gross Payment (0%)</option>
+                      <option value="net">Standard Deduction (20%)</option>
+                      <option value="registered">Registered (30%)</option>
+                    </select>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -563,6 +595,29 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
                     <div>
                       <span className="text-sm text-gray-500">Years in Business</span>
                       <p className="font-medium text-gray-900">{yearsInBusiness || '—'}</p>
+                    </div>
+                    
+                    {/* Tax / CIS Section */}
+                    <div className="col-span-2 pt-4 border-t mt-2">
+                      <h4 className="text-lg font-semibold text-gray-800 mb-3">Tax & CIS Details</h4>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">National Insurance Number (NIN)</span>
+                      <p className="font-medium text-gray-900">{nin || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">Unique Taxpayer Reference (UTR)</span>
+                      <p className="font-medium text-gray-900">{utr || '—'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">CIS Status</span>
+                      <p className="font-medium text-gray-900">
+                        {cisStatus === 'not_registered' ? 'Not Registered' :
+                         cisStatus === 'gross' ? 'Gross Payment (0%)' :
+                         cisStatus === 'net' ? 'Standard Deduction (20%)' :
+                         cisStatus === 'registered' ? 'Registered (30%)' :
+                         '—'}
+                      </p>
                     </div>
                   </div>
                 </div>

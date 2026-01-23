@@ -15,6 +15,7 @@ export default function SubcontractorsPage() {
   const [profile, setProfile] = useState(null)
   const [subcontractors, setSubcontractors] = useState([])
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(null)
   const [stats, setStats] = useState({
     total: 0,
     verified: 0,
@@ -141,6 +142,37 @@ export default function SubcontractorsPage() {
     return new Date(dateString) < new Date()
   }
 
+  const handleDeleteSubcontractor = async (subId, subName) => {
+    if (!confirm(`Are you sure you want to delete "${subName || 'this subcontractor'}"?\n\nThis will permanently delete:\n- Their profile\n- All their bids\n- All their documents\n\nThis action cannot be undone.`)) {
+      return
+    }
+
+    setDeleting(subId)
+
+    try {
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: subId })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to delete subcontractor')
+      }
+
+      // Refresh list
+      await loadSubcontractors()
+      alert('Subcontractor deleted successfully')
+    } catch (error) {
+      console.error('Delete error:', error)
+      alert('Error deleting subcontractor: ' + error.message)
+    } finally {
+      setDeleting(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -245,6 +277,7 @@ export default function SubcontractorsPage() {
                   <th className="px-4 py-3 text-left text-sm font-semibold">Stats</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Pending Bids</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Company Details</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -346,6 +379,36 @@ export default function SubcontractorsPage() {
                             )}
                           </div>
 
+                          {/* Tax / CIS */}
+                          <div>
+                            <div className="font-semibold text-gray-700">Tax / CIS:</div>
+                            {sub.nin && (
+                              <div className="text-gray-600">NIN: {sub.nin}</div>
+                            )}
+                            {sub.utr && (
+                              <div className="text-gray-600">UTR: {sub.utr}</div>
+                            )}
+                            {sub.cis_status && (
+                              <div className="text-gray-600">
+                                CIS: <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                  sub.cis_status === 'verified' ? 'bg-green-100 text-green-800' :
+                                  sub.cis_status === 'gross' ? 'bg-blue-100 text-blue-800' :
+                                  sub.cis_status === 'net' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {sub.cis_status === 'not_registered' ? 'Not Registered' :
+                                   sub.cis_status === 'gross' ? 'Gross (0%)' :
+                                   sub.cis_status === 'net' ? 'Net (20%)' :
+                                   sub.cis_status === 'verified' ? 'Verified' :
+                                   sub.cis_status}
+                                </span>
+                              </div>
+                            )}
+                            {!sub.nin && !sub.utr && !sub.cis_status && (
+                              <div className="text-gray-400">Not provided</div>
+                            )}
+                          </div>
+
                           {/* Insurance */}
                           <div>
                             <div className="font-semibold text-gray-700">Insurance:</div>
@@ -438,6 +501,17 @@ export default function SubcontractorsPage() {
                           </div>
                         </div>
                       </details>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-4">
+                      <button
+                        onClick={() => handleDeleteSubcontractor(sub.id, sub.company_name || sub.full_name)}
+                        disabled={deleting === sub.id}
+                        className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:bg-gray-400 transition"
+                      >
+                        {deleting === sub.id ? 'Deleting...' : 'Delete'}
+                      </button>
                     </td>
                   </tr>
                 ))}
