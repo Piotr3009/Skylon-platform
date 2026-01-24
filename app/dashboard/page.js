@@ -312,35 +312,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Retro Visitor Counter - Admin Only */}
-        {(profile?.role === 'owner' || profile?.role === 'coordinator') && visitorCount !== null && (
-          <div className="mb-8 flex justify-center">
-            <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl p-6 shadow-xl border-4 border-gray-700">
-              <div className="text-center mb-3">
-                <span className="text-gray-400 text-xs uppercase tracking-widest font-mono">Homepage Visitors</span>
-              </div>
-              <div className="bg-black rounded-lg p-4 border-2 border-gray-600 shadow-inner">
-                <div className="flex justify-center gap-1">
-                  {String(visitorCount).padStart(7, '0').split('').map((digit, index) => (
-                    <div 
-                      key={index}
-                      className="w-8 h-12 bg-gradient-to-b from-gray-900 to-black rounded border border-gray-700 flex items-center justify-center shadow-inner"
-                    >
-                      <span className="text-2xl font-mono font-bold text-green-400 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]">
-                        {digit}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="text-center mt-3 flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
-                <span className="text-gray-500 text-[10px] uppercase tracking-wider font-mono">Live Counter</span>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Verification Alerts */}
         {profile && !profile.email_verified && (
           <div className="mb-8">
@@ -677,6 +648,35 @@ export default function DashboardPage() {
               </svg>
               <p>No completed projects yet</p>
               <p className="text-sm mt-2">Your finished work will appear here</p>
+            </div>
+          </div>
+        )}
+
+        {/* Retro Visitor Counter - Admin Only - Bottom of page */}
+        {(profile?.role === 'owner' || profile?.role === 'coordinator') && visitorCount !== null && (
+          <div className="mt-12 flex justify-center">
+            <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg p-3 shadow-lg border-2 border-gray-700">
+              <div className="text-center mb-1.5">
+                <span className="text-gray-400 text-[8px] uppercase tracking-widest font-mono">Visitors</span>
+              </div>
+              <div className="bg-black rounded p-2 border border-gray-600 shadow-inner">
+                <div className="flex justify-center gap-0.5">
+                  {String(visitorCount).padStart(6, '0').split('').map((digit, index) => (
+                    <div 
+                      key={index}
+                      className="w-4 h-6 bg-gradient-to-b from-gray-900 to-black rounded-sm border border-gray-700 flex items-center justify-center"
+                    >
+                      <span className="text-sm font-mono font-bold text-green-400 drop-shadow-[0_0_4px_rgba(74,222,128,0.5)]">
+                        {digit}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="text-center mt-1.5 flex items-center justify-center gap-1">
+                <div className="w-1 h-1 rounded-full bg-green-500 animate-pulse"></div>
+                <span className="text-gray-500 text-[6px] uppercase tracking-wider font-mono">Live</span>
+              </div>
             </div>
           </div>
         )}

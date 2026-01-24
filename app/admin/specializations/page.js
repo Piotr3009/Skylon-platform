@@ -10,8 +10,8 @@ export default function SpecializationsPage() {
   const [subcontractorCounts, setSubcontractorCounts] = useState({})
   const router = useRouter()
 
-  // Specialization categories with subcategories
-  const specializationCategories = {
+  // Specializations with subcategories (expandable)
+  const specializationsWithSubs = {
     'Designers / Professionals': [
       'M&E Designer',
       'Structural Engineer',
@@ -49,7 +49,7 @@ export default function SpecializationsPage() {
     ]
   }
 
-  // Standalone specializations
+  // Standalone specializations (no subcategories yet)
   const standaloneSpecializations = [
     'General Construction',
     'Steel Frame Specialist',
@@ -128,7 +128,7 @@ export default function SpecializationsPage() {
   }
 
   const expandAll = () => {
-    setExpandedCategories(Object.keys(specializationCategories))
+    setExpandedCategories(Object.keys(specializationsWithSubs))
   }
 
   const collapseAll = () => {
@@ -139,8 +139,10 @@ export default function SpecializationsPage() {
     return subcategories.reduce((sum, spec) => sum + (subcontractorCounts[spec] || 0), 0)
   }
 
-  const getTotalCount = () => {
-    return Object.values(subcontractorCounts).reduce((sum, count) => sum + count, 0)
+  const getTotalSpecializations = () => {
+    return Object.keys(specializationsWithSubs).length + 
+           Object.values(specializationsWithSubs).flat().length + 
+           standaloneSpecializations.length
   }
 
   if (loading) {
@@ -171,7 +173,7 @@ export default function SpecializationsPage() {
               </button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">📋 Subcontractor Specializations</h1>
-                <p className="text-sm text-gray-500 mt-1">View all categories and subcategories</p>
+                <p className="text-sm text-gray-500 mt-1">All specializations - some have subcategories</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -195,27 +197,24 @@ export default function SpecializationsPage() {
       <main className="max-w-4xl mx-auto px-4 py-8">
         {/* Stats */}
         <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 p-6 mb-8">
-          <div className="grid grid-cols-3 gap-6 text-center">
+          <div className="grid grid-cols-2 gap-6 text-center">
             <div>
-              <div className="text-3xl font-bold text-blue-600">{Object.keys(specializationCategories).length}</div>
-              <div className="text-sm text-gray-500 mt-1">Main Categories</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-green-600">
-                {Object.values(specializationCategories).flat().length + standaloneSpecializations.length}
-              </div>
+              <div className="text-3xl font-bold text-blue-600">{getTotalSpecializations()}</div>
               <div className="text-sm text-gray-500 mt-1">Total Specializations</div>
             </div>
             <div>
-              <div className="text-3xl font-bold text-purple-600">{getTotalCount()}</div>
-              <div className="text-sm text-gray-500 mt-1">Total Assignments</div>
+              <div className="text-3xl font-bold text-green-600">{Object.keys(specializationsWithSubs).length}</div>
+              <div className="text-sm text-gray-500 mt-1">With Subcategories</div>
             </div>
           </div>
         </div>
 
-        {/* Categories Accordion */}
-        <div className="space-y-4">
-          {Object.entries(specializationCategories).map(([category, subcategories]) => {
+        {/* All Specializations */}
+        <div className="space-y-3">
+          <h2 className="text-lg font-bold text-gray-800 mb-4">All Specializations</h2>
+          
+          {/* Specializations WITH subcategories */}
+          {Object.entries(specializationsWithSubs).map(([category, subcategories]) => {
             const isExpanded = expandedCategories.includes(category)
             const categoryCount = getCategoryCount(subcategories)
             
@@ -224,14 +223,14 @@ export default function SpecializationsPage() {
                 {/* Category Header */}
                 <button
                   onClick={() => toggleCategory(category)}
-                  className="w-full px-6 py-4 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white hover:from-slate-100 hover:to-slate-50 transition"
+                  className="w-full px-5 py-4 flex items-center justify-between bg-gradient-to-r from-blue-50 to-white hover:from-blue-100 hover:to-blue-50 transition"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      category === 'Designers / Professionals' ? 'bg-purple-100 text-purple-600' :
-                      category === 'Specialist Installations' ? 'bg-orange-100 text-orange-600' :
-                      category === 'Electrical & Security' ? 'bg-yellow-100 text-yellow-600' :
-                      'bg-blue-100 text-blue-600'
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm ${
+                      category === 'Designers / Professionals' ? 'bg-purple-100' :
+                      category === 'Specialist Installations' ? 'bg-orange-100' :
+                      category === 'Electrical & Security' ? 'bg-yellow-100' :
+                      'bg-blue-100'
                     }`}>
                       {category === 'Designers / Professionals' ? '🏗️' :
                        category === 'Specialist Installations' ? '🔧' :
@@ -239,17 +238,17 @@ export default function SpecializationsPage() {
                     </div>
                     <div className="text-left">
                       <h3 className="font-bold text-gray-900">{category}</h3>
-                      <p className="text-sm text-gray-500">{subcategories.length} specializations</p>
+                      <p className="text-xs text-gray-500">{subcategories.length} subcategories</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                  <div className="flex items-center gap-3">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                       categoryCount > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                     }`}>
-                      {categoryCount} subcontractors
+                      {categoryCount}
                     </span>
                     <svg 
-                      className={`w-5 h-5 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                      className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                       fill="none" 
                       stroke="currentColor" 
                       viewBox="0 0 24 24"
@@ -261,22 +260,22 @@ export default function SpecializationsPage() {
 
                 {/* Subcategories */}
                 {isExpanded && (
-                  <div className="border-t border-gray-200">
+                  <div className="border-t border-gray-200 bg-gray-50">
                     {subcategories.map((spec, index) => {
                       const count = subcontractorCounts[spec] || 0
                       return (
                         <div 
                           key={spec}
-                          className={`px-6 py-3 flex items-center justify-between hover:bg-gray-50 ${
+                          className={`px-5 py-2.5 flex items-center justify-between hover:bg-white ${
                             index !== subcategories.length - 1 ? 'border-b border-gray-100' : ''
                           }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-gray-300"></div>
-                            <span className="text-gray-700">{spec}</span>
+                          <div className="flex items-center gap-3 pl-6">
+                            <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                            <span className="text-sm text-gray-700">{spec}</span>
                           </div>
-                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                            count > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                            count > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-200 text-gray-400'
                           }`}>
                             {count}
                           </span>
@@ -289,38 +288,28 @@ export default function SpecializationsPage() {
             )
           })}
 
-          {/* Other Trades */}
-          <div className="bg-white rounded-xl shadow-sm border-2 border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 bg-gradient-to-r from-gray-100 to-gray-50">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-200 text-gray-600">
-                  🛠️
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">Other Trades</h3>
-                  <p className="text-sm text-gray-500">{standaloneSpecializations.length} standalone specializations</p>
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-gray-200 grid grid-cols-2 gap-px bg-gray-100">
-              {standaloneSpecializations.map((spec) => {
-                const count = subcontractorCounts[spec] || 0
-                return (
-                  <div 
-                    key={spec}
-                    className="px-4 py-3 flex items-center justify-between bg-white hover:bg-gray-50"
-                  >
-                    <span className="text-sm text-gray-700">{spec}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                      count > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'
-                    }`}>
-                      {count}
-                    </span>
+          {/* Standalone Specializations */}
+          {standaloneSpecializations.map((spec) => {
+            const count = subcontractorCounts[spec] || 0
+            return (
+              <div 
+                key={spec}
+                className="bg-white rounded-xl shadow-sm border-2 border-gray-200 px-5 py-4 flex items-center justify-between hover:border-gray-300 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                    <span className="text-sm">🛠️</span>
                   </div>
-                )
-              })}
-            </div>
-          </div>
+                  <span className="font-medium text-gray-900">{spec}</span>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                  count > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {count}
+                </span>
+              </div>
+            )
+          })}
         </div>
       </main>
     </div>
