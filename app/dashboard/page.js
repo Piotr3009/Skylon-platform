@@ -656,8 +656,8 @@ export default function DashboardPage() {
         {(profile?.role === 'owner' || profile?.role === 'coordinator') && visitorCount !== null && (
           <div className="mt-12 flex justify-center">
             <div className="bg-white rounded-lg p-3 shadow-md border-2 border-gray-300">
-              <div className="text-center mb-1.5">
-                <span className="text-gray-500 text-[10px] uppercase tracking-widest font-mono">Homepage Visitors</span>
+              <div className="text-center mb-2">
+                <span className="text-gray-600 text-[10px] uppercase tracking-widest font-mono">Homepage Visitors</span>
               </div>
               <div className="bg-gray-900 rounded p-2 border border-gray-400">
                 <div className="flex justify-center gap-0.5">
@@ -673,9 +673,9 @@ export default function DashboardPage() {
                   ))}
                 </div>
               </div>
-              <div className="text-center mt-1.5 flex items-center justify-center gap-1">
+              <div className="text-center mt-2 flex items-center justify-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-gray-400 text-[8px] uppercase tracking-wider font-mono">Live</span>
+                <span className="text-gray-500 text-[8px] uppercase tracking-wider font-mono">Live</span>
               </div>
             </div>
           </div>
