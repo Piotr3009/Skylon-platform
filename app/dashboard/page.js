@@ -655,18 +655,18 @@ export default function DashboardPage() {
         {/* Retro Visitor Counter - Admin Only - Bottom of page */}
         {(profile?.role === 'owner' || profile?.role === 'coordinator') && visitorCount !== null && (
           <div className="mt-12 flex justify-center">
-            <div className="bg-white rounded-lg p-3 shadow-md border-2 border-gray-300">
+            <div className="bg-white rounded-lg p-3 shadow-md border border-gray-200">
               <div className="text-center mb-2">
-                <span className="text-gray-600 text-[10px] uppercase tracking-widest font-mono">Homepage Visitors</span>
+                <span className="text-gray-500 text-[10px] uppercase tracking-widest">Homepage Visitors</span>
               </div>
-              <div className="bg-gray-900 rounded p-2 border border-gray-400">
-                <div className="flex justify-center gap-0.5">
+              <div className="bg-gray-100 rounded p-2 border border-gray-200">
+                <div className="flex justify-center gap-1">
                   {String(visitorCount).padStart(6, '0').split('').map((digit, index) => (
                     <div 
                       key={index}
-                      className="w-5 h-7 bg-black rounded-sm border border-gray-600 flex items-center justify-center"
+                      className="w-6 h-8 bg-white rounded border border-gray-300 flex items-center justify-center shadow-sm"
                     >
-                      <span className="text-base font-mono font-bold text-green-400">
+                      <span className="text-lg font-mono font-bold text-gray-800">
                         {digit}
                       </span>
                     </div>
@@ -675,7 +675,7 @@ export default function DashboardPage() {
               </div>
               <div className="text-center mt-2 flex items-center justify-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                <span className="text-gray-500 text-[8px] uppercase tracking-wider font-mono">Live</span>
+                <span className="text-gray-400 text-[8px] uppercase tracking-wider">Live</span>
               </div>
             </div>
           </div>
