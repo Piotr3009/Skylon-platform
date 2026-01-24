@@ -1,1110 +1,727 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getCategoryIcon, getCategoryColor } from '@/lib/categoryIcons'
 
 const formatCurrency = (value) => {
   if (!value || Number.isNaN(value)) return '—'
-  return `£${Number(value).toLocaleString('en-GB')}`
+  if (value >= 1_000_000) return `£${(value / 1_000_000).toFixed(1)}M`
+  if (value >= 1_000) return `£${(value / 1_000).toFixed(0)}k`
+  return `£${Math.round(value)}`
 }
 
-const formatMonthYear = (dateString) => {
-  if (!dateString) return '—'
-  const date = new Date(dateString)
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear()
-  return `${month}/${year}`
+// Modern Grid Color Configuration (from Gemini design)
+const colorConfigs = {
+  slate: { 
+    border: 'border-slate-400', 
+    bg: 'bg-slate-500', 
+    text: 'text-slate-600', 
+    light: 'bg-slate-50',
+    accent: 'border-slate-100',
+  },
+  indigo: { 
+    border: 'border-indigo-500', 
+    bg: 'bg-indigo-600', 
+    text: 'text-indigo-600', 
+    light: 'bg-indigo-50',
+    accent: 'border-indigo-100',
+  },
+  amber: { 
+    border: 'border-amber-500', 
+    bg: 'bg-amber-500', 
+    text: 'text-amber-600', 
+    light: 'bg-amber-50',
+    accent: 'border-amber-100',
+  },
+  yellow: { 
+    border: 'border-yellow-400', 
+    bg: 'bg-yellow-500', 
+    text: 'text-yellow-600', 
+    light: 'bg-yellow-50',
+    accent: 'border-yellow-100',
+  },
+  sky: { 
+    border: 'border-sky-500', 
+    bg: 'bg-sky-600', 
+    text: 'text-sky-600', 
+    light: 'bg-sky-50',
+    accent: 'border-sky-100',
+  },
+  rose: { 
+    border: 'border-rose-400', 
+    bg: 'bg-rose-500', 
+    text: 'text-rose-600', 
+    light: 'bg-rose-50',
+    accent: 'border-rose-100',
+  },
+  emerald: { 
+    border: 'border-emerald-500', 
+    bg: 'bg-emerald-500', 
+    text: 'text-emerald-600', 
+    light: 'bg-emerald-50',
+    accent: 'border-emerald-100',
+  },
+  purple: { 
+    border: 'border-purple-500', 
+    bg: 'bg-purple-500', 
+    text: 'text-purple-600', 
+    light: 'bg-purple-50',
+    accent: 'border-purple-100',
+  },
+  cyan: { 
+    border: 'border-cyan-500', 
+    bg: 'bg-cyan-500', 
+    text: 'text-cyan-600', 
+    light: 'bg-cyan-50',
+    accent: 'border-cyan-100',
+  },
+  red: { 
+    border: 'border-red-500', 
+    bg: 'bg-red-500', 
+    text: 'text-red-600', 
+    light: 'bg-red-50',
+    accent: 'border-red-100',
+  },
+  teal: { 
+    border: 'border-teal-500', 
+    bg: 'bg-teal-500', 
+    text: 'text-teal-600', 
+    light: 'bg-teal-50',
+    accent: 'border-teal-100',
+  },
+  orange: { 
+    border: 'border-orange-500', 
+    bg: 'bg-orange-500', 
+    text: 'text-orange-600', 
+    light: 'bg-orange-50',
+    accent: 'border-orange-100',
+  },
+  blue: { 
+    border: 'border-blue-500', 
+    bg: 'bg-blue-600', 
+    text: 'text-blue-600', 
+    light: 'bg-blue-50',
+    accent: 'border-blue-100',
+  },
+  pink: { 
+    border: 'border-pink-500', 
+    bg: 'bg-pink-500', 
+    text: 'text-pink-600', 
+    light: 'bg-pink-50',
+    accent: 'border-pink-100',
+  },
 }
 
-// Helper functions for file type detection
-const getFileType = (fileName) => {
-  if (!fileName) return 'other'
-  const ext = fileName.toLowerCase().split('.').pop()
-  const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']
-  const pdfExts = ['pdf']
-  if (imageExts.includes(ext)) return 'image'
-  if (pdfExts.includes(ext)) return 'pdf'
-  return 'other'
+const getCategoryGridColor = (categoryName = '') => {
+  const normalized = categoryName.toLowerCase()
+  
+  const categoryColors = {
+    demolition: 'red',
+    groundworks: 'amber',
+    structural: 'slate',
+    external: 'orange',
+    roofing: 'teal',
+    joinery: 'amber',
+    internal: 'indigo',
+    carpentry: 'yellow',
+    plumbing: 'blue',
+    electrical: 'yellow',
+    mechanical: 'sky',
+    plastering: 'amber',
+    flooring: 'slate',
+    finishing: 'rose',
+    specialist: 'pink',
+  }
+  
+  const keywords = {
+    demolition: ['demolition', 'clearance'],
+    groundworks: ['groundworks', 'foundations'],
+    structural: ['structural', 'steel'],
+    external: ['external', 'cladding'],
+    roofing: ['roofing', 'roof', 'loft'],
+    joinery: ['joinery', 'doors'],
+    internal: ['internal', 'partitions'],
+    carpentry: ['carpentry', 'timber'],
+    plumbing: ['plumbing', 'drainage'],
+    electrical: ['electrical', 'lighting'],
+    mechanical: ['mechanical', 'hvac', 'ac', 'vrf'],
+    plastering: ['plastering', 'drylining'],
+    flooring: ['flooring', 'floor'],
+    finishing: ['finishing', 'paint', 'decor'],
+    specialist: ['specialist', 'fire']
+  }
+
+  for (const [key, terms] of Object.entries(keywords)) {
+    if (terms.some(term => normalized.includes(term))) {
+      return colorConfigs[categoryColors[key]] || colorConfigs.slate
+    }
+  }
+  
+  return colorConfigs.slate
 }
 
-export default function PublicTaskPage() {
-  const [task, setTask] = useState(null)
-  const [category, setCategory] = useState(null)
+const formatDeadline = (deadline) => {
+  if (!deadline) return null
+  
+  const now = new Date()
+  const deadlineDate = new Date(deadline)
+  const diffMs = deadlineDate - now
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffHours / 24)
+  
+  if (diffMs < 0) return { text: 'Closed', className: 'text-gray-500', urgent: false }
+  if (diffHours < 6) return { text: `${diffHours}h left`, className: 'text-red-600', urgent: true }
+  if (diffHours < 24) return { text: `${diffHours}h left`, className: 'text-orange-600', urgent: true }
+  if (diffDays < 3) return { text: `${diffDays}d left`, className: 'text-yellow-600', urgent: false }
+  return { text: `${diffDays}d left`, className: 'text-gray-600', urgent: false }
+}
+
+const getOfferDisplay = (count) => {
+  if (count === 0) return 'Be first!'
+  if (count <= 2) return `${count} offer${count > 1 ? 's' : ''}`
+  return '3+ offers'
+}
+
+export default function PublicProjectPage() {
   const [project, setProject] = useState(null)
-  const [documents, setDocuments] = useState([])
-  const [questions, setQuestions] = useState([])
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
-  const [myBid, setMyBid] = useState(null)
-  const [taskPhotos, setTaskPhotos] = useState([])
-
-  // Proposal form state
-  const [showProposalForm, setShowProposalForm] = useState(false)
-  const [proposalPrice, setProposalPrice] = useState('')
-  const [proposalDuration, setProposalDuration] = useState('')
-  const [proposalComment, setProposalComment] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
-
-  // Question form state
-  const [showQuestionForm, setShowQuestionForm] = useState(false)
-  const [questionText, setQuestionText] = useState('')
-  const [askingQuestion, setAskingQuestion] = useState(false)
-  const [questionError, setQuestionError] = useState(null)
-  const [questionSuccess, setQuestionSuccess] = useState(false)
-
-  // Photo upload state
-  const [showPhotoUpload, setShowPhotoUpload] = useState(false)
-  const [photoFile, setPhotoFile] = useState(null)
-  const [photoDescription, setPhotoDescription] = useState('')
-  const [uploadingPhoto, setUploadingPhoto] = useState(false)
-  const [photoError, setPhotoError] = useState(null)
-  const [photoSuccess, setPhotoSuccess] = useState(false)
-
-  // Document preview state
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [selectedPdf, setSelectedPdf] = useState(null)
-
+  const [user, setUser] = useState(null)
+  const [showGanttModal, setShowGanttModal] = useState(false)
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
+  const categoryRefs = useRef({})
 
   useEffect(() => {
     checkUser()
-    loadTaskDetails()
+    loadProjectDetails()
   }, [])
+
+  // Scroll to category when URL has category parameter
+  useEffect(() => {
+    const categoryId = searchParams.get('category')
+    if (categoryId && !loading && categories.length > 0) {
+      const element = categoryRefs.current[categoryId]
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          // Add highlight effect
+          element.classList.add('ring-2', 'ring-blue-500', 'ring-offset-2')
+          setTimeout(() => {
+            element.classList.remove('ring-2', 'ring-blue-500', 'ring-offset-2')
+          }, 2000)
+        }, 100)
+      }
+    }
+  }, [searchParams, loading, categories])
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-
-    if (user) {
-      setUser(user)
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-      setProfile(profileData)
-    }
+    setUser(user)
   }
 
-  const loadTaskDetails = async () => {
+  const loadProjectDetails = async () => {
     setLoading(true)
 
-    // Load task
-    const { data: taskData, error: taskError } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('id', params.taskId)
-      .single()
-
-    if (taskError) {
-      setLoading(false)
-      return
-    }
-
-    setTask(taskData)
-
-    // Load category
-    const { data: categoryData } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('id', taskData.category_id)
-      .single()
-
-    setCategory(categoryData)
-
     // Load project
-    const { data: projectData } = await supabase
+    const { data: projectData, error: projectError } = await supabase
       .from('projects')
       .select('*')
       .eq('id', params.id)
       .single()
 
+    if (projectError) {
+      setLoading(false)
+      return
+    }
+
     setProject(projectData)
 
-    // Load documents
-    const { data: docsData } = await supabase
-      .from('task_documents')
+    // Load categories with tasks
+    const { data: categoriesData, error: categoriesError } = await supabase
+      .from('categories')
       .select('*')
-      .eq('task_id', params.taskId)
+      .eq('project_id', params.id)
+      .order('display_order')
 
-    if (docsData) setDocuments(docsData)
-
-    // Load questions
-    const { data: questionsData } = await supabase
-      .from('task_questions')
-      .select('*, profiles(full_name, company_name)')
-      .eq('task_id', params.taskId)
-      .order('created_at', { ascending: false })
-
-    if (questionsData) setQuestions(questionsData)
-
-    // Load my bid if logged in
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: bidData, error: bidError } = await supabase
-        .from('bids')
-        .select('*')
-        .eq('task_id', params.taskId)
-        .eq('subcontractor_id', user.id)
-        .maybeSingle()
-
-      if (bidData && !bidError) setMyBid(bidData)
+    if (categoriesError) {
+      setLoading(false)
+      return
     }
 
-    // Load task photos
-    const { data: photosData } = await supabase
-      .from('task_photos')
-      .select('*, profiles(full_name, company_name)')
-      .eq('task_id', params.taskId)
-      .order('created_at', { ascending: false })
+    // Load tasks for these categories
+    const categoryIds = categoriesData.map(c => c.id)
+    
+    if (categoryIds.length > 0) {
+      const { data: tasksData, error: tasksError } = await supabase
+        .from('tasks')
+        .select('id, name, status, suggested_price, budget_min, budget_max, estimated_duration, short_description, category_id, bid_deadline')
+        .in('category_id', categoryIds)
+        .order('created_at', { ascending: true })
 
-    if (photosData) setTaskPhotos(photosData)
+      if (!tasksError && tasksData) {
+        // Load proposal counts for all tasks
+        const taskIds = tasksData.map(t => t.id)
+        const { data: proposalsData } = await supabase
+          .from('bids')
+          .select('task_id')
+          .in('task_id', taskIds)
+        
+        // Count proposals per task
+        const proposalCounts = {}
+        if (proposalsData) {
+          proposalsData.forEach(p => {
+            proposalCounts[p.task_id] = (proposalCounts[p.task_id] || 0) + 1
+          })
+        }
+
+        // Add proposal count to each task
+        const tasksWithCounts = tasksData.map(task => ({
+          ...task,
+          proposalCount: proposalCounts[task.id] || 0
+        }))
+
+        const categoriesWithTasks = categoriesData.map(category => ({
+          ...category,
+          tasks: tasksWithCounts.filter(task => task.category_id === category.id)
+        }))
+        setCategories(categoriesWithTasks)
+      }
+    } else {
+      setCategories(categoriesData)
+    }
 
     setLoading(false)
-  }
-
-  const handleSubmitProposal = async (e) => {
-    e.preventDefault()
-
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
-    if (profile?.role !== 'subcontractor') {
-      setError('Only subcontractors can submit proposals')
-      return
-    }
-
-    setSubmitting(true)
-    setError(null)
-
-    // Use upsert to allow updating existing bids
-    const { data, error: bidError } = await supabase
-      .from('bids')
-      .upsert(
-        {
-          task_id: params.taskId,
-          subcontractor_id: user.id,
-          price: parseFloat(proposalPrice),
-          duration: parseInt(proposalDuration),
-          comment: proposalComment,
-          status: 'pending'
-        },
-        {
-          onConflict: 'task_id,subcontractor_id'
-        }
-      )
-
-    if (bidError) {
-      setError('Failed to submit proposal: ' + bidError.message)
-      setSubmitting(false)
-      return
-    }
-
-    setSuccess(true)
-    setSubmitting(false)
-
-    setTimeout(() => {
-      setShowProposalForm(false)
-      setSuccess(false)
-      setProposalPrice('')
-      setProposalDuration('')
-      setProposalComment('')
-      loadTaskDetails() // Reload to show updated bid
-    }, 2000)
-  }
-
-  const handleAskQuestion = async (e) => {
-    e.preventDefault()
-
-    if (!user) {
-      router.push('/login')
-      return
-    }
-
-    setAskingQuestion(true)
-    setQuestionError(null)
-
-    const { error: questionError } = await supabase
-      .from('task_questions')
-      .insert([
-        {
-          task_id: params.taskId,
-          subcontractor_id: user.id,
-          question: questionText
-        }
-      ])
-
-    if (questionError) {
-      setQuestionError('Failed to submit question: ' + questionError.message)
-      setAskingQuestion(false)
-      return
-    }
-
-    setQuestionSuccess(true)
-    setQuestionText('')
-    setAskingQuestion(false)
-    
-    setTimeout(() => {
-      setShowQuestionForm(false)
-      setQuestionSuccess(false)
-      loadTaskDetails()
-    }, 1500)
-  }
-
-  const handlePhotoUpload = async (e) => {
-    e.preventDefault()
-
-    if (!photoFile) {
-      setPhotoError('Please select a photo')
-      return
-    }
-
-    // Validate file size (5MB max)
-    if (photoFile.size > 5 * 1024 * 1024) {
-      setPhotoError('Photo must be less than 5MB')
-      return
-    }
-
-    // Validate file type
-    if (!photoFile.type.startsWith('image/')) {
-      setPhotoError('File must be an image')
-      return
-    }
-
-    setUploadingPhoto(true)
-    setPhotoError(null)
-
-    try {
-      // Upload to Supabase storage
-      const fileExt = photoFile.name.split('.').pop()
-      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`
-      const filePath = `task-photos/${fileName}`
-
-      const { error: uploadError, data: uploadData } = await supabase.storage
-        .from('project-files')
-        .upload(filePath, photoFile)
-
-      if (uploadError) {
-        setPhotoError('Upload failed: ' + uploadError.message)
-        setUploadingPhoto(false)
-        return
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('project-files')
-        .getPublicUrl(filePath)
-
-      // Save to database
-      const { error: dbError } = await supabase
-        .from('task_photos')
-        .insert([
-          {
-            task_id: params.taskId,
-            uploaded_by: user.id,
-            photo_url: publicUrl,
-            description: photoDescription
-          }
-        ])
-
-      if (dbError) {
-        setPhotoError('Database error: ' + dbError.message)
-        setUploadingPhoto(false)
-        return
-      }
-
-      setPhotoSuccess(true)
-      setUploadingPhoto(false)
-
-      setTimeout(() => {
-        setShowPhotoUpload(false)
-        setPhotoSuccess(false)
-        setPhotoFile(null)
-        setPhotoDescription('')
-        loadTaskDetails()
-      }, 1500)
-
-    } catch (err) {
-      setPhotoError('Upload failed: ' + err.message)
-      setUploadingPhoto(false)
-    }
-  }
-
-  const handlePhotoFileChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setPhotoFile(file)
-      setPhotoError(null)
-    }
   }
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-xl">Loading task details...</div>
+        <div className="text-xl">Loading project...</div>
       </div>
     )
   }
 
-  if (!task) {
+  if (!project) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Task not found</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Project not found</h1>
           <button
-            onClick={() => router.push(`/projects/${params.id}`)}
+            onClick={() => router.push('/')}
             className="text-blue-600 hover:underline"
           >
-            Return to project
+            Return to homepage
           </button>
         </div>
       </div>
     )
-  }
-
-  const canSubmitProposal = user && profile?.role === 'subcontractor' && task.status === 'open'
-
-  // Pre-fill form with existing bid data when opening the form
-  const handleOpenProposalForm = () => {
-    if (myBid) {
-      setProposalPrice(myBid.price.toString())
-      setProposalDuration(myBid.duration.toString())
-      setProposalComment(myBid.comment || '')
-    }
-    setShowProposalForm(true)
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-md border-b-2 border-gray-300">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-sm text-gray-500 flex items-center gap-2">
-              <button
-                onClick={() => router.push(`/projects/${params.id}`)}
-                className="hover:text-blue-600 transition"
-              >
-                {project?.name}
-              </button>
-              <span>→</span>
-              {category && (
-                <div className="flex items-center gap-2">
-                  {(() => {
-                    const Icon = getCategoryIcon(category.name)
-                    return <Icon className="w-5 h-5" />
-                  })()}
-                  <span>{category.name}</span>
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              {/* Project name with image */}
+              <div className="flex items-center gap-4 mb-2">
+                {/* Project image */}
+                {project.project_image_url ? (
+                  <img 
+                    src={project.project_image_url} 
+                    alt={project.name}
+                    className="w-24 h-24 object-cover rounded-lg border-2 border-indigo-300 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-indigo-200 rounded-lg flex items-center justify-center border-2 border-indigo-300 flex-shrink-0">
+                    <svg className="w-12 h-12 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                )}
+                
+                <div>
+                  <div className="flex items-center gap-3">
+                    <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
+                    <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                      project.status === 'active' ? 'bg-green-100 text-green-800' :
+                      project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                      project.status === 'planning' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {project.status}
+                    </span>
+                  </div>
                 </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {user ? (
+                <button
+                  onClick={() => router.push('/dashboard')}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition"
+                >
+                  Dashboard
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => router.push('/login')}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  >
+                    Login
+                  </button>
+                  <button
+                    onClick={() => router.push('/register')}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Register to Bid
+                  </button>
+                </>
               )}
             </div>
-            <button
-              onClick={() => router.push(`/projects/${params.id}`)}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-            >
-              Back to Project
-            </button>
           </div>
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{task.name}</h1>
-              <div className="flex items-center gap-3">
-                <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                  task.status === 'open' ? 'bg-green-100 text-green-800' :
-                  task.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {task.status}
+
+          <div className="flex flex-wrap gap-6 text-sm border-t border-gray-100 pt-4">
+            {project.start_date && (
+              <div>
+                <span className="font-semibold text-gray-700">Start:</span>{' '}
+                <span className="text-gray-600">
+                  {new Date(project.start_date).toLocaleDateString('en-GB')}
                 </span>
-                {task.bid_deadline && (
-                  <span className="text-sm text-gray-600">
-                    Bid deadline: {new Date(task.bid_deadline).toLocaleDateString('en-GB')}
-                  </span>
-                )}
               </div>
+            )}
+            {project.end_date && (
+              <div>
+                <span className="font-semibold text-gray-700">Target completion:</span>{' '}
+                <span className="text-gray-600">
+                  {new Date(project.end_date).toLocaleDateString('en-GB')}
+                </span>
+              </div>
+            )}
+            <div>
+              <span className="font-semibold text-gray-700">Trade packages:</span>{' '}
+              <span className="text-gray-600">{categories.length}</span>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Task details */}
-            <div className="bg-white rounded-xl shadow-md border-2 border-gray-300 p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Task Details</h2>
-
-              <div className="grid grid-cols-2 gap-6 mb-6">
-                {(task.budget_min || task.budget_max || task.suggested_price) && (
-                  <div>
-                    <div className="text-sm text-gray-500 mb-1">Suggested Budget</div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {task.budget_min && task.budget_max ? (
-                        // Show range if both min and max exist
-                        `${formatCurrency(task.budget_min)} - ${formatCurrency(task.budget_max)}`
-                      ) : task.budget_min ? (
-                        // Show only min if max doesn't exist
-                        `From ${formatCurrency(task.budget_min)}`
-                      ) : task.budget_max ? (
-                        // Show only max if min doesn't exist
-                        `Up to ${formatCurrency(task.budget_max)}`
-                      ) : (
-                        // Fallback to suggested_price
-                        formatCurrency(task.suggested_price)
-                      )}
-                    </div>
-                  </div>
-                )}
-                {(task.start_date || task.end_date) && (
-                  <div className="grid grid-cols-2 gap-4">
-                    {task.start_date && (
-                      <div>
-                        <div className="text-sm text-gray-500 mb-1">Start Date</div>
-                        <div className="text-xl font-bold text-gray-900">
-                          {formatMonthYear(task.start_date)}
-                        </div>
-                      </div>
-                    )}
-                    {task.end_date && (
-                      <div>
-                        <div className="text-sm text-gray-500 mb-1">End Date</div>
-                        <div className="text-xl font-bold text-gray-900">
-                          {formatMonthYear(task.end_date)}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {!task.start_date && !task.end_date && task.estimated_duration && (
-                  <div>
-                    <div className="text-sm text-gray-500 mb-1">Estimated Duration</div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {task.estimated_duration} days
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {task.short_description && (
-                <div className="mb-4">
-                  <div className="text-sm font-semibold text-gray-700 mb-2">Overview</div>
-                  <p className="text-gray-700">{task.short_description}</p>
-                </div>
-              )}
-
-              {task.description && (
-                <div>
-                  <div className="text-sm font-semibold text-gray-700 mb-2">Full Description</div>
-                  <div className="prose max-w-none text-gray-700 whitespace-pre-wrap">
-                    {task.description}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Photo Gallery */}
-            {taskPhotos.length > 0 && (
-              <div className="bg-white rounded-xl shadow-md border-2 border-gray-300 p-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Project Photos ({taskPhotos.length})
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {taskPhotos.map((photo) => (
-                    <div key={photo.id} className="group relative">
-                      <img
-                        src={photo.photo_url}
-                        alt={photo.description || 'Task photo'}
-                        className="w-full h-48 object-cover rounded-lg border border-gray-200 group-hover:shadow-lg transition cursor-pointer"
-                        onClick={() => window.open(photo.photo_url, '_blank')}
-                      />
-                      <div className="mt-2">
-                        {photo.description && (
-                          <p className="text-sm text-gray-700 mb-1">{photo.description}</p>
-                        )}
-                        <p className="text-xs text-gray-500">
-                          {photo.profiles?.company_name || photo.profiles?.full_name} • {new Date(photo.created_at).toLocaleDateString('en-GB')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Upload Photo Section - only for accepted subcontractors */}
-            {myBid && myBid.status === 'accepted' && (
-              <div className="bg-white rounded-xl shadow-md border-2 border-gray-300 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-gray-900">Upload Progress Photos</h2>
-                  {!showPhotoUpload && (
-                    <button
-                      onClick={() => setShowPhotoUpload(true)}
-                      className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                    >
-                      Add Photo
-                    </button>
-                  )}
-                </div>
-
-                {showPhotoUpload && (
-                  <form onSubmit={handlePhotoUpload} className="p-4 bg-green-50 rounded-lg border border-green-200">
-                    {photoError && (
-                      <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-                        {photoError}
-                      </div>
-                    )}
-
-                    {photoSuccess && (
-                      <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded text-sm">
-                        Photo uploaded successfully!
-                      </div>
-                    )}
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Photo (max 5MB) *
-                      </label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoFileChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        required
-                      />
-                      {photoFile && (
-                        <p className="mt-2 text-sm text-gray-600">
-                          Selected: {photoFile.name} ({(photoFile.size / 1024 / 1024).toFixed(2)} MB)
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Description (optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={photoDescription}
-                        onChange={(e) => setPhotoDescription(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        placeholder="e.g., Foundation completed, Electrical work in progress..."
-                      />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        type="submit"
-                        disabled={uploadingPhoto}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition"
-                      >
-                        {uploadingPhoto ? 'Uploading...' : 'Upload Photo'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowPhotoUpload(false)
-                          setPhotoFile(null)
-                          setPhotoDescription('')
-                          setPhotoError(null)
-                        }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {!showPhotoUpload && (
-                  <p className="text-sm text-gray-600">
-                    Upload photos to show project progress and keep the coordinator updated.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Questions section */}
-            <div className="bg-white rounded-xl shadow-md border-2 border-gray-300 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Questions & Answers ({questions.length})
-                </h2>
-                {user && (
-                  <button
-                    onClick={() => setShowQuestionForm(!showQuestionForm)}
-                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                  >
-                    Ask Question
-                  </button>
-                )}
-              </div>
-
-              {showQuestionForm && (
-                <form onSubmit={handleAskQuestion} className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Question
-                  </label>
-                  
-                  {questionError && (
-                    <div className="mb-3 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                      {questionError}
-                    </div>
-                  )}
-                  
-                  {questionSuccess && (
-                    <div className="mb-3 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
-                      Question submitted successfully!
-                    </div>
-                  )}
-                  
-                  <textarea
-                    value={questionText}
-                    onChange={(e) => {
-                      setQuestionText(e.target.value)
-                      setQuestionError(null)
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    rows="3"
-                    placeholder="Ask about scope, requirements, materials..."
-                    required
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      type="submit"
-                      disabled={askingQuestion}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
-                    >
-                      {askingQuestion ? 'Submitting...' : 'Submit Question'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowQuestionForm(false)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {questions.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
-                  No questions yet. Be the first to ask!
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {questions.map((q) => (
-                    <div key={q.id} className="border-l-4 border-[#1e3a5f] pl-4 py-3">
-                      <div className="flex justify-between text-sm text-gray-500 mb-2">
-                        <span className="font-medium">
-                          Anonymous Subcontractor
-                        </span>
-                        <span>{new Date(q.created_at).toLocaleDateString('en-GB')}</span>
-                      </div>
-                      <div className="font-semibold text-gray-900 mb-2">
-                        Q: {q.question}
-                      </div>
-                      {q.answer ? (
-                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                          <span className="text-sm font-medium text-gray-700">A: </span>
-                          <span className="text-gray-700">{q.answer}</span>
-                        </div>
-                      ) : (
-                        <div className="text-gray-400 italic text-sm">
-                          Awaiting response from coordinator
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Submit proposal */}
-            {canSubmitProposal && !showProposalForm && !myBid && (
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white">
-                <h3 className="text-xl font-bold mb-2">Ready to bid?</h3>
-                <p className="text-blue-100 mb-4 text-sm">
-                  Submit your proposal with pricing and timeline
-                </p>
-                <button
-                  onClick={handleOpenProposalForm}
-                  className="w-full px-4 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition shadow"
-                >
-                  Submit Proposal
-                </button>
-              </div>
-            )}
-
-            {/* Update existing bid */}
-            {canSubmitProposal && !showProposalForm && myBid && (
-              <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-lg shadow-lg p-6 text-white">
-                <h3 className="text-xl font-bold mb-2">Your Current Bid</h3>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-green-100">Price:</span>
-                    <span className="font-semibold">£{myBid.price.toLocaleString('en-GB')}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-green-100">Duration:</span>
-                    <span className="font-semibold">{myBid.duration} days</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-green-100">Status:</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      myBid.status === 'pending' ? 'bg-yellow-500 text-white' :
-                      myBid.status === 'accepted' ? 'bg-white text-green-600' :
-                      'bg-red-500 text-white'
-                    }`}>
-                      {myBid.status}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleOpenProposalForm}
-                  className="w-full px-4 py-3 bg-white text-green-600 font-semibold rounded-lg hover:bg-gray-100 transition shadow"
-                >
-                  Update Proposal
-                </button>
-              </div>
-            )}
-
-            {!user && task.status === 'open' && (
-              <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg p-6 text-white">
-                <h3 className="text-xl font-bold mb-2">Want to bid?</h3>
-                <p className="text-blue-100 mb-4 text-sm">
-                  Login or register to submit your proposal
-                </p>
-                <button
-                  onClick={() => router.push('/login')}
-                  className="w-full px-4 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition shadow mb-2"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => router.push('/register')}
-                  className="w-full px-4 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-blue-800 transition"
-                >
-                  Register
-                </button>
-              </div>
-            )}
-
-            {/* Proposal form */}
-            {showProposalForm && (
-              <div className="bg-white rounded-lg shadow-lg border-2 border-blue-500 p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  {myBid ? 'Update Your Proposal' : 'Submit Your Proposal'}
-                </h3>
-
-                {error && (
-                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                    {error}
-                  </div>
-                )}
-
-                {success && (
-                  <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                    {myBid ? 'Proposal updated successfully!' : 'Proposal submitted successfully!'}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmitProposal}>
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Your Price (£) *
-                    </label>
-                    <input
-                      type="number"
-                      value={proposalPrice}
-                      onChange={(e) => setProposalPrice(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="25000"
-                      step="0.01"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Duration (days) *
-                    </label>
-                    <input
-                      type="number"
-                      value={proposalDuration}
-                      onChange={(e) => setProposalDuration(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="20"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-6">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Comments & Approach
-                    </label>
-                    <textarea
-                      value={proposalComment}
-                      onChange={(e) => setProposalComment(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      rows="4"
-                      placeholder="Describe your approach, experience, team size..."
-                    />
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="flex-1 px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition"
-                    >
-                      {submitting ? (myBid ? 'Updating...' : 'Submitting...') : (myBid ? 'Update Proposal' : 'Submit Proposal')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowProposalForm(false)}
-                      className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Documents */}
-            <div className="bg-white rounded-xl shadow-md border-2 border-gray-300 p-6">
-              <h3 className="font-bold text-gray-900 mb-4">
-                Documents ({documents.length})
-              </h3>
-
-              {!user && documents.length > 0 && (
-                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-                  <p className="font-medium mb-1">🔒 Login required to view documents</p>
-                  <p className="text-xs text-blue-600">Register or login to access project files</p>
-                </div>
-              )}
-
-              {user && profile && !profile.email_verified && documents.length > 0 && (
-                <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
-                  <p className="font-medium mb-1">⚠️ Email verification required</p>
-                  <p className="text-xs text-yellow-600">Check your inbox to verify your email before viewing</p>
-                </div>
-              )}
-
-              {documents.length === 0 ? (
-                <p className="text-gray-500 text-sm">No documents available</p>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {documents.map((doc) => {
-                    const canView = user && profile?.email_verified
-                    const fileType = getFileType(doc.file_name)
-
-                    if (!canView) {
-                      return (
-                        <div
-                          key={doc.id}
-                          className="relative aspect-square bg-gray-100 rounded-lg border border-gray-200 flex flex-col items-center justify-center opacity-60 cursor-not-allowed"
-                        >
-                          <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                          </svg>
-                          <span className="text-xs text-gray-500 text-center px-2 truncate w-full">
-                            {doc.file_name}
-                          </span>
-                          <span className="text-xs text-gray-400 mt-1">🔒 Locked</span>
-                        </div>
-                      )
-                    }
-
-                    // Image preview
-                    if (fileType === 'image') {
-                      return (
-                        <div
-                          key={doc.id}
-                          onClick={() => setSelectedImage(doc)}
-                          className="relative aspect-square bg-gray-100 rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 hover:shadow-md transition group"
-                        >
-                          <img
-                            src={doc.file_url}
-                            alt={doc.file_name}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
-                            <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                            </svg>
-                          </div>
-                          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                            <span className="text-xs text-white truncate block">
-                              {doc.file_name}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    // PDF preview
-                    if (fileType === 'pdf') {
-                      return (
-                        <div
-                          key={doc.id}
-                          onClick={() => setSelectedPdf(doc)}
-                          className="relative aspect-square bg-red-50 rounded-lg border border-red-200 flex flex-col items-center justify-center cursor-pointer hover:border-red-400 hover:shadow-md transition group"
-                        >
-                          <svg className="w-12 h-12 text-red-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2l5 5h-5V4zM8.5 13.5c0 .8-.7 1.5-1.5 1.5H6v2H5v-6h2c.8 0 1.5.7 1.5 1.5v1zm4.5 2.5h-2v-6h2c1.1 0 2 .9 2 2v2c0 1.1-.9 2-2 2zm5.5-4.5c0-.3-.2-.5-.5-.5h-1v1.5h1v1h-1V16h-1v-6h2c.8 0 1.5.7 1.5 1.5v1zM7 12h-.5v1.5H7c.3 0 .5-.2.5-.5v-1c0-.3-.2-.5-.5-.5zm4 0h-.5v3.5H11c.6 0 1-.4 1-1v-2c0-.6-.4-1-1-1z"/>
-                          </svg>
-                          <span className="text-xs text-gray-700 text-center px-2 truncate w-full font-medium">
-                            {doc.file_name}
-                          </span>
-                          <span className="text-xs text-red-500 mt-1">Click to preview</span>
-                        </div>
-                      )
-                    }
-
-                    // Other files (download)
-                    return (
-                      <a
-                        key={doc.id}
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="relative aspect-square bg-gray-50 rounded-lg border border-gray-200 flex flex-col items-center justify-center hover:border-blue-400 hover:shadow-md transition"
-                      >
-                        <svg className="w-12 h-12 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span className="text-xs text-gray-700 text-center px-2 truncate w-full">
-                          {doc.file_name}
-                        </span>
-                        <span className="text-xs text-blue-500 mt-1">Click to download</span>
-                      </a>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Task info */}
-            <div className="bg-white rounded-xl shadow-md border-2 border-gray-300 p-6">
-              <h3 className="font-bold text-gray-900 mb-4">Task Information</h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <div className="text-gray-500 mb-2">Category</div>
-                  {category && (
-                    <div className={`flex items-center gap-3 p-3 rounded-lg border ${getCategoryColor(category.name)}`}>
-                      {(() => {
-                        const Icon = getCategoryIcon(category.name)
-                        return <Icon className="w-6 h-6 flex-shrink-0" />
-                      })()}
-                      <div className="font-semibold">{category.name}</div>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <div className="text-gray-500">Project</div>
-                  <div className="font-medium text-gray-900">{project?.name}</div>
-                </div>
-                <div>
-                  <div className="text-gray-500">Status</div>
-                  <div className="font-medium text-gray-900 capitalize">{task.status}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      {/* Image Lightbox Modal */}
-      {selectedImage && (
-        <div 
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedImage(null)}
-        >
-          <button
-            onClick={() => setSelectedImage(null)}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 transition"
-          >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+      {/* Project Description Section */}
+      <section className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
-          </button>
-          <div className="max-w-4xl max-h-[90vh] relative" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={selectedImage.file_url}
-              alt={selectedImage.file_name}
-              className="max-w-full max-h-[85vh] object-contain rounded-lg"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-3 rounded-b-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">{selectedImage.file_name}</span>
-                <a
-                  href={selectedImage.file_url}
-                  download
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm transition"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download
-                </a>
+            Project Description
+          </h2>
+          <div className="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-xl p-6">
+            {project.description ? (
+              <div>
+                <p className="text-sm text-gray-700 font-semibold mb-2">📋 About This Project:</p>
+                <p className="text-gray-700 leading-relaxed">
+                  {project.description}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-600 italic">
+                Detailed project description will be added soon. Please check individual trade packages for specific requirements.
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Selection Criteria Banner */}
+      <section className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                </svg>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                🏆 How We Select Subcontractors
+              </h3>
+              <p className="text-gray-700 mb-3 text-sm leading-relaxed">
+                We choose our partners based on comprehensive evaluation criteria. 
+                <strong className="text-gray-900"> We don&apos;t just accept the lowest bid.</strong>
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Quality</span>
+                  </div>
+                  <p className="text-xs text-blue-700">Excellence in workmanship</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Timeliness</span>
+                  </div>
+                  <p className="text-xs text-blue-700">On-time delivery</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Professionalism</span>
+                  </div>
+                  <p className="text-xs text-blue-700">Professional conduct</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Health & Safety</span>
+                  </div>
+                  <p className="text-xs text-blue-700">Safety compliance</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg px-3 py-2 border-2 border-blue-300">
+                  <div className="flex items-center gap-2 mb-1">
+                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span className="text-xs font-semibold text-blue-900">Price</span>
+                  </div>
+                  <p className="text-xs text-blue-700">Competitive value</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Gantt Chart */}
+      {project.gantt_image_url && (
+        <section className="max-w-7xl mx-auto px-4 py-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Project Timeline</h2>
+            <img
+              src={project.gantt_image_url}
+              alt="Project Gantt Chart"
+              className="w-full rounded-lg cursor-pointer hover:opacity-90 transition"
+              onClick={() => setShowGanttModal(true)}
+            />
+          </div>
+        </section>
       )}
 
-      {/* PDF Preview Modal */}
-      {selectedPdf && (
-        <div 
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedPdf(null)}
-        >
-          <button
-            onClick={() => setSelectedPdf(null)}
-            className="absolute top-4 right-4 text-white hover:text-gray-300 transition z-10"
-          >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-          <div 
-            className="w-full max-w-5xl h-[90vh] bg-white rounded-lg overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-gray-100 p-3 flex items-center justify-between border-b">
-              <span className="font-medium text-gray-800 truncate">{selectedPdf.file_name}</span>
-              <a
-                href={selectedPdf.file_url}
-                download
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition"
+      {/* Categories & Tasks - Modern Grid Design */}
+      <section className="max-w-7xl mx-auto px-4 py-6 pb-12">
+        <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-6">Trade Packages & Tasks</h2>
+
+        {categories.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <p className="text-gray-500">No trade packages have been published yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.map((category) => {
+              const config = getCategoryGridColor(category.name)
+              const Icon = getCategoryIcon(category.name)
+              const hasTasks = category.tasks && category.tasks.length > 0
+              
+              return (
+                <div 
+                  key={category.id}
+                  ref={(el) => categoryRefs.current[category.id] = el}
+                  className={`group relative flex flex-col bg-white rounded-3xl border-2 transition-all duration-500 hover:-translate-y-2
+                    ${config.border} ${hasTasks ? 'border-opacity-100 shadow-2xl' : 'border-opacity-20 hover:border-opacity-100'}
+                  `}
+                >
+                  {/* Top Indicator Accent */}
+                  <div className={`absolute top-0 left-0 w-full h-2 rounded-t-3xl ${config.bg} opacity-20`} />
+
+                  <div className="p-7 flex flex-col h-full">
+                    {/* Header with Icon and Status */}
+                    <div className="flex justify-between items-start mb-8">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 transform group-hover:rotate-6
+                        ${hasTasks ? `${config.bg} text-white shadow-lg` : `${config.light} ${config.text} opacity-60`}
+                      `}>
+                        <Icon className="w-8 h-8" strokeWidth={2.2} />
+                      </div>
+                      
+                      {hasTasks ? (
+                        <div className="flex flex-col items-end">
+                          <span className={`text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${config.bg} text-white`}>
+                            {category.tasks.length} Task{category.tasks.length > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-slate-100 text-slate-400">
+                          Coming Soon
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Category Title */}
+                    <h3 className={`text-2xl font-black mb-4 leading-tight tracking-tighter ${hasTasks ? 'text-slate-900' : 'text-slate-400'}`}>
+                      {category.name}
+                    </h3>
+
+                    {/* Tasks */}
+                    <div className="flex-grow">
+                      {hasTasks ? (
+                        <div className="space-y-4">
+                          {category.tasks.filter(task => task && task.id).map(task => (
+                            <div 
+                              key={task.id} 
+                              onClick={() => {
+                                if (task.id) {
+                                  router.push(`/projects/${params.id}/task/${task.id}`)
+                                }
+                              }}
+                              className={`p-5 rounded-2xl border-2 ${config.accent} bg-gradient-to-br from-white to-slate-50 cursor-pointer hover:shadow-md transition-all`}
+                            >
+                              <div className="flex items-center justify-between mb-4">
+                                <div className="text-sm font-black text-slate-800">{task.name}</div>
+                                <svg className={`w-4 h-4 ${config.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                {(task.budget_min || task.budget_max) && (
+                                  <div className={`flex items-center gap-2 text-[11px] font-bold text-slate-600 bg-white shadow-sm px-3 py-2 rounded-xl border border-slate-100 flex-1`}>
+                                    <svg className={`w-3.5 h-3.5 ${config.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {task.budget_min && task.budget_max 
+                                      ? `£${task.budget_min.toLocaleString()}`
+                                      : formatCurrency(task.budget_min || task.budget_max)}
+                                  </div>
+                                )}
+                                {task.estimated_duration && (
+                                  <div className={`flex items-center gap-2 text-[11px] font-bold text-slate-600 bg-white shadow-sm px-3 py-2 rounded-xl border border-slate-100 flex-1`}>
+                                    <svg className={`w-3.5 h-3.5 ${config.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {task.estimated_duration} days
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Status badge */}
+                              <div className="mt-3 flex justify-between items-center">
+                                <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide rounded-full ${
+                                  task.status === 'open' ? 'bg-green-100 text-green-700' :
+                                  task.status === 'assigned' ? 'bg-blue-100 text-blue-700' :
+                                  task.status === 'completed' ? 'bg-purple-100 text-purple-700' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {task.status}
+                                </span>
+                                
+                                {task.status === 'open' && task.proposalCount !== undefined && (
+                                  <span className="text-[10px] font-bold text-slate-400">
+                                    {task.proposalCount === 0 ? 'Be first!' : `${task.proposalCount} offer${task.proposalCount > 1 ? 's' : ''}`}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className={`mt-2 p-4 rounded-2xl border border-dashed ${config.border} border-opacity-30 bg-slate-50/50`}>
+                          <p className="text-[13px] text-slate-500 font-medium leading-relaxed">
+                            Specifications are being prepared for this trade package.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-10 pt-6 border-t border-slate-100 flex items-center justify-between">
+                      <button 
+                        onClick={() => {
+                          const firstTask = category.tasks?.find(t => t && t.id)
+                          if (firstTask) {
+                            router.push(`/projects/${params.id}/task/${firstTask.id}`)
+                          }
+                        }}
+                        className={`flex items-center gap-2 text-[11px] font-black uppercase tracking-tighter transition-all
+                          ${hasTasks ? 'text-slate-900 hover:tracking-widest' : 'text-slate-300 pointer-events-none'}
+                        `}
+                      >
+                        View Details 
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M17 7H7M17 7v10" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Footer CTA */}
+      {!user && (
+        <section className="bg-blue-600 text-white py-12">
+          <div className="max-w-7xl mx-auto px-4 text-center">
+            <h2 className="text-2xl font-bold mb-4">Ready to submit your proposal?</h2>
+            <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
+              Register as a subcontractor to bid on tasks and grow your business with Skylon Build Network.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => router.push('/register')}
+                className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-100 transition"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Download PDF
-              </a>
+                Create Account
+              </button>
+              <button
+                onClick={() => router.push('/login')}
+                className="px-6 py-3 border-2 border-white text-white font-semibold rounded-lg hover:bg-blue-700 transition"
+              >
+                Login
+              </button>
             </div>
-            <iframe
-              src={selectedPdf.file_url}
-              className="flex-1 w-full"
-              title={selectedPdf.file_name}
+          </div>
+        </section>
+      )}
+
+      {/* Gantt Modal */}
+      {showGanttModal && project?.gantt_image_url && (
+        <div 
+          className="fixed inset-0 bg-black/90 z-[100] flex items-center justify-center p-4"
+          onClick={() => setShowGanttModal(false)}
+        >
+          <div className="relative w-[95vw] max-w-[1800px] max-h-[95vh] overflow-auto bg-white rounded-lg shadow-2xl">
+            <button
+              onClick={() => setShowGanttModal(false)}
+              className="sticky top-4 right-4 float-right bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center hover:bg-red-600 transition z-10 text-xl font-bold shadow-lg"
+            >
+              ✕
+            </button>
+            <img
+              src={project.gantt_image_url}
+              alt="Gantt Chart"
+              className="w-full h-auto"
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </div>
