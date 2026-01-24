@@ -484,6 +484,7 @@ const BuildingIcon = ({ type, projectType }) => {
 
 const CategoryNode = ({ name, categoryId, projectId, tasks, onClick }) => {
   const { color, Icon } = getCategoryStyle(name)
+  const taskCount = tasks?.length || 0
 
   const handleClick = (e) => {
     e.stopPropagation()
@@ -495,8 +496,14 @@ const CategoryNode = ({ name, categoryId, projectId, tasks, onClick }) => {
   return (
     <div
       onClick={handleClick}
-      className={`flex min-h-24 min-w-32 max-w-36 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-2 ${color} ${onClick ? 'cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-200' : ''}`}
+      className={`relative flex min-h-24 min-w-32 max-w-36 flex-col items-center justify-center rounded-2xl bg-white/90 backdrop-blur border shadow-sm p-2 ${color} ${onClick ? 'cursor-pointer hover:scale-105 hover:shadow-md transition-all duration-200' : ''}`}
     >
+      {/* Task count badge */}
+      {taskCount > 0 && (
+        <div className="absolute -top-2 -right-2 min-w-6 h-6 flex items-center justify-center bg-blue-600 text-white text-xs font-bold rounded-full px-1.5 shadow-lg border-2 border-white">
+          {taskCount}
+        </div>
+      )}
       <Icon className="h-6 w-6 flex-shrink-0" />
       <span className="mt-1 text-center text-[10px] font-semibold leading-tight break-words px-1">
         {name}
@@ -634,6 +641,20 @@ export default function HomePage() {
   const [selectedGantt, setSelectedGantt] = useState(null)
   const router = useRouter()
 
+  // Track visitor (once per session)
+  const trackVisit = async () => {
+    try {
+      // Check if already tracked in this session
+      if (typeof window !== 'undefined' && !sessionStorage.getItem('visit_tracked')) {
+        await supabase.rpc('increment_visitor_count', { p_page_name: 'homepage' })
+        sessionStorage.setItem('visit_tracked', 'true')
+      }
+    } catch (error) {
+      // Silently fail - don't break the page if counter doesn't work
+      console.log('Visit tracking skipped')
+    }
+  }
+
   useEffect(() => {
     // Check if URL has password recovery hash and redirect
     const hash = window.location.hash
@@ -644,6 +665,7 @@ export default function HomePage() {
     
     checkUser()
     loadProjects()
+    trackVisit()
   }, [])
 
   const checkUser = async () => {
