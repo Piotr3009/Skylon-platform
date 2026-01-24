@@ -76,7 +76,10 @@ export default function RegisterPage() {
     'Roofer',
     'Glazier',
     'Groundworks',
-    'Renderer'
+    'Renderer',
+    // Legacy - for backward compatibility
+    'Electrician',
+    'Fire Protection Specialist'
   ]
 
   // State for expanded categories

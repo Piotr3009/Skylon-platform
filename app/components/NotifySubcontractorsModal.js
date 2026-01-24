@@ -68,7 +68,10 @@ export default function NotifySubcontractorsModal({ isOpen, categoryName, catego
     'Roofer',
     'Glazier',
     'Groundworks',
-    'Renderer'
+    'Renderer',
+    // Legacy - for backward compatibility
+    'Electrician',
+    'Fire Protection Specialist'
   ]
 
   // All specializations flat list for counting

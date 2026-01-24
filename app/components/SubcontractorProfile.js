@@ -46,15 +46,49 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
   const [industryAccreditations, setIndustryAccreditations] = useState('')
   const [editingCerts, setEditingCerts] = useState(false)
 
-  // Available specializations
-  const availableSpecializations = [
+  // Specialization categories with subcategories
+  const specializationCategories = {
+    'Designers / Professionals': [
+      'M&E Designer',
+      'Structural Engineer',
+      'Architectural Designer',
+      'Acoustic Consultant',
+      'Fire Engineer',
+      'BREEAM Specialist',
+      'PES Specialist',
+      'CDM Coordinator',
+      'Quantity Surveyor'
+    ],
+    'Specialist Installations': [
+      'Fire Stopping',
+      'Sprinkler Systems',
+      'Movement Monitoring',
+      'BMS (Building Management Systems)',
+      'Pressurisation Systems',
+      'Lift Installer',
+      'Lightning Protection'
+    ],
+    'Electrical & Security': [
+      'Electrical Installation',
+      'IT Installer / Data Cabling',
+      'CCTV Installer',
+      'Access Control / Door Entry',
+      'Fire Alarm Systems',
+      'Emergency Lighting',
+      'AV Systems',
+      'Intruder Alarm'
+    ],
+    'MEP': [
+      'Plumber',
+      'HVAC Installer',
+      'Drainage Specialist'
+    ]
+  }
+
+  // Standalone specializations (no subcategories)
+  const standaloneSpecializations = [
     'General Construction',
     'Steel Frame Specialist',
-    'Plumber',
-    'HVAC Installer',
-    'Electrician',
-    'Fire Protection Specialist',
-    'Lift Engineer',
     'Scaffolder',
     'Decorator/Painter',
     'Bricklayer',
@@ -70,9 +104,22 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
     'Roofer',
     'Glazier',
     'Groundworks',
-    'Drainage Specialist',
-    'Renderer'
+    'Renderer',
+    // Legacy - for backward compatibility
+    'Electrician',
+    'Fire Protection Specialist'
   ]
+
+  // State for expanded categories in specialization edit
+  const [expandedSpecCategories, setExpandedSpecCategories] = useState([])
+
+  const toggleSpecCategory = (category) => {
+    setExpandedSpecCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    )
+  }
 
   useEffect(() => {
     if (profile) {
@@ -645,26 +692,77 @@ export default function SubcontractorProfile({ profile, onUpdate, readOnly = fal
               {editingSpec ? (
                 <div className="space-y-3">
                   <p className="text-sm text-gray-600 mb-4">Select all specializations that apply to your company:</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {availableSpecializations.map((spec) => (
-                      <label 
-                        key={spec}
-                        className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
-                          specialization.includes(spec)
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={specialization.includes(spec)}
-                          onChange={() => handleToggleSpecialization(spec)}
-                          className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                        />
-                        <span className="font-medium text-gray-900">{spec}</span>
-                      </label>
+                  
+                  <div className="border-2 border-gray-200 rounded-lg max-h-[500px] overflow-y-auto">
+                    {/* Categories with subcategories */}
+                    {Object.entries(specializationCategories).map(([category, subcategories]) => (
+                      <div key={category} className="border-b border-gray-200 last:border-b-0">
+                        {/* Category header */}
+                        <button
+                          type="button"
+                          onClick={() => toggleSpecCategory(category)}
+                          className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition"
+                        >
+                          <span className="font-bold text-gray-800">{category}</span>
+                          <span className="text-gray-500 text-sm">
+                            {expandedSpecCategories.includes(category) ? '▲' : '▼'}
+                          </span>
+                        </button>
+                        
+                        {/* Subcategories */}
+                        {expandedSpecCategories.includes(category) && (
+                          <div className="bg-white">
+                            {subcategories.map((spec) => (
+                              <label
+                                key={spec}
+                                className={`flex items-center gap-3 px-6 py-3 cursor-pointer border-l-4 transition ${
+                                  specialization.includes(spec)
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-transparent hover:bg-gray-50 hover:border-gray-300'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={specialization.includes(spec)}
+                                  onChange={() => handleToggleSpecialization(spec)}
+                                  className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                />
+                                <span className="font-medium text-gray-700">{spec}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
+
+                    {/* Standalone specializations */}
+                    <div className="border-t-2 border-gray-300">
+                      <div className="px-4 py-2 bg-gray-100">
+                        <span className="font-bold text-gray-700">Other Trades</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 p-2">
+                        {standaloneSpecializations.map((spec) => (
+                          <label 
+                            key={spec}
+                            className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition ${
+                              specialization.includes(spec)
+                                ? 'bg-blue-50 border-2 border-blue-300'
+                                : 'hover:bg-gray-50 border-2 border-transparent'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={specialization.includes(spec)}
+                              onChange={() => handleToggleSpecialization(spec)}
+                              className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="font-medium text-gray-700 text-sm">{spec}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   </div>
+                  
                   {specialization.length === 0 && (
                     <p className="text-sm text-red-600 mt-2">⚠️ Please select at least one specialization</p>
                   )}
