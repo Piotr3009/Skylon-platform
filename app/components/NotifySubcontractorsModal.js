@@ -8,16 +8,51 @@ export default function NotifySubcontractorsModal({ isOpen, categoryName, catego
   const [subcontractorCounts, setSubcontractorCounts] = useState({})
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
+  const [expandedCategories, setExpandedCategories] = useState([])
 
-  // Lista wszystkich specializations
-  const allSpecializations = [
+  // Specialization categories with subcategories
+  const specializationCategories = {
+    'Designers / Professionals': [
+      'M&E Designer',
+      'Structural Engineer',
+      'Architectural Designer',
+      'Acoustic Consultant',
+      'Fire Engineer',
+      'BREEAM Specialist',
+      'PES Specialist',
+      'CDM Coordinator',
+      'Quantity Surveyor'
+    ],
+    'Specialist Installations': [
+      'Fire Stopping',
+      'Sprinkler Systems',
+      'Movement Monitoring',
+      'BMS (Building Management Systems)',
+      'Pressurisation Systems',
+      'Lift Installer',
+      'Lightning Protection'
+    ],
+    'Electrical & Security': [
+      'Electrical Installation',
+      'IT Installer / Data Cabling',
+      'CCTV Installer',
+      'Access Control / Door Entry',
+      'Fire Alarm Systems',
+      'Emergency Lighting',
+      'AV Systems',
+      'Intruder Alarm'
+    ],
+    'MEP': [
+      'Plumber',
+      'HVAC Installer',
+      'Drainage Specialist'
+    ]
+  }
+
+  // Standalone specializations (no subcategories)
+  const standaloneSpecializations = [
     'General Construction',
     'Steel Frame Specialist',
-    'Plumber',
-    'HVAC Installer',
-    'Electrician',
-    'Fire Protection Specialist',
-    'Lift Engineer',
     'Scaffolder',
     'Decorator/Painter',
     'Bricklayer',
@@ -33,9 +68,32 @@ export default function NotifySubcontractorsModal({ isOpen, categoryName, catego
     'Roofer',
     'Glazier',
     'Groundworks',
-    'Drainage Specialist',
     'Renderer'
   ]
+
+  // All specializations flat list for counting
+  const allSpecializations = [
+    ...Object.values(specializationCategories).flat(),
+    ...standaloneSpecializations
+  ]
+
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    )
+  }
+
+  // Select/deselect entire category
+  const toggleEntireCategory = (category, subcategories) => {
+    const allSelected = subcategories.every(spec => selectedSpecializations.includes(spec))
+    if (allSelected) {
+      setSelectedSpecializations(prev => prev.filter(s => !subcategories.includes(s)))
+    } else {
+      setSelectedSpecializations(prev => [...new Set([...prev, ...subcategories])])
+    }
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -181,38 +239,125 @@ export default function NotifySubcontractorsModal({ isOpen, categoryName, catego
                 Select which specializations should receive this notification:
               </p>
 
-              {/* Specializations Grid */}
-              <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2">
-                {allSpecializations.map((spec) => {
-                  const count = subcontractorCounts[spec] || 0
-                  const isSelected = selectedSpecializations.includes(spec)
-
+              {/* Specializations with Categories */}
+              <div className="max-h-[400px] overflow-y-auto pr-2 border-2 border-gray-200 rounded-lg">
+                {/* Categories with subcategories */}
+                {Object.entries(specializationCategories).map(([category, subcategories]) => {
+                  const categoryCount = subcategories.reduce((sum, spec) => sum + (subcontractorCounts[spec] || 0), 0)
+                  const allSelected = subcategories.every(spec => selectedSpecializations.includes(spec))
+                  const someSelected = subcategories.some(spec => selectedSpecializations.includes(spec))
+                  
                   return (
-                    <label
-                      key={spec}
-                      className={`flex items-center justify-between p-3 border-2 rounded-lg cursor-pointer transition ${
-                        isSelected
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 flex-1">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleSpecialization(spec)}
-                          className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                        />
-                        <span className="font-medium text-gray-900 text-sm">{spec}</span>
+                    <div key={category} className="border-b border-gray-200 last:border-b-0">
+                      {/* Category header */}
+                      <div className="flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => toggleCategory(category)}
+                          className="flex items-center gap-2 flex-1 text-left"
+                        >
+                          <span className="text-gray-500 text-sm">
+                            {expandedCategories.includes(category) ? '▼' : '▶'}
+                          </span>
+                          <span className="font-bold text-gray-800">{category}</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            categoryCount > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                          }`}>
+                            {categoryCount}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => toggleEntireCategory(category, subcategories)}
+                          className={`text-xs font-medium px-3 py-1 rounded transition ${
+                            allSelected 
+                              ? 'bg-blue-600 text-white' 
+                              : someSelected 
+                                ? 'bg-blue-200 text-blue-800'
+                                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                          }`}
+                        >
+                          {allSelected ? 'Deselect All' : 'Select All'}
+                        </button>
                       </div>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                        count > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {count}
-                      </span>
-                    </label>
+                      
+                      {/* Subcategories */}
+                      {expandedCategories.includes(category) && (
+                        <div className="bg-white">
+                          {subcategories.map((spec) => {
+                            const count = subcontractorCounts[spec] || 0
+                            const isSelected = selectedSpecializations.includes(spec)
+                            
+                            return (
+                              <label
+                                key={spec}
+                                className={`flex items-center justify-between px-6 py-2 cursor-pointer border-l-4 transition ${
+                                  isSelected
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-transparent hover:bg-gray-50 hover:border-gray-300'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => handleToggleSpecialization(spec)}
+                                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                  />
+                                  <span className="text-sm text-gray-700">{spec}</span>
+                                </div>
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                  count > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                                }`}>
+                                  {count}
+                                </span>
+                              </label>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
+
+                {/* Standalone specializations */}
+                <div className="border-t-2 border-gray-300">
+                  <div className="px-4 py-2 bg-gray-100">
+                    <span className="font-bold text-gray-700">Other Trades</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 p-2">
+                    {standaloneSpecializations.map((spec) => {
+                      const count = subcontractorCounts[spec] || 0
+                      const isSelected = selectedSpecializations.includes(spec)
+
+                      return (
+                        <label
+                          key={spec}
+                          className={`flex items-center justify-between p-2 rounded cursor-pointer transition ${
+                            isSelected
+                              ? 'bg-blue-50 border border-blue-300'
+                              : 'hover:bg-gray-50 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleSpecialization(spec)}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                            <span className="text-xs text-gray-700">{spec}</span>
+                          </div>
+                          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                            count > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {count}
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
 
               {/* Total Counter */}

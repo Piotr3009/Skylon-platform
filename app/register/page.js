@@ -18,14 +18,49 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false)
   const router = useRouter()
 
-  const specializations = [
+  // Specialization categories with subcategories
+  const specializationCategories = {
+    'Designers / Professionals': [
+      'M&E Designer',
+      'Structural Engineer',
+      'Architectural Designer',
+      'Acoustic Consultant',
+      'Fire Engineer',
+      'BREEAM Specialist',
+      'PES Specialist',
+      'CDM Coordinator',
+      'Quantity Surveyor'
+    ],
+    'Specialist Installations': [
+      'Fire Stopping',
+      'Sprinkler Systems',
+      'Movement Monitoring',
+      'BMS (Building Management Systems)',
+      'Pressurisation Systems',
+      'Lift Installer',
+      'Lightning Protection'
+    ],
+    'Electrical & Security': [
+      'Electrical Installation',
+      'IT Installer / Data Cabling',
+      'CCTV Installer',
+      'Access Control / Door Entry',
+      'Fire Alarm Systems',
+      'Emergency Lighting',
+      'AV Systems',
+      'Intruder Alarm'
+    ],
+    'MEP': [
+      'Plumber',
+      'HVAC Installer',
+      'Drainage Specialist'
+    ]
+  }
+
+  // Standalone specializations (no subcategories)
+  const standaloneSpecializations = [
     'General Construction',
     'Steel Frame Specialist',
-    'Plumber',
-    'HVAC Installer',
-    'Electrician',
-    'Fire Protection Specialist',
-    'Lift Engineer',
     'Scaffolder',
     'Decorator/Painter',
     'Bricklayer',
@@ -41,9 +76,19 @@ export default function RegisterPage() {
     'Roofer',
     'Glazier',
     'Groundworks',
-    'Drainage Specialist',
     'Renderer'
   ]
+
+  // State for expanded categories
+  const [expandedCategories, setExpandedCategories] = useState([])
+
+  const toggleCategory = (category) => {
+    setExpandedCategories(prev => 
+      prev.includes(category) 
+        ? prev.filter(c => c !== category)
+        : [...prev, category]
+    )
+  }
 
   const toggleSpecialization = (spec) => {
     if (specialization.includes(spec)) {
@@ -224,24 +269,70 @@ export default function RegisterPage() {
             </button>
 
             {showDropdown && (
-              <div className="absolute z-10 w-full mt-1 bg-white border rounded shadow-lg max-h-60 overflow-y-auto">
-                {specializations.map((spec) => (
-                  <label
-                    key={spec}
-                    className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-                      specialization.length >= 3 && !specialization.includes(spec) ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={specialization.includes(spec)}
-                      onChange={() => toggleSpecialization(spec)}
-                      disabled={specialization.length >= 3 && !specialization.includes(spec)}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">{spec}</span>
-                  </label>
+              <div className="absolute z-10 w-full mt-1 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-80 overflow-y-auto">
+                {/* Categories with subcategories */}
+                {Object.entries(specializationCategories).map(([category, subcategories]) => (
+                  <div key={category} className="border-b border-gray-200 last:border-b-0">
+                    {/* Category header */}
+                    <button
+                      type="button"
+                      onClick={() => toggleCategory(category)}
+                      className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition"
+                    >
+                      <span className="font-semibold text-gray-800">{category}</span>
+                      <span className="text-gray-500 text-sm">
+                        {expandedCategories.includes(category) ? '▲' : '▼'}
+                      </span>
+                    </button>
+                    
+                    {/* Subcategories */}
+                    {expandedCategories.includes(category) && (
+                      <div className="bg-white">
+                        {subcategories.map((spec) => (
+                          <label
+                            key={spec}
+                            className={`flex items-center px-6 py-2 hover:bg-blue-50 cursor-pointer border-l-4 border-transparent hover:border-blue-400 ${
+                              specialization.length >= 3 && !specialization.includes(spec) ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={specialization.includes(spec)}
+                              onChange={() => toggleSpecialization(spec)}
+                              disabled={specialization.length >= 3 && !specialization.includes(spec)}
+                              className="mr-3 w-4 h-4 text-blue-600 rounded"
+                            />
+                            <span className="text-sm text-gray-700">{spec}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
+
+                {/* Standalone specializations */}
+                <div className="border-t-2 border-gray-300">
+                  <div className="px-4 py-2 bg-gray-100">
+                    <span className="font-semibold text-gray-700 text-sm">Other Trades</span>
+                  </div>
+                  {standaloneSpecializations.map((spec) => (
+                    <label
+                      key={spec}
+                      className={`flex items-center px-4 py-2 hover:bg-blue-50 cursor-pointer ${
+                        specialization.length >= 3 && !specialization.includes(spec) ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={specialization.includes(spec)}
+                        onChange={() => toggleSpecialization(spec)}
+                        disabled={specialization.length >= 3 && !specialization.includes(spec)}
+                        className="mr-3 w-4 h-4 text-blue-600 rounded"
+                      />
+                      <span className="text-sm text-gray-700">{spec}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             )}
           </div>
