@@ -58,58 +58,95 @@ export default function SubcontractorsPage() {
 
   const loadSubcontractors = async () => {
     try {
-      // Fetch all subcontractors
+      // Fetch all active subcontractors (soft delete filter)
       const { data: subcontractorsData, error: subError } = await supabase
         .from('profiles')
         .select('*')
         .eq('role', 'subcontractor')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
 
       if (subError) throw subError
 
-      // For each subcontractor, get their pending bids count and documents
+      // Batch load all ratings for real stats
+      const { data: allActiveRatings } = await supabase
+        .from('task_ratings')
+        .select('subcontractor_id, rating')
+      const { data: allArchivedRatings } = await supabase
+        .from('archived_task_ratings')
+        .select('subcontractor_id, rating')
+
+      // Batch load accepted bids for turnover
+      const { data: allAcceptedBids } = await supabase
+        .from('bids')
+        .select('subcontractor_id, price, tasks(status)')
+        .eq('status', 'accepted')
+      const { data: allArchivedAcceptedBids } = await supabase
+        .from('archived_bids')
+        .select('subcontractor_id, price')
+        .eq('status', 'accepted')
+
+      // Group ratings by subcontractor
+      const ratingsMap = {}
+      ;[...(allActiveRatings || []), ...(allArchivedRatings || [])].forEach(r => {
+        if (!ratingsMap[r.subcontractor_id]) ratingsMap[r.subcontractor_id] = []
+        ratingsMap[r.subcontractor_id].push(r.rating)
+      })
+
+      // Group earnings by subcontractor (completed tasks only)
+      const earnedMap = {}
+      ;[...(allAcceptedBids || [])].forEach(b => {
+        if (b.tasks?.status === 'completed') {
+          earnedMap[b.subcontractor_id] = (earnedMap[b.subcontractor_id] || 0) + Number(b.price || 0)
+        }
+      })
+      ;[...(allArchivedAcceptedBids || [])].forEach(b => {
+        earnedMap[b.subcontractor_id] = (earnedMap[b.subcontractor_id] || 0) + Number(b.price || 0)
+      })
+
+      // For each subcontractor, get pending bids + documents + real stats
       const enrichedData = await Promise.all(
         subcontractorsData.map(async (sub) => {
-          // Get pending bids count
           const { count: pendingCount } = await supabase
             .from('bids')
             .select('*', { count: 'exact', head: true })
             .eq('subcontractor_id', sub.id)
             .eq('status', 'pending')
 
-          // Get documents
           const { data: documents } = await supabase
             .from('subcontractor_documents')
             .select('*')
             .eq('subcontractor_id', sub.id)
             .order('uploaded_at', { ascending: false })
 
+          const subRatings = ratingsMap[sub.id] || []
+          const realAvgRating = subRatings.length > 0
+            ? subRatings.reduce((sum, r) => sum + r, 0) / subRatings.length
+            : 0
+          const realTotalProjects = subRatings.length
+          const realTotalEarned = earnedMap[sub.id] || 0
+
           return {
             ...sub,
             pendingBids: pendingCount || 0,
-            documents: documents || []
+            documents: documents || [],
+            realAvgRating: realAvgRating.toFixed(1),
+            realTotalProjects,
+            realTotalEarned
           }
         })
       )
 
       setSubcontractors(enrichedData)
 
-      // Calculate stats
+      // Calculate global stats
       const totalSubs = enrichedData.length
       const verifiedCount = enrichedData.filter(s => s.email_verified).length
       const totalBidsCount = enrichedData.reduce((sum, s) => sum + s.pendingBids, 0)
       
-      // Get real average from task_ratings + archived_task_ratings
-      const { data: allActiveRatings } = await supabase
-        .from('task_ratings')
-        .select('rating')
-      const { data: allArchivedRatings } = await supabase
-        .from('archived_task_ratings')
-        .select('rating')
-      
-      const allRatingsForAvg = [...(allActiveRatings || []), ...(allArchivedRatings || [])]
-      const avgRating = allRatingsForAvg.length > 0
-        ? allRatingsForAvg.reduce((sum, r) => sum + r.rating, 0) / allRatingsForAvg.length
+      const allRatingsFlat = [...(allActiveRatings || []), ...(allArchivedRatings || [])]
+      const avgRating = allRatingsFlat.length > 0
+        ? allRatingsFlat.reduce((sum, r) => sum + r.rating, 0) / allRatingsFlat.length
         : 0
 
       setStats({
@@ -157,31 +194,27 @@ export default function SubcontractorsPage() {
   }
 
   const handleDeleteSubcontractor = async (subId, subName) => {
-    if (!confirm(`Are you sure you want to delete "${subName || 'this subcontractor'}"?\n\nThis will permanently delete:\n- Their profile\n- All their bids\n- All their documents\n\nThis action cannot be undone.`)) {
+    if (!confirm(`Deactivate "${subName || 'this subcontractor'}"?\n\nThis will:\n- Hide them from the active list\n- Preserve all their history, ratings and bids\n- They won't be able to log in\n\nYou can reactivate them later if needed.`)) {
       return
     }
 
     setDeleting(subId)
 
     try {
-      const response = await fetch('/api/account/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: subId })
-      })
+      // Soft delete - set deleted_at timestamp
+      const { error } = await supabase
+        .from('profiles')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', subId)
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to delete subcontractor')
-      }
+      if (error) throw error
 
       // Refresh list
       await loadSubcontractors()
-      alert('Subcontractor deleted successfully')
+      alert('Subcontractor deactivated successfully. Their history is preserved.')
     } catch (error) {
-      console.error('Delete error:', error)
-      alert('Error deleting subcontractor: ' + error.message)
+      console.error('Deactivate error:', error)
+      alert('Error deactivating subcontractor: ' + error.message)
     } finally {
       setDeleting(null)
     }
@@ -227,10 +260,10 @@ export default function SubcontractorsPage() {
       }))
     ]
 
-    // Load accepted bids (active)
+    // Load accepted bids (active) - with project info for links
     const { data: bidsData } = await supabase
       .from('bids')
-      .select('*, tasks(name, status)')
+      .select('*, tasks(id, name, status, categories(project_id, projects(name)))')
       .eq('subcontractor_id', sub.id)
       .eq('status', 'accepted')
       .order('created_at', { ascending: false })
@@ -246,7 +279,10 @@ export default function SubcontractorsPage() {
     const allBids = [
       ...(bidsData || []).map(b => ({
         id: b.id,
+        taskId: b.tasks?.id || b.task_id,
+        projectId: b.tasks?.categories?.project_id,
         taskName: b.tasks?.name || 'Task',
+        projectName: b.tasks?.categories?.projects?.name || '',
         taskStatus: b.tasks?.status || 'unknown',
         price: b.price,
         duration: b.duration,
@@ -474,11 +510,11 @@ export default function SubcontractorsPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-yellow-500">★</span>
                           <span className="font-semibold">
-                            {sub.average_rating ? Number(sub.average_rating).toFixed(1) : '0.0'}
+                            {sub.realAvgRating || '0.0'}
                           </span>
                         </div>
-                        <div className="text-gray-600">Projects: {sub.total_projects || 0}</div>
-                        <div className="text-gray-600">Earned: {formatCurrency(sub.total_earned)}</div>
+                        <div className="text-gray-600">Projects: {sub.realTotalProjects || 0}</div>
+                        <div className="text-gray-600">Earned: {formatCurrency(sub.realTotalEarned)}</div>
                       </div>
                     </td>
 
@@ -657,7 +693,7 @@ export default function SubcontractorsPage() {
                           disabled={deleting === sub.id}
                           className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:bg-gray-400 transition"
                         >
-                          {deleting === sub.id ? 'Deleting...' : 'Delete'}
+                          {deleting === sub.id ? 'Processing...' : 'Deactivate'}
                         </button>
                       </div>
                     </td>
@@ -773,9 +809,24 @@ export default function SubcontractorsPage() {
                     ) : (
                       <div className="space-y-2">
                         {subHistory.bids.map((b) => (
-                          <div key={b.id} className="flex items-center justify-between p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-gray-300">
+                          <div 
+                            key={b.id} 
+                            className={`flex items-center justify-between p-3 bg-white rounded-lg border-2 border-gray-200 ${
+                              !b.archived && b.taskId && b.projectId 
+                                ? 'hover:border-blue-400 cursor-pointer hover:shadow-sm' 
+                                : 'hover:border-gray-300'
+                            }`}
+                            onClick={() => {
+                              if (!b.archived && b.taskId && b.projectId) {
+                                router.push(`/admin/projects/${b.projectId}/task/${b.taskId}`)
+                              }
+                            }}
+                          >
                             <div>
                               <div className="font-medium text-sm text-gray-900 flex items-center gap-2">
+                                {!b.archived && b.taskId && b.projectId && (
+                                  <span className="text-blue-500">🔗</span>
+                                )}
                                 {b.taskName}
                                 {b.archived && (
                                   <span className="px-1.5 py-0.5 text-[10px] bg-gray-200 text-gray-500 rounded">Archived</span>
