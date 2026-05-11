@@ -411,15 +411,22 @@ export default function AdminTaskDetailPage() {
       return
     }
 
-    // Update average rating for subcontractor
-    const { data: ratings } = await supabase
+    // Update average rating for subcontractor (from BOTH active + archived)
+    const { data: activeRatings } = await supabase
       .from('task_ratings')
       .select('rating')
       .eq('subcontractor_id', subcontractorId)
 
-    if (ratings && ratings.length > 0) {
-      const avgRating = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
-      const totalProjects = ratings.length
+    const { data: archivedRatings } = await supabase
+      .from('archived_task_ratings')
+      .select('rating')
+      .eq('subcontractor_id', subcontractorId)
+
+    const allRatings = [...(activeRatings || []), ...(archivedRatings || [])]
+    
+    if (allRatings.length > 0) {
+      const avgRating = allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length
+      const totalProjects = allRatings.length
 
       await supabase
         .from('profiles')

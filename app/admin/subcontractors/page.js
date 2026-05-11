@@ -666,33 +666,37 @@ export default function SubcontractorsPage() {
             </div>
 
             <div className="px-6 py-4">
-              {/* Stats */}
-              <div className="grid grid-cols-4 gap-3 mb-6">
-                <div className="bg-yellow-50 rounded-lg p-3 text-center border border-yellow-200">
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {selectedSub.average_rating ? Number(selectedSub.average_rating).toFixed(1) : '0.0'}
+              {/* Stats - calculated from loaded data */}
+              {(() => {
+                const allRatings = subHistory.ratings || []
+                const avgRating = allRatings.length > 0 
+                  ? (allRatings.reduce((sum, r) => sum + r.rating, 0) / allRatings.length).toFixed(1)
+                  : '0.0'
+                const completedBids = (subHistory.bids || []).filter(b => b.taskStatus === 'completed')
+                const totalTurnover = completedBids.reduce((sum, b) => sum + Number(b.price || 0), 0)
+
+                return (
+                  <div className="grid grid-cols-4 gap-3 mb-6">
+                    <div className="bg-yellow-50 rounded-lg p-3 text-center border border-yellow-200">
+                      <div className="text-2xl font-bold text-yellow-600">{avgRating}</div>
+                      <div className="text-xs text-yellow-700">Rating ⭐</div>
+                      <div className="text-[10px] text-yellow-600 mt-1">({allRatings.length} reviews)</div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3 text-center border border-green-200">
+                      <div className="text-2xl font-bold text-green-600">{completedBids.length}</div>
+                      <div className="text-xs text-green-700">Completed</div>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
+                      <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalTurnover)}</div>
+                      <div className="text-xs text-blue-700">Turnover</div>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-3 text-center border border-purple-200">
+                      <div className="text-2xl font-bold text-purple-600">{(subHistory.bids || []).length}</div>
+                      <div className="text-xs text-purple-700">Accepted</div>
+                    </div>
                   </div>
-                  <div className="text-xs text-yellow-700">Rating ⭐</div>
-                </div>
-                <div className="bg-green-50 rounded-lg p-3 text-center border border-green-200">
-                  <div className="text-2xl font-bold text-green-600">
-                    {selectedSub.total_projects || 0}
-                  </div>
-                  <div className="text-xs text-green-700">Completed</div>
-                </div>
-                <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(selectedSub.total_earned)}
-                  </div>
-                  <div className="text-xs text-blue-700">Turnover</div>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-3 text-center border border-purple-200">
-                  <div className="text-2xl font-bold text-purple-600">
-                    {subHistory.bids.length}
-                  </div>
-                  <div className="text-xs text-purple-700">Accepted</div>
-                </div>
-              </div>
+                )
+              })()}
 
               {/* Specializations */}
               {selectedSub.specialization && selectedSub.specialization.length > 0 && (
@@ -712,51 +716,17 @@ export default function SubcontractorsPage() {
                 <div className="text-center py-8 text-gray-500">Loading history...</div>
               ) : (
                 <>
-                  {/* Ratings */}
+                  {/* Accepted Work - FIRST, more prominent */}
                   <div className="mb-6">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                      Ratings ({subHistory.ratings.length})
+                    <h3 className="font-semibold text-gray-900 mb-3">
+                      Accepted Work ({(subHistory.bids || []).length})
                     </h3>
-                    {subHistory.ratings.length === 0 ? (
-                      <p className="text-sm text-gray-400 py-4 text-center">No ratings yet</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {subHistory.ratings.map((r) => (
-                          <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div>
-                              <div className="font-medium text-sm text-gray-900 flex items-center gap-2">
-                                {r.taskName}
-                                {r.archived && (
-                                  <span className="px-1.5 py-0.5 text-[10px] bg-gray-200 text-gray-500 rounded">Archived</span>
-                                )}
-                              </div>
-                              {r.comment && (
-                                <div className="text-xs text-gray-500 mt-1">{r.comment}</div>
-                              )}
-                              <div className="text-[10px] text-gray-400 mt-1">
-                                by {r.ratedBy} • {new Date(r.date).toLocaleDateString('en-GB')}
-                              </div>
-                            </div>
-                            <div className="text-xl font-bold text-yellow-600 flex items-center gap-1">
-                              {r.rating}<span className="text-sm">⭐</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Completed Work */}
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                      Accepted Work ({subHistory.bids.length})
-                    </h3>
-                    {subHistory.bids.length === 0 ? (
-                      <p className="text-sm text-gray-400 py-4 text-center">No accepted work yet</p>
+                    {(subHistory.bids || []).length === 0 ? (
+                      <p className="text-sm text-gray-400 py-4 text-center border border-dashed border-gray-200 rounded-lg">No accepted work yet</p>
                     ) : (
                       <div className="space-y-2">
                         {subHistory.bids.map((b) => (
-                          <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                          <div key={b.id} className="flex items-center justify-between p-3 bg-white rounded-lg border-2 border-gray-200 hover:border-gray-300">
                             <div>
                               <div className="font-medium text-sm text-gray-900 flex items-center gap-2">
                                 {b.taskName}
@@ -786,6 +756,41 @@ export default function SubcontractorsPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Ratings - collapsible */}
+                  <details className="mb-6">
+                    <summary className="font-semibold text-gray-900 cursor-pointer hover:text-blue-600 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <span>⭐ Ratings ({(subHistory.ratings || []).length})</span>
+                      <span className="text-xs text-gray-500">Click to expand</span>
+                    </summary>
+                    <div className="mt-2 space-y-2">
+                      {(subHistory.ratings || []).length === 0 ? (
+                        <p className="text-sm text-gray-400 py-4 text-center">No ratings yet</p>
+                      ) : (
+                        subHistory.ratings.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <div>
+                              <div className="font-medium text-sm text-gray-900 flex items-center gap-2">
+                                {r.taskName}
+                                {r.archived && (
+                                  <span className="px-1.5 py-0.5 text-[10px] bg-gray-200 text-gray-500 rounded">Archived</span>
+                                )}
+                              </div>
+                              {r.comment && (
+                                <div className="text-xs text-gray-500 mt-1">{r.comment}</div>
+                              )}
+                              <div className="text-[10px] text-gray-400 mt-1">
+                                by {r.ratedBy} • {new Date(r.date).toLocaleDateString('en-GB')}
+                              </div>
+                            </div>
+                            <div className="text-xl font-bold text-yellow-600 flex items-center gap-1">
+                              {r.rating}<span className="text-sm">⭐</span>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </details>
                 </>
               )}
             </div>
