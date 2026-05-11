@@ -170,7 +170,7 @@ export default function AdminProjectsPage() {
               <div
                 key={project.id}
                 onClick={() => router.push(`/admin/projects/${project.id}`)}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-lg transition cursor-pointer overflow-hidden"
+                className="bg-gray-50 rounded-xl shadow-md border-2 border-gray-300 hover:shadow-xl hover:border-blue-400 transition cursor-pointer overflow-hidden"
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
