@@ -17,6 +17,10 @@ export default function SubcontractorsPage() {
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [sortField, setSortField] = useState('name')
+  const [sortDir, setSortDir] = useState('asc')
+  const [filterVerified, setFilterVerified] = useState('all')
+  const [filterSpec, setFilterSpec] = useState('')
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [selectedSub, setSelectedSub] = useState(null)
   const [subHistory, setSubHistory] = useState({ ratings: [], bids: [], loading: true })
@@ -304,6 +308,72 @@ export default function SubcontractorsPage() {
     setSubHistory({ ratings: allRatings, bids: allBids, loading: false })
   }
 
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortDir(prev => prev === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDir('desc')
+    }
+  }
+
+  const SortIcon = ({ field }) => (
+    <span className="ml-1 text-xs">
+      {sortField === field ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+    </span>
+  )
+
+  // Get unique specializations for filter
+  const allSpecs = [...new Set(subcontractors.flatMap(s => s.specialization || []))].sort()
+
+  // Filter and sort subcontractors
+  const filteredSubcontractors = subcontractors
+    .filter(sub => {
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase()
+        const matchesSearch = (
+          (sub.company_name || '').toLowerCase().includes(term) ||
+          (sub.full_name || '').toLowerCase().includes(term) ||
+          (sub.email || '').toLowerCase().includes(term) ||
+          (sub.phone || '').toLowerCase().includes(term) ||
+          (sub.specialization || []).some(s => s.toLowerCase().includes(term))
+        )
+        if (!matchesSearch) return false
+      }
+      if (filterVerified === 'verified' && !sub.email_verified) return false
+      if (filterVerified === 'not_verified' && sub.email_verified) return false
+      if (filterSpec && !(sub.specialization || []).includes(filterSpec)) return false
+      return true
+    })
+    .sort((a, b) => {
+      let valA, valB
+      switch (sortField) {
+        case 'name':
+          valA = (a.company_name || a.full_name || '').toLowerCase()
+          valB = (b.company_name || b.full_name || '').toLowerCase()
+          return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA)
+        case 'rating':
+          valA = Number(a.realAvgRating || 0)
+          valB = Number(b.realAvgRating || 0)
+          break
+        case 'projects':
+          valA = a.realTotalProjects || 0
+          valB = b.realTotalProjects || 0
+          break
+        case 'earned':
+          valA = a.realTotalEarned || 0
+          valB = b.realTotalEarned || 0
+          break
+        case 'pending':
+          valA = a.pendingBids || 0
+          valB = b.pendingBids || 0
+          break
+        default:
+          return 0
+      }
+      return sortDir === 'asc' ? valA - valB : valB - valA
+    })
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -405,27 +475,44 @@ export default function SubcontractorsPage() {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="mb-4">
-          <div className="relative">
+        {/* Search & Filters */}
+        <div className="mb-4 flex flex-wrap gap-3 items-center">
+          <div className="relative flex-1 min-w-[250px]">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
               type="text"
-              placeholder="Search by name, company, email, specialization..."
+              placeholder="Search by name, company, email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
             />
             {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
+              <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
             )}
+          </div>
+          <select
+            value={filterVerified}
+            onChange={(e) => setFilterVerified(e.target.value)}
+            className="px-3 py-2.5 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All Email Status</option>
+            <option value="verified">✓ Verified</option>
+            <option value="not_verified">✗ Not Verified</option>
+          </select>
+          <select
+            value={filterSpec}
+            onChange={(e) => setFilterSpec(e.target.value)}
+            className="px-3 py-2.5 border-2 border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Specializations</option>
+            {allSpecs.map(spec => (
+              <option key={spec} value={spec}>{spec}</option>
+            ))}
+          </select>
+          <div className="text-sm text-gray-500">
+            {filteredSubcontractors.length} / {subcontractors.length}
           </div>
         </div>
 
@@ -435,29 +522,23 @@ export default function SubcontractorsPage() {
             <table className="w-full">
               <thead className="navy-table-header text-white">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Company / Contact</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-white/10" onClick={() => toggleSort('name')}>
+                    Company / Contact <SortIcon field="name" />
+                  </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Email Status</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Specialization</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Stats</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold">Pending Bids</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-white/10" onClick={() => toggleSort('rating')}>
+                    Stats <SortIcon field="rating" />
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold cursor-pointer hover:bg-white/10" onClick={() => toggleSort('pending')}>
+                    Pending Bids <SortIcon field="pending" />
+                  </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Company Details</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {subcontractors
-                  .filter(sub => {
-                    if (!searchTerm) return true
-                    const term = searchTerm.toLowerCase()
-                    return (
-                      (sub.company_name || '').toLowerCase().includes(term) ||
-                      (sub.full_name || '').toLowerCase().includes(term) ||
-                      (sub.email || '').toLowerCase().includes(term) ||
-                      (sub.phone || '').toLowerCase().includes(term) ||
-                      (sub.specialization || []).some(s => s.toLowerCase().includes(term))
-                    )
-                  })
-                  .map((sub) => (
+                {filteredSubcontractors.map((sub) => (
                   <tr 
                     key={sub.id} 
                     className={`hover:bg-gray-50 ${sub.pendingBids > 0 ? 'bg-yellow-50' : ''}`}
