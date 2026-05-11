@@ -16,6 +16,7 @@ export default function SubcontractorsPage() {
   const [subcontractors, setSubcontractors] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [selectedSub, setSelectedSub] = useState(null)
   const [subHistory, setSubHistory] = useState({ ratings: [], bids: [], loading: true })
@@ -358,6 +359,30 @@ export default function SubcontractorsPage() {
           </div>
         </div>
 
+        {/* Search */}
+        <div className="mb-4">
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by name, company, email, specialization..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Table */}
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
@@ -374,7 +399,19 @@ export default function SubcontractorsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {subcontractors.map((sub) => (
+                {subcontractors
+                  .filter(sub => {
+                    if (!searchTerm) return true
+                    const term = searchTerm.toLowerCase()
+                    return (
+                      (sub.company_name || '').toLowerCase().includes(term) ||
+                      (sub.full_name || '').toLowerCase().includes(term) ||
+                      (sub.email || '').toLowerCase().includes(term) ||
+                      (sub.phone || '').toLowerCase().includes(term) ||
+                      (sub.specialization || []).some(s => s.toLowerCase().includes(term))
+                    )
+                  })
+                  .map((sub) => (
                   <tr 
                     key={sub.id} 
                     className={`hover:bg-gray-50 ${sub.pendingBids > 0 ? 'bg-yellow-50' : ''}`}
