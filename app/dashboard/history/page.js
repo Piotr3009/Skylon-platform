@@ -49,14 +49,18 @@ export default function HistoryPage() {
   }
 
   const loadHistory = async (userId) => {
-    // Load ALL bids (pending, negotiation, accepted, rejected)
+    // Load ALL bids - nested join: bids → tasks → categories → projects
     const { data: bidsData } = await supabase
       .from('bids')
       .select(`
         *,
-        tasks!inner(id, name, status, suggested_price),
-        categories!inner(name),
-        projects!inner(name, project_image_url)
+        tasks!inner(
+          id, name, status, suggested_price,
+          categories(
+            name,
+            projects(name, project_image_url)
+          )
+        )
       `)
       .eq('subcontractor_id', userId)
       .order('created_at', { ascending: false })
@@ -66,13 +70,13 @@ export default function HistoryPage() {
         id: bid.id,
         task_id: bid.task_id,
         task_name: bid.tasks?.name || 'Unknown Task',
-        project_name: bid.projects?.name || 'Unknown Project',
-        project_image: bid.projects?.project_image_url,
-        category_name: bid.categories?.name || 'Unknown',
+        project_name: bid.tasks?.categories?.projects?.name || 'Unknown Project',
+        project_image: bid.tasks?.categories?.projects?.project_image_url,
+        category_name: bid.tasks?.categories?.name || 'Unknown',
         price: bid.price,
         duration: bid.duration,
-        bid_status: bid.status, // pending, negotiation, accepted, rejected
-        task_status: bid.tasks?.status, // open, assigned, in_progress, completed
+        bid_status: bid.status,
+        task_status: bid.tasks?.status,
         created_at: bid.created_at
       }))
       setCompletedTasks(formattedTasks)
