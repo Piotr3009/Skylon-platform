@@ -98,8 +98,18 @@ export default function SubcontractorsPage() {
       const totalSubs = enrichedData.length
       const verifiedCount = enrichedData.filter(s => s.email_verified).length
       const totalBidsCount = enrichedData.reduce((sum, s) => sum + s.pendingBids, 0)
-      const avgRating = enrichedData.length > 0
-        ? enrichedData.reduce((sum, s) => sum + (Number(s.average_rating) || 0), 0) / enrichedData.length
+      
+      // Get real average from task_ratings + archived_task_ratings
+      const { data: allActiveRatings } = await supabase
+        .from('task_ratings')
+        .select('rating')
+      const { data: allArchivedRatings } = await supabase
+        .from('archived_task_ratings')
+        .select('rating')
+      
+      const allRatingsForAvg = [...(allActiveRatings || []), ...(allArchivedRatings || [])]
+      const avgRating = allRatingsForAvg.length > 0
+        ? allRatingsForAvg.reduce((sum, r) => sum + r.rating, 0) / allRatingsForAvg.length
         : 0
 
       setStats({
