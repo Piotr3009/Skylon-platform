@@ -62,7 +62,6 @@ export default function DashboardPage() {
       .select('id, name, description, status, start_date, project_image_url, project_type')
       .eq('status', 'active')
       .order('created_at', { ascending: false })
-      .limit(6)
 
     if (projectsData) setProjects(projectsData)
 
@@ -127,7 +126,6 @@ export default function DashboardPage() {
       .from('projects')
       .select('id, name, description, status, created_at, project_image_url, project_type')
       .order('created_at', { ascending: false })
-      .limit(6)
 
     if (projectsData) setProjects(projectsData)
 
@@ -569,11 +567,11 @@ export default function DashboardPage() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {projects.map((project) => (
                 <div
                   key={project.id}
-                  className="border-2 border-gray-300 rounded-lg overflow-hidden hover:border-blue-400 hover:shadow-md transition cursor-pointer group bg-white"
+                  className="border border-gray-200 rounded-lg overflow-hidden hover:border-blue-400 hover:shadow-md transition cursor-pointer group bg-white"
                   onClick={() => {
                     if (profile?.role === 'owner' || profile?.role === 'coordinator') {
                       router.push(`/admin/projects/${project.id}`)
@@ -586,15 +584,15 @@ export default function DashboardPage() {
                     <img
                       src={project.project_image_url}
                       alt={project.name}
-                      className="w-full h-32 object-cover"
+                      className="w-full h-24 object-cover"
                     />
                   )}
-                  <div className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition">
+                  <div className="p-3">
+                    <div className="flex items-start justify-between mb-1">
+                      <h4 className="font-semibold text-sm text-gray-900 group-hover:text-blue-600 transition line-clamp-1">
                         {project.name}
                       </h4>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full flex-shrink-0 ${
+                      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded-full flex-shrink-0 ml-1 ${
                         project.status === 'active' ? 'bg-green-100 text-green-800' :
                         project.status === 'completed' ? 'bg-blue-100 text-blue-800' :
                         'bg-gray-100 text-gray-800'
@@ -603,8 +601,8 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     {project.project_type && (
-                      <div className="mb-2">
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
+                      <div className="mb-1">
+                        <span className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-indigo-100 text-indigo-800">
                           {project.project_type === 'commercial' ? 'Commercial' :
                            project.project_type === 'domestic' ? 'Domestic' :
                            project.project_type === 'restaurant' ? 'Restaurant' :
@@ -613,12 +611,12 @@ export default function DashboardPage() {
                       </div>
                     )}
                     {project.description && (
-                      <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                      <p className="text-xs text-gray-600 line-clamp-2 mb-2">
                         {project.description}
                       </p>
                     )}
                     {project.start_date && (
-                      <div className="text-xs text-gray-500">
+                      <div className="text-[10px] text-gray-500">
                         Start: {new Date(project.start_date).toLocaleDateString('en-GB')}
                       </div>
                     )}

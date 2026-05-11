@@ -78,14 +78,61 @@ export default function HistoryPage() {
       setCompletedTasks(formattedTasks)
     }
 
-    // Load ratings
+    // Load ratings (active)
     const { data: ratingsData } = await supabase
       .from('task_ratings')
       .select('*, tasks(name), profiles!task_ratings_rated_by_fkey(full_name, company_name)')
       .eq('subcontractor_id', userId)
       .order('created_at', { ascending: false })
 
-    if (ratingsData) setRatings(ratingsData)
+    // Load archived ratings
+    const { data: archivedRatingsData } = await supabase
+      .from('archived_task_ratings')
+      .select('*, archived_tasks(name), profiles!archived_task_ratings_rated_by_fkey(full_name, company_name)')
+      .eq('subcontractor_id', userId)
+      .order('original_created_at', { ascending: false })
+
+    // Combine ratings
+    const allRatings = [
+      ...(ratingsData || []).map(r => ({
+        ...r,
+        taskName: r.tasks?.name || 'Task',
+        ratedBy: r.profiles?.full_name || r.profiles?.company_name || 'Coordinator',
+        date: r.created_at,
+        archived: false
+      })),
+      ...(archivedRatingsData || []).map(r => ({
+        ...r,
+        taskName: r.archived_tasks?.name || 'Task',
+        ratedBy: r.profiles?.full_name || r.profiles?.company_name || 'Coordinator',
+        date: r.original_created_at,
+        archived: true
+      }))
+    ]
+    
+    setRatings(allRatings)
+
+    // Load archived bids for history
+    const { data: archivedBidsData } = await supabase
+      .from('archived_bids')
+      .select('*, archived_tasks(name, status), archived_projects(name)')
+      .eq('subcontractor_id', userId)
+      .order('original_created_at', { ascending: false })
+
+    if (archivedBidsData) {
+      const archivedFormatted = archivedBidsData.map(bid => ({
+        id: 'archived-' + bid.id,
+        task_name: bid.archived_tasks?.name || 'Unknown Task',
+        project_name: bid.archived_projects?.name || 'Unknown Project',
+        price: bid.price,
+        duration: bid.duration,
+        bid_status: bid.status,
+        task_status: bid.archived_tasks?.status || 'completed',
+        created_at: bid.original_created_at,
+        archived: true
+      }))
+      setCompletedTasks(prev => [...prev, ...archivedFormatted])
+    }
   }
 
   const handleLogout = async () => {
@@ -103,6 +150,7 @@ export default function HistoryPage() {
 
   const avgRating = profile?.average_rating || 0
   const totalProjects = profile?.total_projects || 0
+  const totalEarned = profile?.total_earned || 0
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50">
@@ -120,7 +168,7 @@ export default function HistoryPage() {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="text-gray-600 text-sm font-medium mb-1">Average Rating</div>
             <div className="text-4xl font-bold text-yellow-600 flex items-center gap-2">
@@ -131,15 +179,21 @@ export default function HistoryPage() {
           </div>
 
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="text-gray-600 text-sm font-medium mb-1">Completed Projects</div>
+            <div className="text-gray-600 text-sm font-medium mb-1">Completed Tasks</div>
             <div className="text-4xl font-bold text-green-600">{totalProjects}</div>
-            <div className="text-xs text-gray-500 mt-1">Total rated tasks</div>
+            <div className="text-xs text-gray-500 mt-1">Rated & completed</div>
           </div>
 
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="text-gray-600 text-sm font-medium mb-1">All My Proposals</div>
-            <div className="text-4xl font-bold text-blue-600">{completedTasks.length}</div>
-            <div className="text-xs text-gray-500 mt-1">All statuses included</div>
+            <div className="text-gray-600 text-sm font-medium mb-1">Total Turnover</div>
+            <div className="text-4xl font-bold text-blue-600">{formatCurrency(totalEarned)}</div>
+            <div className="text-xs text-gray-500 mt-1">From completed work</div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="text-gray-600 text-sm font-medium mb-1">All Proposals</div>
+            <div className="text-4xl font-bold text-purple-600">{completedTasks.length}</div>
+            <div className="text-xs text-gray-500 mt-1">All statuses</div>
           </div>
         </div>
 
@@ -155,13 +209,18 @@ export default function HistoryPage() {
             </p>
           ) : (
             <div className="space-y-4">
-              {ratings.map((rating) => (
-                <div key={rating.id} className="border border-gray-200 rounded-lg p-4">
+              {ratings.map((rating, index) => (
+                <div key={rating.id || index} className="border border-gray-200 rounded-lg p-4">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <div className="font-semibold text-gray-900">{rating.tasks?.name || 'Task'}</div>
+                      <div className="font-semibold text-gray-900 flex items-center gap-2">
+                        {rating.taskName}
+                        {rating.archived && (
+                          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-gray-100 text-gray-500">Archived</span>
+                        )}
+                      </div>
                       <div className="text-sm text-gray-600 mt-1">
-                        Rated by: {rating.profiles?.full_name || rating.profiles?.company_name || 'Coordinator'}
+                        Rated by: {rating.ratedBy}
                       </div>
                     </div>
                     <div className="text-right">
@@ -181,7 +240,7 @@ export default function HistoryPage() {
                   )}
 
                   <div className="mt-2 text-xs text-gray-500">
-                    {new Date(rating.created_at).toLocaleDateString('en-GB')}
+                    {new Date(rating.date || rating.created_at).toLocaleDateString('en-GB')}
                   </div>
                 </div>
               ))}
@@ -259,4 +318,4 @@ export default function HistoryPage() {
       </main>
     </div>
   )
-} 
+}

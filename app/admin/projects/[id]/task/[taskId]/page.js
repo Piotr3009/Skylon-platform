@@ -37,6 +37,8 @@ export default function AdminTaskDetailPage() {
   const [ratingValue, setRatingValue] = useState('')
   const [ratingComment, setRatingComment] = useState('')
   const [submittingRating, setSubmittingRating] = useState(false)
+  const [taskRating, setTaskRating] = useState(null) // Existing rating for this task
+  const [markingDone, setMarkingDone] = useState(false)
 
   const router = useRouter()
   const params = useParams()
@@ -129,6 +131,15 @@ export default function AdminTaskDetailPage() {
       .order('created_at', { ascending: false })
 
     if (questionsData) setQuestions(questionsData)
+
+    // Load existing rating for this task
+    const { data: ratingData } = await supabase
+      .from('task_ratings')
+      .select('*, profiles!task_ratings_subcontractor_id_fkey(full_name, company_name)')
+      .eq('task_id', params.taskId)
+      .maybeSingle()
+
+    setTaskRating(ratingData || null)
 
     setLoading(false)
   }
@@ -425,6 +436,59 @@ export default function AdminTaskDetailPage() {
     loadTaskDetails()
   }
 
+  // Mark task as Done (completed) - requires rating
+  const handleMarkAsDone = async () => {
+    if (!taskRating) {
+      alert('You must rate the subcontractor before marking this task as done.')
+      return
+    }
+
+    if (!confirm('Mark this task as completed? This will update the subcontractor\'s history and earnings.')) {
+      return
+    }
+
+    setMarkingDone(true)
+
+    try {
+      // Update task status to completed
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .update({ status: 'completed' })
+        .eq('id', params.taskId)
+
+      if (taskError) throw taskError
+
+      // Find accepted bid to get price and subcontractor
+      const acceptedBid = bids.find(b => b.status === 'accepted')
+      
+      if (acceptedBid) {
+        // Update subcontractor total_earned
+        const { data: subProfile } = await supabase
+          .from('profiles')
+          .select('total_earned')
+          .eq('id', acceptedBid.subcontractor_id)
+          .single()
+
+        const currentEarned = Number(subProfile?.total_earned || 0)
+        const bidPrice = Number(acceptedBid.price || 0)
+
+        await supabase
+          .from('profiles')
+          .update({ 
+            total_earned: currentEarned + bidPrice 
+          })
+          .eq('id', acceptedBid.subcontractor_id)
+      }
+
+      alert('Task marked as completed! Subcontractor earnings updated.')
+      loadTaskDetails()
+    } catch (error) {
+      alert('Error: ' + error.message)
+    } finally {
+      setMarkingDone(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -482,6 +546,22 @@ export default function AdminTaskDetailPage() {
               </div>
             </div>
             <div className="flex gap-2">
+              {/* Mark as Done button - only when assigned and has rating */}
+              {task.status === 'assigned' && taskRating && (
+                <button
+                  onClick={handleMarkAsDone}
+                  disabled={markingDone}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 transition font-medium"
+                >
+                  {markingDone ? 'Processing...' : '✅ Mark as Done'}
+                </button>
+              )}
+              {/* Show hint when assigned but no rating */}
+              {task.status === 'assigned' && !taskRating && (
+                <div className="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg text-sm font-medium border border-yellow-300">
+                  ⚠️ Rate subcontractor first to mark as done
+                </div>
+              )}
               <button
                 onClick={() => setShowEditModal(true)}
                 className="px-4 py-2 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#2a5179] transition"
@@ -623,7 +703,7 @@ export default function AdminTaskDetailPage() {
                         </div>
                       )}
 
-                      {bid.status === 'accepted' && ratingBidId !== bid.id && (
+                      {bid.status === 'accepted' && !taskRating && ratingBidId !== bid.id && (
                         <div className="mt-3">
                           <button
                             onClick={() => setRatingBidId(bid.id)}
@@ -634,7 +714,7 @@ export default function AdminTaskDetailPage() {
                         </div>
                       )}
 
-                      {bid.status === 'accepted' && ratingBidId === bid.id && (
+                      {bid.status === 'accepted' && !taskRating && ratingBidId === bid.id && (
                         <div className="mt-3 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                           <div className="text-sm font-semibold text-gray-700 mb-3">Rate this subcontractor&apos;s performance</div>
                           <div className="mb-3">
@@ -768,6 +848,48 @@ export default function AdminTaskDetailPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Task Status & Rating Card */}
+            {task.status === 'assigned' || task.status === 'completed' ? (
+              <div className="bg-white rounded-lg shadow-sm border-2 border-gray-200 p-6">
+                <h3 className="font-bold text-gray-900 mb-4">Task Progress</h3>
+                
+                {/* Status Steps */}
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs">✓</div>
+                    <span className="text-sm text-gray-700">Proposal accepted</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                      taskRating ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
+                    }`}>{taskRating ? '✓' : '2'}</div>
+                    <span className="text-sm text-gray-700">
+                      {taskRating ? `Rated: ${taskRating.rating}/10` : 'Rate subcontractor'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${
+                      task.status === 'completed' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
+                    }`}>{task.status === 'completed' ? '✓' : '3'}</div>
+                    <span className="text-sm text-gray-700">
+                      {task.status === 'completed' ? 'Completed ✅' : 'Mark as done'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Existing Rating Details */}
+                {taskRating && (
+                  <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200 mt-3">
+                    <div className="text-xs font-semibold text-yellow-800 mb-1">Rating</div>
+                    <div className="text-lg font-bold text-yellow-700">{taskRating.rating}/10</div>
+                    {taskRating.comment && (
+                      <div className="text-xs text-gray-600 mt-1">{taskRating.comment}</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : null}
+
             {/* Documents */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <h3 className="font-bold text-gray-900 mb-4">
@@ -937,12 +1059,10 @@ export default function AdminTaskDetailPage() {
                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#1e3a5f]"
                   >
                     <option value="open">Open</option>
-                    <option value="closing_soon">Closing Soon</option>
-                    <option value="closed">Closed</option>
-                    <option value="awarded">Awarded</option>
                     <option value="assigned">Assigned</option>
                     <option value="in_progress">In Progress</option>
                     <option value="completed">Completed</option>
+                    <option value="closed">Closed</option>
                   </select>
                 </div>
 
