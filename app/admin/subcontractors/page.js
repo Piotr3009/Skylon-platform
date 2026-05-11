@@ -16,6 +16,9 @@ export default function SubcontractorsPage() {
   const [subcontractors, setSubcontractors] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null)
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [selectedSub, setSelectedSub] = useState(null)
+  const [subHistory, setSubHistory] = useState({ ratings: [], bids: [], loading: true })
   const [stats, setStats] = useState({
     total: 0,
     verified: 0,
@@ -171,6 +174,87 @@ export default function SubcontractorsPage() {
     } finally {
       setDeleting(null)
     }
+  }
+
+  const handleViewHistory = async (sub) => {
+    setSelectedSub(sub)
+    setShowHistoryModal(true)
+    setSubHistory({ ratings: [], bids: [], loading: true })
+
+    // Load ratings (active)
+    const { data: ratingsData } = await supabase
+      .from('task_ratings')
+      .select('*, tasks(name, status), profiles!task_ratings_rated_by_fkey(full_name)')
+      .eq('subcontractor_id', sub.id)
+      .order('created_at', { ascending: false })
+
+    // Load archived ratings
+    const { data: archivedRatingsData } = await supabase
+      .from('archived_task_ratings')
+      .select('*, archived_tasks(name), profiles!archived_task_ratings_rated_by_fkey(full_name)')
+      .eq('subcontractor_id', sub.id)
+      .order('original_created_at', { ascending: false })
+
+    const allRatings = [
+      ...(ratingsData || []).map(r => ({
+        id: r.id,
+        taskName: r.tasks?.name || 'Task',
+        rating: r.rating,
+        comment: r.comment,
+        ratedBy: r.profiles?.full_name || 'Coordinator',
+        date: r.created_at,
+        archived: false
+      })),
+      ...(archivedRatingsData || []).map(r => ({
+        id: 'a-' + r.id,
+        taskName: r.archived_tasks?.name || 'Task',
+        rating: r.rating,
+        comment: r.comment,
+        ratedBy: r.profiles?.full_name || 'Coordinator',
+        date: r.original_created_at,
+        archived: true
+      }))
+    ]
+
+    // Load accepted bids (active)
+    const { data: bidsData } = await supabase
+      .from('bids')
+      .select('*, tasks(name, status)')
+      .eq('subcontractor_id', sub.id)
+      .eq('status', 'accepted')
+      .order('created_at', { ascending: false })
+
+    // Load archived accepted bids
+    const { data: archivedBidsData } = await supabase
+      .from('archived_bids')
+      .select('*, archived_tasks(name, status), archived_projects(name)')
+      .eq('subcontractor_id', sub.id)
+      .eq('status', 'accepted')
+      .order('original_created_at', { ascending: false })
+
+    const allBids = [
+      ...(bidsData || []).map(b => ({
+        id: b.id,
+        taskName: b.tasks?.name || 'Task',
+        taskStatus: b.tasks?.status || 'unknown',
+        price: b.price,
+        duration: b.duration,
+        date: b.created_at,
+        archived: false
+      })),
+      ...(archivedBidsData || []).map(b => ({
+        id: 'a-' + b.id,
+        taskName: b.archived_tasks?.name || 'Task',
+        projectName: b.archived_projects?.name || '',
+        taskStatus: b.archived_tasks?.status || 'completed',
+        price: b.price,
+        duration: b.duration,
+        date: b.original_created_at,
+        archived: true
+      }))
+    ]
+
+    setSubHistory({ ratings: allRatings, bids: allBids, loading: false })
   }
 
   if (loading) {
@@ -514,13 +598,21 @@ export default function SubcontractorsPage() {
 
                     {/* Actions */}
                     <td className="px-4 py-4">
-                      <button
-                        onClick={() => handleDeleteSubcontractor(sub.id, sub.company_name || sub.full_name)}
-                        disabled={deleting === sub.id}
-                        className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:bg-gray-400 transition"
-                      >
-                        {deleting === sub.id ? 'Deleting...' : 'Delete'}
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => handleViewHistory(sub)}
+                          className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition"
+                        >
+                          📊 History
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSubcontractor(sub.id, sub.company_name || sub.full_name)}
+                          disabled={deleting === sub.id}
+                          className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:bg-gray-400 transition"
+                        >
+                          {deleting === sub.id ? 'Deleting...' : 'Delete'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -548,6 +640,158 @@ export default function SubcontractorsPage() {
           </div>
         )}
       </div>
+
+      {/* Subcontractor History Modal */}
+      {showHistoryModal && selectedSub && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-xl z-10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">
+                    {selectedSub.company_name || selectedSub.full_name}
+                  </h2>
+                  {selectedSub.company_name && selectedSub.full_name && (
+                    <p className="text-sm text-gray-500">{selectedSub.full_name} • {selectedSub.email}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowHistoryModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div className="px-6 py-4">
+              {/* Stats */}
+              <div className="grid grid-cols-4 gap-3 mb-6">
+                <div className="bg-yellow-50 rounded-lg p-3 text-center border border-yellow-200">
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {selectedSub.average_rating ? Number(selectedSub.average_rating).toFixed(1) : '0.0'}
+                  </div>
+                  <div className="text-xs text-yellow-700">Rating ⭐</div>
+                </div>
+                <div className="bg-green-50 rounded-lg p-3 text-center border border-green-200">
+                  <div className="text-2xl font-bold text-green-600">
+                    {selectedSub.total_projects || 0}
+                  </div>
+                  <div className="text-xs text-green-700">Completed</div>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(selectedSub.total_earned)}
+                  </div>
+                  <div className="text-xs text-blue-700">Turnover</div>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-3 text-center border border-purple-200">
+                  <div className="text-2xl font-bold text-purple-600">
+                    {subHistory.bids.length}
+                  </div>
+                  <div className="text-xs text-purple-700">Accepted</div>
+                </div>
+              </div>
+
+              {/* Specializations */}
+              {selectedSub.specialization && selectedSub.specialization.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Specializations</h3>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedSub.specialization.map((spec, idx) => (
+                      <span key={idx} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                        {spec}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {subHistory.loading ? (
+                <div className="text-center py-8 text-gray-500">Loading history...</div>
+              ) : (
+                <>
+                  {/* Ratings */}
+                  <div className="mb-6">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                      Ratings ({subHistory.ratings.length})
+                    </h3>
+                    {subHistory.ratings.length === 0 ? (
+                      <p className="text-sm text-gray-400 py-4 text-center">No ratings yet</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {subHistory.ratings.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <div>
+                              <div className="font-medium text-sm text-gray-900 flex items-center gap-2">
+                                {r.taskName}
+                                {r.archived && (
+                                  <span className="px-1.5 py-0.5 text-[10px] bg-gray-200 text-gray-500 rounded">Archived</span>
+                                )}
+                              </div>
+                              {r.comment && (
+                                <div className="text-xs text-gray-500 mt-1">{r.comment}</div>
+                              )}
+                              <div className="text-[10px] text-gray-400 mt-1">
+                                by {r.ratedBy} • {new Date(r.date).toLocaleDateString('en-GB')}
+                              </div>
+                            </div>
+                            <div className="text-xl font-bold text-yellow-600 flex items-center gap-1">
+                              {r.rating}<span className="text-sm">⭐</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Completed Work */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                      Accepted Work ({subHistory.bids.length})
+                    </h3>
+                    {subHistory.bids.length === 0 ? (
+                      <p className="text-sm text-gray-400 py-4 text-center">No accepted work yet</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {subHistory.bids.map((b) => (
+                          <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <div>
+                              <div className="font-medium text-sm text-gray-900 flex items-center gap-2">
+                                {b.taskName}
+                                {b.archived && (
+                                  <span className="px-1.5 py-0.5 text-[10px] bg-gray-200 text-gray-500 rounded">Archived</span>
+                                )}
+                              </div>
+                              {b.projectName && (
+                                <div className="text-xs text-gray-500">{b.projectName}</div>
+                              )}
+                              <div className="text-[10px] text-gray-400 mt-1">
+                                {b.duration} days • {new Date(b.date).toLocaleDateString('en-GB')}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-sm text-gray-900">{formatCurrency(b.price)}</div>
+                              <span className={`px-1.5 py-0.5 text-[10px] rounded-full ${
+                                b.taskStatus === 'completed' ? 'bg-green-100 text-green-700' :
+                                b.taskStatus === 'assigned' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-600'
+                              }`}>
+                                {b.taskStatus}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
