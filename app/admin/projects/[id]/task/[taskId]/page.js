@@ -765,6 +765,31 @@ export default function AdminTaskDetailPage() {
                           </div>
                         </div>
                       )}
+
+                      {/* Show existing rating */}
+                      {bid.status === 'accepted' && taskRating && (
+                        <div className="mt-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm font-semibold text-green-800 mb-1">⭐ Rating Given</div>
+                              <div className="text-2xl font-bold text-green-700">{taskRating.rating}/10</div>
+                              {taskRating.comment && (
+                                <div className="text-sm text-green-700 mt-1 italic">&quot;{taskRating.comment}&quot;</div>
+                              )}
+                            </div>
+                            {task.status !== 'completed' && (
+                              <div className="text-xs text-green-600 bg-green-100 px-3 py-1 rounded-full">
+                                Ready for Done ✅
+                              </div>
+                            )}
+                            {task.status === 'completed' && (
+                              <div className="text-xs text-green-700 bg-green-200 px-3 py-1 rounded-full font-bold">
+                                Completed ✅
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
