@@ -137,9 +137,10 @@ export default function AdminTaskDetailPage() {
       .from('task_ratings')
       .select('*, profiles!task_ratings_subcontractor_id_fkey(full_name, company_name)')
       .eq('task_id', params.taskId)
-      .maybeSingle()
+      .order('created_at', { ascending: false })
+      .limit(1)
 
-    setTaskRating(ratingData || null)
+    setTaskRating(ratingData && ratingData.length > 0 ? ratingData[0] : null)
 
     setLoading(false)
   }
